@@ -90,7 +90,13 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    media: {
+      usedInBlogPosts: 'blog-posts';
+      usedInProperties: 'properties';
+      usedInInvestors: 'investors';
+    };
+  };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -246,9 +252,37 @@ export interface Media {
    */
   caption?: string | null;
   /**
+   * Physical storage health status. Auto-managed by the system.
+   */
+  healthStatus?: ('ready' | 'missing' | 'broken' | 'migrating' | 'deleted') | null;
+  /**
    * The original filename before Payload processing.
    */
   originalFilename?: string | null;
+  /**
+   * Blog posts using this media
+   */
+  usedInBlogPosts?: {
+    docs?: (number | BlogPost)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * Properties using this media
+   */
+  usedInProperties?: {
+    docs?: (string | Property)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * Investors using this media
+   */
+  usedInInvestors?: {
+    docs?: (number | Investor)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -318,34 +352,102 @@ export interface MediaFolder {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "locations".
+ * via the `definition` "blog-posts".
  */
-export interface Location {
+export interface BlogPost {
   id: number;
-  formattedLocation?: string | null;
-  zip: string;
+  title: string;
   /**
-   * City of the zip code
+   * URL-friendly version of the title
    */
-  city: string;
+  slug: string;
   /**
-   * State abbreviation of the zip code
+   * Brief summary (150-200 characters recommended)
    */
-  state_abbr: string;
+  excerpt: string;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
   /**
-   * State name of the zip code
+   * Main image for the post (recommended: 1200x630px)
    */
-  state_name: string;
+  featuredImage: number | Media;
+  author: string;
+  category: number | BlogCategory;
   /**
-   * County of the zip code
+   * Tags for better organization and SEO
    */
-  county?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'draft' | 'published' | 'archived';
   /**
-   * Estimated population of the zip code
+   * The date when this post was/will be published
    */
-  est_population?: number | null;
+  publishedDate?: string | null;
+  /**
+   * Display this post prominently on the blog homepage
+   */
+  featured?: boolean | null;
+  seo?: {
+    /**
+     * Custom SEO title (defaults to post title)
+     */
+    metaTitle?: string | null;
+    /**
+     * Custom SEO description (defaults to excerpt)
+     */
+    metaDescription?: string | null;
+    /**
+     * Comma-separated keywords for SEO
+     */
+    metaKeywords?: string | null;
+  };
+  /**
+   * Estimated time to read this post
+   */
+  readTime?: number | null;
+  /**
+   * Number of times this post has been viewed
+   */
+  views?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-categories".
+ */
+export interface BlogCategory {
+  id: number;
+  name: string;
+  /**
+   * URL-friendly version of the category name
+   */
+  slug: string;
+  /**
+   * Brief description of this category
+   */
+  description?: string | null;
+  /**
+   * Color for category badges in the UI
+   */
+  color?: ('blue' | 'green' | 'red' | 'yellow' | 'purple' | 'gray') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -523,6 +625,39 @@ export interface PropertyType {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations".
+ */
+export interface Location {
+  id: number;
+  formattedLocation?: string | null;
+  zip: string;
+  /**
+   * City of the zip code
+   */
+  city: string;
+  /**
+   * State abbreviation of the zip code
+   */
+  state_abbr: string;
+  /**
+   * State name of the zip code
+   */
+  state_name: string;
+  /**
+   * County of the zip code
+   */
+  county?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  /**
+   * Estimated population of the zip code
+   */
+  est_population?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "features".
  */
 export interface Feature {
@@ -659,107 +794,6 @@ export interface PropertyView {
     city?: string | null;
     region?: string | null;
   };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "blog-categories".
- */
-export interface BlogCategory {
-  id: number;
-  name: string;
-  /**
-   * URL-friendly version of the category name
-   */
-  slug: string;
-  /**
-   * Brief description of this category
-   */
-  description?: string | null;
-  /**
-   * Color for category badges in the UI
-   */
-  color?: ('blue' | 'green' | 'red' | 'yellow' | 'purple' | 'gray') | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "blog-posts".
- */
-export interface BlogPost {
-  id: number;
-  title: string;
-  /**
-   * URL-friendly version of the title
-   */
-  slug: string;
-  /**
-   * Brief summary (150-200 characters recommended)
-   */
-  excerpt: string;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  /**
-   * Main image for the post (recommended: 1200x630px)
-   */
-  featuredImage: number | Media;
-  author: string;
-  category: number | BlogCategory;
-  /**
-   * Tags for better organization and SEO
-   */
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  status: 'draft' | 'published' | 'archived';
-  /**
-   * The date when this post was/will be published
-   */
-  publishedDate?: string | null;
-  /**
-   * Display this post prominently on the blog homepage
-   */
-  featured?: boolean | null;
-  seo?: {
-    /**
-     * Custom SEO title (defaults to post title)
-     */
-    metaTitle?: string | null;
-    /**
-     * Custom SEO description (defaults to excerpt)
-     */
-    metaDescription?: string | null;
-    /**
-     * Comma-separated keywords for SEO
-     */
-    metaKeywords?: string | null;
-  };
-  /**
-   * Estimated time to read this post
-   */
-  readTime?: number | null;
-  /**
-   * Number of times this post has been viewed
-   */
-  views?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1027,7 +1061,11 @@ export interface MediaSelect<T extends boolean = true> {
         id?: T;
       };
   caption?: T;
+  healthStatus?: T;
   originalFilename?: T;
+  usedInBlogPosts?: T;
+  usedInProperties?: T;
+  usedInInvestors?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

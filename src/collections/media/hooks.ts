@@ -121,3 +121,38 @@ export const mediaBeforeChange: CollectionBeforeChangeHook = async ({
 }) => {
   return data
 }
+
+// ---------------------------------------------------------------------------
+// beforeDelete — Final line of defense against inconsistent states
+// ---------------------------------------------------------------------------
+
+/**
+ * Server-side logic right before the database delete.
+ * Uses MediaReferenceManager to prevent deleting media that is currently in use.
+ */
+export const mediaBeforeDelete: import('payload').CollectionBeforeDeleteHook = async ({
+  req,
+  id,
+}) => {
+  const { MediaReferenceManager } = await import('@/lib/media/MediaReferenceManager')
+  
+  const usageResult = await MediaReferenceManager.isUsed(id, req.payload)
+
+  if (usageResult.used) {
+    const { APIError } = await import('payload')
+    
+    const reasonParts = usageResult.usages.map((usage) => {
+      const extraCount = usage.count - 1
+      const title = usage.titles[0] || 'Unknown'
+      const suffix = extraCount > 0 ? ` and ${extraCount} others` : ''
+      return `Used in ${usage.collection}: "${title}"${suffix}`
+    })
+
+    throw new APIError(
+      `Cannot delete media. It is currently referenced. Details: ${reasonParts.join(' | ')}`,
+      400,
+      null,
+      true
+    )
+  }
+}

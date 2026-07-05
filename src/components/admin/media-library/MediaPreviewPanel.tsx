@@ -79,13 +79,19 @@ export function MediaPreviewPanel({ library }: MediaPreviewPanelProps) {
         <div className="flex-1 overflow-y-auto p-6 space-y-8">
           {/* Preview Image */}
           <div className="bg-zinc-100/50 dark:bg-zinc-900/50 rounded-2xl aspect-square flex items-center justify-center relative overflow-hidden border border-zinc-200/50 dark:border-zinc-800/50 shadow-inner group">
-            {isImage && previewMedia.url ? (
+            {previewMedia.healthStatus === 'missing' || previewMedia.healthStatus === 'broken' ? (
+              <div className="flex flex-col items-center justify-center text-red-500 gap-3 opacity-60">
+                <FileText className="w-16 h-16" />
+                <span className="text-sm font-bold uppercase tracking-wider">Asset Offline</span>
+              </div>
+            ) : isImage && previewMedia.url ? (
               <Image
                 src={previewMedia.url}
                 alt={previewMedia.alt || ''}
                 fill
                 className="object-contain transition-transform duration-500 group-hover:scale-105"
                 sizes="(max-width: 768px) 90vw, 450px"
+                onError={() => library.reportBrokenImage(previewMedia.id)}
               />
             ) : (
               <div className="text-zinc-400 dark:text-zinc-600 text-sm font-medium flex flex-col items-center gap-2">

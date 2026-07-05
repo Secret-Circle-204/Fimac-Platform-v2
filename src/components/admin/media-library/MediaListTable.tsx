@@ -140,13 +140,18 @@ export function MediaListTable({ library }: MediaListTableProps) {
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700">
-                      {isImage && item.sizes?.thumbnail?.url ? (
+                      {item.healthStatus === 'missing' || item.healthStatus === 'broken' ? (
+                        <div className="flex flex-col items-center justify-center text-red-500 gap-1 opacity-60">
+                          <FileText className="w-5 h-5" />
+                        </div>
+                      ) : isImage && item.sizes?.thumbnail?.url ? (
                         <Image
                           src={item.sizes.thumbnail.url}
                           alt={item.alt || ''}
                           width={48}
                           height={48}
                           className="object-cover w-full h-full"
+                          onError={() => library.reportBrokenImage(item.id)}
                         />
                       ) : (
                         <FileText className="w-6 h-6 text-zinc-400 dark:text-zinc-500" />

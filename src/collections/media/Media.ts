@@ -21,7 +21,9 @@ import {
   IMAGE_SIZES,
   PAYLOAD_MIME_TYPES_GLOB,
 } from '@/lib/media/config'
-import { mediaBeforeChange, mediaBeforeValidate, mediaBeforeOperation } from './hooks'
+import { mediaBeforeChange, mediaBeforeValidate, mediaBeforeOperation, mediaBeforeDelete } from './hooks'
+import { MediaBulkDeletionService } from '@/lib/media/MediaBulkDeletionService'
+import { MediaHealthService } from '@/lib/media/MediaHealthService'
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -44,10 +46,64 @@ export const Media: CollectionConfig = {
   access: {
     read: () => true,
   },
+  endpoints: [
+    {
+      path: '/bulk-delete-safe',
+      method: 'post',
+      handler: async (req) => {
+        const { payload, user } = req
+        if (user?.collection !== 'users') {
+          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        
+        let body
+        try {
+          // Payload 3.0 uses standard Web Request API
+          body = typeof req.json === 'function' ? await req.json() : req.data || req.body
+        } catch (_e) {
+          return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
+        }
+        
+        const ids = body?.ids
+        if (!Array.isArray(ids)) {
+          return Response.json({ error: 'Missing or invalid ids array' }, { status: 400 })
+        }
+
+        const report = await MediaBulkDeletionService.processBulkDelete(ids, payload)
+        return Response.json(report)
+      },
+    },
+    {
+      path: '/verify-health-batch',
+      method: 'post',
+      handler: async (req) => {
+        const { payload, user } = req
+        if (user?.collection !== 'users') {
+          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+        
+        let body
+        try {
+          body = typeof req.json === 'function' ? await req.json() : req.data || req.body
+        } catch (_e) {
+          return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
+        }
+        
+        const ids = body?.ids
+        if (!Array.isArray(ids)) {
+          return Response.json({ error: 'Missing or invalid ids array' }, { status: 400 })
+        }
+
+        const report = await MediaHealthService.verifyBatchHealth(ids, payload)
+        return Response.json(report)
+      },
+    },
+  ],
   hooks: {
     beforeOperation: [mediaBeforeOperation],
     beforeValidate: [mediaBeforeValidate],
     beforeChange: [mediaBeforeChange],
+    beforeDelete: [mediaBeforeDelete],
   },
   fields: [
     // --- Core fields ---
@@ -121,6 +177,23 @@ export const Media: CollectionConfig = {
 
     // --- System fields (auto-populated, hidden from admin) ---
     {
+      name: 'healthStatus',
+      type: 'select',
+      defaultValue: 'ready',
+      options: [
+        { label: 'Ready', value: 'ready' },
+        { label: 'Missing', value: 'missing' },
+        { label: 'Broken', value: 'broken' },
+        { label: 'Migrating', value: 'migrating' },
+        { label: 'Deleted', value: 'deleted' },
+      ],
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: 'Physical storage health status. Auto-managed by the system.',
+      },
+    },
+    {
       name: 'originalFilename',
       type: 'text',
       label: 'Original Filename',
@@ -128,6 +201,38 @@ export const Media: CollectionConfig = {
         readOnly: true,
         position: 'sidebar',
         description: 'The original filename before Payload processing.',
+      },
+    },
+
+    // --- Bi-Directional Relationships (Join Fields) UI Only ---
+    {
+      name: 'usedInBlogPosts',
+      type: 'join',
+      collection: 'blog-posts',
+      on: 'featuredImage',
+      admin: {
+        position: 'sidebar',
+        description: 'Blog posts using this media',
+      },
+    },
+    {
+      name: 'usedInProperties',
+      type: 'join',
+      collection: 'properties',
+      on: 'photos',
+      admin: {
+        position: 'sidebar',
+        description: 'Properties using this media',
+      },
+    },
+    {
+      name: 'usedInInvestors',
+      type: 'join',
+      collection: 'investors',
+      on: 'proof_of_funds',
+      admin: {
+        position: 'sidebar',
+        description: 'Investors using this media',
       },
     },
   ],

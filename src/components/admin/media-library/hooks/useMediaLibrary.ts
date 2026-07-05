@@ -237,6 +237,39 @@ export function useMediaLibrary() {
   const [state, dispatch] = useReducer(reducer, initialState)
   const abortControllerRef = useRef<AbortController | null>(null)
 
+  // ── Health Checking (Debounced) ────────────────────────────────────────
+  const brokenImageQueue = useRef<Set<number>>(new Set())
+  const brokenImageTimeout = useRef<NodeJS.Timeout | null>(null)
+
+  const reportBrokenImage = useCallback((id: number) => {
+    brokenImageQueue.current.add(id)
+
+    if (brokenImageTimeout.current) {
+      clearTimeout(brokenImageTimeout.current)
+    }
+
+    brokenImageTimeout.current = setTimeout(async () => {
+      const ids = Array.from(brokenImageQueue.current)
+      if (ids.length === 0) return
+
+      try {
+        await fetch('/api/media/verify-health-batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids }),
+        })
+        // Clear queue after successful report
+        brokenImageQueue.current.clear()
+
+        // Refresh media to update healthStatus
+        await fetchMedia()
+      } catch (err) {
+        console.error('[MediaLibrary] Failed to report broken images', err)
+      }
+    }, 1500)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ── Fetch Folders ──────────────────────────────────────────────────────
   const fetchFolders = useCallback(async () => {
     dispatch({ type: 'SET_FOLDERS_LOADING', loading: true })
@@ -442,14 +475,18 @@ export function useMediaLibrary() {
 
   const deleteMediaBulk = useCallback(
     async (mediaIds: number[]) => {
-      await Promise.all(
-        mediaIds.map(async (id) => {
-          const res = await fetch(`/api/media/${id}`, { method: 'DELETE' })
-          if (!res.ok) console.error(`Failed to delete media ${id}`)
-        })
-      )
+      const res = await fetch('/api/media/bulk-delete-safe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: mediaIds })
+      })
+      if (!res.ok) throw new Error('Failed to safe delete media')
+      const report = await res.json()
+      
       dispatch({ type: 'CLEAR_SELECTION' })
       await fetchMedia()
+      
+      return report
     },
     [fetchMedia],
   )
@@ -487,6 +524,7 @@ export function useMediaLibrary() {
     deleteMedia,
     deleteMediaBulk,
     moveMedia,
+    reportBrokenImage,
 
     // Dispatch helpers
     setViewMode: useCallback((mode: ViewMode) => dispatch({ type: 'SET_VIEW_MODE', mode }), []),

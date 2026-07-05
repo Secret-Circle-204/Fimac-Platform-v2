@@ -8,6 +8,7 @@ import { MediaListTable } from './MediaListTable'
 import { MediaPreviewPanel } from './MediaPreviewPanel'
 import { UploadZone } from './UploadZone'
 import { useMediaLibrary } from './hooks/useMediaLibrary'
+import type { BulkDeletionReport } from '@/lib/media/MediaBulkDeletionService'
 import { Search, ChevronLeft, ChevronRight, Trash2, FolderOutput, CheckSquare } from 'lucide-react'
 import { useListDrawerContext } from '@payloadcms/ui'
 import './media-library.css'
@@ -30,6 +31,7 @@ export default function MediaLibraryView(_props: unknown) {
   const [isMoveDialogOpen, setIsMoveDialogOpen] = React.useState(false)
   const [targetFolderId, setTargetFolderId] = React.useState<number | null>(null)
   const [folderSearch, setFolderSearch] = React.useState('')
+  const [deleteReport, setDeleteReport] = React.useState<BulkDeletionReport | null>(null)
 
   const hasSelection = selection.selectedIds.size > 0
 
@@ -76,10 +78,18 @@ export default function MediaLibraryView(_props: unknown) {
       return
     }
     
-    // Bulk delete to avoid overwhelming the server with sequential list refreshes
+    // Bulk delete using the SAFE endpoint to handle dependencies gracefully
     const ids = Array.from(selection.selectedIds)
-    await deleteMediaBulk(ids)
-    clearSelection()
+    try {
+      const report = await deleteMediaBulk(ids)
+      if (report && report.skipped > 0) {
+        setDeleteReport(report)
+      } else {
+        clearSelection()
+      }
+    } catch (_err) {
+      alert('An error occurred during deletion.')
+    }
   }
 
   return (
@@ -317,6 +327,80 @@ export default function MediaLibraryView(_props: unknown) {
                 className="px-10 py-3.5 text-lg font-bold border-none outline-none ring-0 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95 flex items-center gap-2"
               >
                 Confirm Move
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Report Modal overlay */}
+      {deleteReport && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity"
+          onClick={() => {
+            setDeleteReport(null)
+            clearSelection()
+          }}
+        >
+          <div 
+            className="bg-white dark:bg-zinc-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-zinc-200 dark:border-white/10 p-8 w-full max-w-2xl mx-4 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 shrink-0">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Deletion Report</h3>
+                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+                  Successfully deleted <strong className="text-green-600 dark:text-green-400">{deleteReport.deleted}</strong> items.
+                  Skipped <strong className="text-orange-600 dark:text-orange-400">{deleteReport.skipped}</strong> items.
+                </p>
+              </div>
+            </div>
+
+            {deleteReport.skipped > 0 && (
+              <div className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-950/50 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 custom-scrollbar">
+                <h4 className="text-sm font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">Skipped Items Details</h4>
+                <div className="space-y-3">
+                  {Object.entries(
+                    deleteReport.reasons.reduce((acc: Record<string, (string | number)[]>, r) => {
+                      if (!acc[r.reason]) acc[r.reason] = []
+                      acc[r.reason].push(r.id)
+                      return acc
+                    }, {} as Record<string, (string | number)[]>)
+                  ).map(([reason, ids], idx) => {
+                    const mediaNames = ids.map((id) => {
+                      const mediaDoc = library.media.find(m => String(m.id) === String(id))
+                      return mediaDoc?.displayName || mediaDoc?.filename || `ID: ${id}`
+                    })
+                    
+                    return (
+                      <div key={idx} className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-red-100 dark:border-red-900/30 shadow-sm">
+                        <p className="text-sm text-red-600 dark:text-red-400 font-bold leading-relaxed mb-2">
+                          {reason}
+                        </p>
+                        <p className="font-medium text-zinc-600 dark:text-zinc-400 text-sm">
+                          <span className="font-bold text-zinc-900 dark:text-zinc-100">{ids.length} image{ids.length > 1 ? 's' : ''}: </span>
+                          {mediaNames.join(' • ')}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteReport(null)
+                  clearSelection()
+                }}
+                className="px-8 py-3 text-sm font-bold text-white bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 rounded-xl transition-all shadow-md active:scale-95"
+              >
+                Acknowledge & Close
               </button>
             </div>
           </div>

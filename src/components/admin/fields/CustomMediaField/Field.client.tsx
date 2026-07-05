@@ -13,11 +13,13 @@ import type { UploadFieldClientProps } from 'payload'
 function SortableMediaItem({ 
   id, 
   mediaDoc, 
-  onRemove 
+  onRemove,
+  reportBrokenImage
 }: { 
   id: string, 
   mediaDoc: Record<string, unknown> | undefined, 
-  onRemove: (id: string) => void 
+  onRemove: (id: string) => void,
+  reportBrokenImage: (id: string | number) => void
 }) {
   const {
     attributes,
@@ -64,6 +66,34 @@ function SortableMediaItem({
     )
   }
 
+  if (mediaDoc._missing || mediaDoc.healthStatus === 'missing' || mediaDoc.healthStatus === 'broken') {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="relative group bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 shadow-sm rounded-xl overflow-hidden flex flex-col h-40 items-center justify-center"
+      >
+        <div className="w-8 h-8 flex items-center justify-center bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 rounded-full mb-2">
+          <X className="w-5 h-5" />
+        </div>
+        <p className="text-xs font-semibold text-red-600 dark:text-red-400">Missing Asset</p>
+        <p className="text-[10px] text-red-500 mt-1 mb-2 px-2 text-center">This media was deleted</p>
+        
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onRemove(id)
+          }}
+          className="px-3 py-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 text-[10px] font-bold rounded transition-colors pointer-events-auto shadow-sm"
+        >
+          Remove Reference
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div
       ref={setNodeRef}
@@ -72,7 +102,14 @@ function SortableMediaItem({
     >
       <div className="flex-1 bg-zinc-100 dark:bg-zinc-950 relative flex items-center justify-center">
         {url ? (
-          <Image src={url} alt={(mediaDoc?.alt as string) || displayName || 'Media'} fill className="object-cover" sizes="200px" />
+          <Image 
+            src={url} 
+            alt={(mediaDoc?.alt as string) || displayName || 'Media'} 
+            fill 
+            className="object-cover" 
+            sizes="200px" 
+            onError={() => reportBrokenImage(id)}
+          />
         ) : (
           <ImageIcon className="w-8 h-8 text-zinc-300 dark:text-zinc-700" />
         )}
@@ -116,6 +153,45 @@ export const CustomMediaFieldClient: React.FC<UploadFieldClientProps> = ({ path,
   const { config } = useConfig()
   const serverURL = config?.serverURL || ''
   const api = config?.routes?.api || '/api'
+
+  // Debounced broken image reporter
+  const brokenImageQueue = React.useRef<Set<string | number>>(new Set())
+  const brokenImageTimeout = React.useRef<NodeJS.Timeout | null>(null)
+
+  const reportBrokenImage = useCallback((id: string | number) => {
+    brokenImageQueue.current.add(id)
+
+    if (brokenImageTimeout.current) {
+      clearTimeout(brokenImageTimeout.current)
+    }
+
+    brokenImageTimeout.current = setTimeout(async () => {
+      const ids = Array.from(brokenImageQueue.current)
+      if (ids.length === 0) return
+
+      try {
+        await fetch(`${serverURL}${api}/media/verify-health-batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        })
+        brokenImageQueue.current.clear()
+        
+        // Mark locally in state so they re-render as offline immediately
+        setMediaDocs(prev => {
+          const next = { ...prev }
+          ids.forEach(brokenId => {
+            if (next[String(brokenId)]) {
+              next[String(brokenId)] = { ...next[String(brokenId)], healthStatus: 'missing' }
+            }
+          })
+          return next
+        })
+      } catch (err) {
+        console.error('Failed to report broken images', err)
+      }
+    }, 1500)
+  }, [serverURL, api])
 
   // Ensure value is an array of IDs
   const items = React.useMemo(() => {
@@ -169,6 +245,13 @@ export const CustomMediaFieldClient: React.FC<UploadFieldClientProps> = ({ path,
         
         if (data && Array.isArray(data.docs)) {
           const newDocs = { ...mediaDocs }
+          
+          // Pre-mark all requested IDs as missing
+          missingIds.forEach(id => {
+            newDocs[String(id)] = { _missing: true }
+          })
+
+          // Overwrite with actual docs if found
           data.docs.forEach((doc: Record<string, unknown>) => {
             if (doc?.id) {
               newDocs[String(doc.id)] = doc
@@ -202,8 +285,9 @@ export const CustomMediaFieldClient: React.FC<UploadFieldClientProps> = ({ path,
     }
   }
 
-  const handleRemove = (idToRemove: string) => {
-    setValue(items.filter(id => id !== idToRemove))
+  const handleRemove = (idToRemove: string | number) => {
+    // Both sides cast to String to handle number vs string mismatch
+    setValue(items.filter((id) => String(id) !== String(idToRemove)))
   }
 
   return (
@@ -235,6 +319,7 @@ export const CustomMediaFieldClient: React.FC<UploadFieldClientProps> = ({ path,
                 id={String(id)} 
                 mediaDoc={mediaDocs[String(id)]} 
                 onRemove={handleRemove}
+                reportBrokenImage={reportBrokenImage}
               />
             ))}
           </SortableContext>

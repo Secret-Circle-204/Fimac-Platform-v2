@@ -114,13 +114,19 @@ export function MediaGrid({ library }: MediaGridProps) {
 
             {/* Thumbnail */}
             <div className="w-full h-full bg-zinc-100 dark:bg-zinc-900/50 flex items-center justify-center">
-              {isImage && item.sizes?.thumbnail?.url ? (
+              {item.healthStatus === 'missing' || item.healthStatus === 'broken' ? (
+                <div className="flex flex-col items-center justify-center text-red-500 gap-1 opacity-60">
+                  <FileText className="w-8 h-8" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Asset Offline</span>
+                </div>
+              ) : isImage && item.sizes?.thumbnail?.url ? (
                 <Image
                   src={item.sizes.thumbnail.url}
                   alt={item.alt || ''}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 16vw"
+                  onError={() => library.reportBrokenImage(item.id)}
                 />
               ) : isImage && item.url ? (
                 <Image
@@ -129,6 +135,7 @@ export function MediaGrid({ library }: MediaGridProps) {
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 16vw"
+                  onError={() => library.reportBrokenImage(item.id)}
                 />
               ) : isVideo ? (
                 <Film className="w-12 h-12 text-zinc-300 dark:text-zinc-600" />

@@ -47,7 +47,5 @@ export default buildConfig({
     await seedFeatures(payload)
     await seedPropertyTypes(payload)
   },
-  plugins: [
-    ...(activeProvider.getPayloadPlugin() ? [activeProvider.getPayloadPlugin()!] : []),
-  ],
+  plugins: [...(activeProvider.getPayloadPlugin() ? [activeProvider.getPayloadPlugin()!] : [])],
 })
