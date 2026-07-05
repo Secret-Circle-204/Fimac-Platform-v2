@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './theme.css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.bg-blue-fimac {
+  background-image: url('/bg-blue.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.bg-gold-fimac {
+  background-image: url('/bg-gold.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.color-gold-fimac {
+  background-color: #a18052;
+}
+
+/* VIP Luxury Futuristic Sidebar Keyframe Animations */
+@keyframes sheetVipCinemaIn {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: perspective(1200px) rotateY(8deg) rotateX(-2deg) scale(0.96) translateY(15px);
+    clip-path: inset(0% 0% 0% 0% rounded 4rem); /* Extremely rounded initial */
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1) translateY(0);
+    clip-path: inset(0% 0% 0% 0% rounded 2.5rem);
+  }
+}
+
+@keyframes sheetVipCinemaOut {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: perspective(1200px) rotateY(-5deg) scale(0.97) translateY(10px);
+  }
+}
+
+.sheet-magical-content {
+  transform-origin: center right;
+  /* Safe base state */
+  opacity: 0;
+}
+
+.sheet-magical-content[data-state="open"] {
+  animation: sheetVipCinemaIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.sheet-magical-content[data-state="closed"] {
+  animation: sheetVipCinemaOut 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+/* Bottom Sheet Ultra-Smooth Transitions (GPU Accelerated) */
+@keyframes sheetSmoothSlideIn {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheetSmoothSlideOut {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.sheet-smooth-bottom {
+  will-change: transform;
+  transform: translateY(100%);
+  transition: none !important;
+}
+
+.sheet-smooth-bottom[data-state="open"] {
+  animation: sheetSmoothSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+.sheet-smooth-bottom[data-state="closed"] {
+  animation: sheetSmoothSlideOut 0.2s cubic-bezier(0.7, 0, 0.84, 0) forwards !important;
+}
+
+/* Select Dropdown Smooth GPU Animations */
+@keyframes selectSmoothOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.select-smooth-content {
+  will-change: transform, opacity;
+  animation: selectSmoothOpen 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
