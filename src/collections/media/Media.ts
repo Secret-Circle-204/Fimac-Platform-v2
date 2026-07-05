@@ -21,7 +21,14 @@ import {
   IMAGE_SIZES,
   PAYLOAD_MIME_TYPES_GLOB,
 } from '@/lib/media/config'
-import { mediaBeforeChange, mediaBeforeValidate, mediaBeforeOperation, mediaBeforeDelete } from './hooks'
+import { 
+  mediaBeforeChange, 
+  mediaBeforeValidate, 
+  mediaBeforeOperation, 
+  mediaBeforeDelete,
+  mediaAfterChange,
+  mediaAfterDelete
+} from './hooks'
 import { MediaBulkDeletionService } from '@/lib/media/MediaBulkDeletionService'
 import { MediaHealthService } from '@/lib/media/MediaHealthService'
 
@@ -58,9 +65,8 @@ export const Media: CollectionConfig = {
         
         let body
         try {
-          // Payload 3.0 uses standard Web Request API
-          body = typeof req.json === 'function' ? await req.json() : req.data || req.body
-        } catch (_e) {
+          body = await req.json?.() ?? req.data ?? req.body
+        } catch {
           return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
         }
         
@@ -84,8 +90,8 @@ export const Media: CollectionConfig = {
         
         let body
         try {
-          body = typeof req.json === 'function' ? await req.json() : req.data || req.body
-        } catch (_e) {
+          body = await req.json?.() ?? req.data ?? req.body
+        } catch {
           return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
         }
         
@@ -104,6 +110,8 @@ export const Media: CollectionConfig = {
     beforeValidate: [mediaBeforeValidate],
     beforeChange: [mediaBeforeChange],
     beforeDelete: [mediaBeforeDelete],
+    afterChange: [mediaAfterChange],
+    afterDelete: [mediaAfterDelete],
   },
   fields: [
     // --- Core fields ---

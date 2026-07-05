@@ -1,14 +1,31 @@
-import type { Payload } from 'payload'
+import type { Payload, CollectionSlug } from 'payload'
 
 export type MediaUsageResult = {
   used: boolean
   totalReferences: number
   usages: {
-    collection: string
+    collection: CollectionSlug
     count: number
     titles: string[]
   }[]
 }
+
+export type AffectedReference = {
+  collection: CollectionSlug
+  id: string | number
+}
+
+type ReferenceConfig = {
+  collection: CollectionSlug
+  field: string
+  titleField: string
+}
+
+const REFERENCE_CONFIGS: ReferenceConfig[] = [
+  { collection: 'blog-posts', field: 'featuredImage', titleField: 'title' },
+  { collection: 'properties', field: 'photos', titleField: 'title' },
+  { collection: 'investors', field: 'proof_of_funds', titleField: 'full_name' },
+]
 
 /**
  * Core Business Logic Service for managing Media references.
@@ -22,55 +39,22 @@ export const MediaReferenceManager = {
     const usages: MediaUsageResult['usages'] = []
     let totalReferences = 0
 
-    // 1. Check Blog Posts
-    const blogPosts = await payload.find({
-      collection: 'blog-posts',
-      where: { featuredImage: { equals: id } },
-      limit: 1,
-      depth: 0,
-    })
-
-    if (blogPosts.totalDocs > 0) {
-      totalReferences += blogPosts.totalDocs
-      usages.push({
-        collection: 'blog-posts',
-        count: blogPosts.totalDocs,
-        titles: blogPosts.docs.map((doc: { title?: string; id: string | number }) => String(doc.title || doc.id)),
+    for (const config of REFERENCE_CONFIGS) {
+      const result = await payload.find({
+        collection: config.collection,
+        where: { [config.field]: { equals: id } },
+        limit: 1,
+        depth: 0,
       })
-    }
 
-    // 2. Check Properties
-    const properties = await payload.find({
-      collection: 'properties',
-      where: { photos: { equals: id } },
-      limit: 1,
-      depth: 0,
-    })
-
-    if (properties.totalDocs > 0) {
-      totalReferences += properties.totalDocs
-      usages.push({
-        collection: 'properties',
-        count: properties.totalDocs,
-        titles: properties.docs.map((doc: { title?: string; id: string | number }) => String(doc.title || doc.id)),
-      })
-    }
-
-    // 3. Check Investors
-    const investors = await payload.find({
-      collection: 'investors',
-      where: { proof_of_funds: { equals: id } },
-      limit: 1,
-      depth: 0,
-    })
-
-    if (investors.totalDocs > 0) {
-      totalReferences += investors.totalDocs
-      usages.push({
-        collection: 'investors',
-        count: investors.totalDocs,
-        titles: investors.docs.map((doc: { full_name?: string; id: string | number }) => String(doc.full_name || doc.id)),
-      })
+      if (result.totalDocs > 0) {
+        totalReferences += result.totalDocs
+        usages.push({
+          collection: config.collection,
+          count: result.totalDocs,
+          titles: result.docs.map((doc: any) => String(doc[config.titleField] || doc.id)),
+        })
+      }
     }
 
     return {
@@ -78,5 +62,43 @@ export const MediaReferenceManager = {
       totalReferences,
       usages,
     }
+  },
+
+  /**
+   * Retrieves all actual document IDs that reference a specific media ID.
+   * Uses pagination to safely retrieve all IDs without overwhelming memory.
+   */
+  getAffectedReferences: async (id: number | string, payload: Payload): Promise<AffectedReference[]> => {
+    const affected: AffectedReference[] = []
+
+    for (const config of REFERENCE_CONFIGS) {
+      let page = 1
+      let hasNextPage = true
+
+      while (hasNextPage) {
+        const result = await payload.find({
+          collection: config.collection,
+          where: { [config.field]: { equals: id } },
+          limit: 100, // Process in batches
+          page,
+          depth: 0,
+          select: { id: true }, // Optimization: Only fetch the ID
+        })
+
+        if (result.docs && result.docs.length > 0) {
+          result.docs.forEach((doc: any) => {
+            affected.push({
+              collection: config.collection,
+              id: doc.id,
+            })
+          })
+        }
+
+        hasNextPage = result.hasNextPage
+        page += 1
+      }
+    }
+
+    return affected
   },
 }

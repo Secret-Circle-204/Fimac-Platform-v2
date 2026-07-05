@@ -156,3 +156,85 @@ export const mediaBeforeDelete: import('payload').CollectionBeforeDeleteHook = a
     )
   }
 }
+
+// ---------------------------------------------------------------------------
+// afterChange — Domain Event: Media Modified
+// ---------------------------------------------------------------------------
+
+export const mediaAfterChange: import('payload').CollectionAfterChangeHook = async ({
+  doc,
+  previousDoc,
+  req,
+}) => {
+  // Smart Revalidation: Only trigger if meaningful display fields changed.
+  const hasMeaningfulChange =
+    !previousDoc || // It's a new document
+    doc.url !== previousDoc.url ||
+    doc.filename !== previousDoc.filename ||
+    doc.alt !== previousDoc.alt ||
+    doc.caption !== previousDoc.caption ||
+    JSON.stringify(doc.sizes) !== JSON.stringify(previousDoc.sizes)
+
+  if (!hasMeaningfulChange) {
+    return doc
+  }
+
+  try {
+    const { MediaReferenceManager } = await import('@/lib/media/MediaReferenceManager')
+    const { CacheTagResolver } = await import('@/lib/cache/CacheTagResolver')
+    const { triggerRevalidate } = await import('@/lib/cache/revalidate')
+
+    const affectedReferences = await MediaReferenceManager.getAffectedReferences(doc.id, req.payload)
+    const tagsToInvalidate = CacheTagResolver.resolveTagsForReferences(affectedReferences)
+
+    tagsToInvalidate.forEach((tag) => {
+      try {
+        triggerRevalidate(tag)
+        console.log(`[CacheRevalidation] Invalidated cache tag: ${tag} due to Media(${doc.id}) update.`)
+      } catch (revalidateError) {
+        req.payload.logger.error({ err: revalidateError }, `Failed to revalidate tag ${tag}`)
+      }
+    })
+  } catch (err) {
+    req.payload.logger.error({ err }, `Failed to broadcast mediaAfterChange domain event for Media(${doc.id})`)
+  }
+
+  return doc
+}
+
+// ---------------------------------------------------------------------------
+// afterDelete — Domain Event: Media Deleted
+// ---------------------------------------------------------------------------
+
+export const mediaAfterDelete: import('payload').CollectionAfterDeleteHook = async ({
+  doc,
+  req,
+  id,
+}) => {
+  // Payload sometimes only provides id, sometimes doc on deletion. We use id as source of truth.
+  const mediaId = id || (doc && doc.id)
+  
+  if (!mediaId) return doc
+
+  try {
+    const { MediaReferenceManager } = await import('@/lib/media/MediaReferenceManager')
+    const { CacheTagResolver } = await import('@/lib/cache/CacheTagResolver')
+    const { triggerRevalidate } = await import('@/lib/cache/revalidate')
+
+    const affectedReferences = await MediaReferenceManager.getAffectedReferences(mediaId, req.payload)
+    const tagsToInvalidate = CacheTagResolver.resolveTagsForReferences(affectedReferences)
+
+    tagsToInvalidate.forEach((tag) => {
+      try {
+        triggerRevalidate(tag)
+        console.log(`[CacheRevalidation] Invalidated cache tag: ${tag} due to Media(${mediaId}) deletion.`)
+      } catch (revalidateError) {
+        req.payload.logger.error({ err: revalidateError }, `Failed to revalidate tag ${tag}`)
+      }
+    })
+  } catch (err) {
+    req.payload.logger.error({ err }, `Failed to broadcast mediaAfterDelete domain event for Media(${mediaId})`)
+  }
+
+  return doc
+}

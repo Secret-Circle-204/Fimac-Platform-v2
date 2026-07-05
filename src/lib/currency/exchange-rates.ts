@@ -16,7 +16,7 @@ export interface ExchangeRatesData {
 export const FALLBACK_RATES: Record<string, number> = {
   USD: 1.0,
   EGP: 50.0,
-  EUR: 0.92,
+  EUR: 52.0,
 }
 
 /**
@@ -41,13 +41,13 @@ export async function getExchangeRates(): Promise<Record<string, number>> {
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 4000)
-    
+
     const response = await fetch('https://open.er-api.com/v6/latest/USD', {
       signal: controller.signal,
     })
-    
+
     clearTimeout(timeoutId)
-    
+
     if (response.ok) {
       const data = await response.json()
       if (data && data.rates) {
@@ -56,17 +56,21 @@ export async function getExchangeRates(): Promise<Record<string, number>> {
           EGP: Number(data.rates.EGP) || FALLBACK_RATES.EGP,
           EUR: Number(data.rates.EUR) || FALLBACK_RATES.EUR,
         }
-        
+
         // Save to cache
         try {
-          fs.writeFileSync(CACHE_FILE, JSON.stringify({
-            rates,
-            timestamp: Date.now(),
-          }), 'utf8')
+          fs.writeFileSync(
+            CACHE_FILE,
+            JSON.stringify({
+              rates,
+              timestamp: Date.now(),
+            }),
+            'utf8',
+          )
         } catch (writeErr) {
           console.warn('[ExchangeRates] Failed to write currency cache:', writeErr)
         }
-        
+
         return rates
       }
     }
