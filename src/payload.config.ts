@@ -39,7 +39,7 @@ export default buildConfig({
       idleTimeoutMillis: 60000,
       connectionTimeoutMillis: 20000,
     },
-    push: true,
+    push: false,
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
