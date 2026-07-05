@@ -3,6 +3,7 @@ import * as migration_20260609_114128_add_currency_fields from './20260609_11412
 import * as migration_20260704_165904 from './20260704_165904';
 import * as migration_20260704_191146 from './20260704_191146';
 import * as migration_20260705_082010 from './20260705_082010';
+import * as migration_20260705_173608 from './20260705_173608';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20260705_082010.up,
     down: migration_20260705_082010.down,
-    name: '20260705_082010'
+    name: '20260705_082010',
+  },
+  {
+    up: migration_20260705_173608.up,
+    down: migration_20260705_173608.down,
+    name: '20260705_173608'
   },
 ];
