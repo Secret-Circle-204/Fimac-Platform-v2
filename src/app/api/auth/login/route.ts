@@ -27,13 +27,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, password, user_type = "investors" } = body
+    const { email, password, user_type = "buyers" } = body
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    if (user_type !== "investors" && user_type !== "sellers") {
+    if (user_type !== "buyers" && user_type !== "sellers") {
       return NextResponse.json({ error: 'Invalid user type' }, { status: 400 })
     }
 
@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
       // Set auth cookie
       const cookieStore = await cookies()
       const isSeller = user_type === 'sellers'
-      const cookieName = isSeller ? 'payload-token-sellers' : 'payload-token-investors'
-      const otherCookieName = isSeller ? 'payload-token-investors' : 'payload-token-sellers'
+      const cookieName = isSeller ? 'payload-token-sellers' : 'payload-token-buyers'
+      const otherCookieName = isSeller ? 'payload-token-buyers' : 'payload-token-sellers'
 
       // Delete the other role's cookie to avoid role/session conflicts in the same browser
       cookieStore.delete(otherCookieName)

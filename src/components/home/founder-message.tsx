@@ -24,7 +24,7 @@ export function FounderMessage() {
               when it comes to the pivotal moments of buying or selling, the market often lacks a
               dedicated, strategic partner. That&apos;s why I founded FIMAC. We&apos;re not just a platform;
               we are a consultancy built on trust, deep market insight, and a shared vision of
-              success. Our mission is to bridge the gap between discerning investors and remarkable
+              success. Our mission is to bridge the gap between discerning buyers and remarkable
               opportunities, ensuring every transaction is not just a deal, but a legacy. We are
               here to empower your next chapter in hospitality.&rdquo;
             </blockquote>

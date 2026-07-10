@@ -9,19 +9,19 @@ export type CurrentUser = {
   company_name?: string
   phone: string
   verification_status: string
-  role: "investor" | "seller"
-  collection: "investors" | "sellers"
+  role: "buyer" | "seller"
+  collection: "buyers" | "sellers"
 }
 
 const TOKEN_COOKIE_CONFIG = [
-  { name: "payload-token-investors", collection: "investors" as const, role: "investor" as const },
+  { name: "payload-token-buyers", collection: "buyers" as const, role: "buyer" as const },
   { name: "payload-token-sellers", collection: "sellers" as const, role: "seller" as const },
 ]
 
 function mapUserRecord<T extends { id: string | number }>(
   user: T,
-  role: "investor" | "seller",
-  collection: "investors" | "sellers"
+  role: "buyer" | "seller",
+  collection: "buyers" | "sellers"
 ): CurrentUser {
   const u = user as unknown as Record<string, unknown>
   return {
@@ -38,8 +38,8 @@ function mapUserRecord<T extends { id: string | number }>(
 
 async function verifyTokenAndFetchUser(
   token: string,
-  collection: "investors" | "sellers",
-  role: "investor" | "seller"
+  collection: "buyers" | "sellers",
+  role: "buyer" | "seller"
 ) {
   const payload = await getPayloadClient()
   const encoder = new TextEncoder()
@@ -79,8 +79,8 @@ async function authenticateViaHeaders(headers: Headers): Promise<CurrentUser | n
       return null
     }
 
-    if (user.collection === "investors") {
-      return mapUserRecord(user, "investor", "investors")
+    if (user.collection === "buyers") {
+      return mapUserRecord(user, "buyer", "buyers")
     }
     if (user.collection === "sellers") {
       return mapUserRecord(user, "seller", "sellers")
@@ -147,9 +147,9 @@ export async function requireAuth(): Promise<CurrentUser> {
   return user
 }
 
-export async function requireInvestor(): Promise<CurrentUser> {
+export async function requireBuyer(): Promise<CurrentUser> {
   const user = await requireAuth()
-  if (user.role !== "investor") {
+  if (user.role !== "buyer") {
     throw new Error("Insufficient permissions")
   }
   return user

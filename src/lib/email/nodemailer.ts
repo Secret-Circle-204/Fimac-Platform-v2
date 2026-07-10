@@ -229,7 +229,7 @@ export const emailTemplates = {
           <p>As a <strong>${role}</strong>, you now have access to:</p>
           <ul>
             ${
-              role === 'Investor'
+              role === 'Buyer'
                 ? `
               <li>Exclusive property listings</li>
               <li>Detailed financial analytics</li>
@@ -237,7 +237,7 @@ export const emailTemplates = {
             `
                 : `
               <li>Property listing management</li>
-              <li>Investor interest tracking</li>
+              <li>Buyer interest tracking</li>
               <li>Professional valuation services</li>
             `
             }
@@ -360,7 +360,7 @@ export const emailTemplates = {
       title: `${firstName ? `Welcome aboard, ${firstName}!` : 'Welcome to FIMAC'}`,
       body: `
         <p>Your subscription (${email}) is now confirmed.</p>
-        <p>You will start receiving market trends, premium listings, and investor-only opportunities soon.</p>
+        <p>You will start receiving market trends, premium listings, and buyer-only opportunities soon.</p>
       `,
       cta: { label: 'Visit our platform', url: SERVER_URL },
     }),

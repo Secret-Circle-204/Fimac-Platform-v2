@@ -13,6 +13,7 @@ import { collections } from './collections'
 import { seedFeatures } from './db/seedFeatures'
 import { seedPropertyTypes } from './db/seedPropertyTypes'
 import { activeProvider } from './lib/storage'
+import { CompanySettings } from './globals/CompanySettings'
 
 export default buildConfig({
   serverURL: SERVER_URL,
@@ -26,6 +27,7 @@ export default buildConfig({
   },
 
   collections,
+  globals: [CompanySettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

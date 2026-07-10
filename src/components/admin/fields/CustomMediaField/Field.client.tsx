@@ -16,9 +16,9 @@ function SortableMediaItem({
   onRemove,
   reportBrokenImage
 }: { 
-  id: string, 
+  id: string | number, 
   mediaDoc: Record<string, unknown> | undefined, 
-  onRemove: (id: string) => void,
+  onRemove: (id: string | number) => void,
   reportBrokenImage: (id: string | number) => void
 }) {
   const {
@@ -279,9 +279,11 @@ export const CustomMediaFieldClient: React.FC<UploadFieldClientProps> = ({ path,
   const handleDragEnd = (event: import('@dnd-kit/core').DragEndEvent) => {
     const { active, over } = event
     if (active.id !== over?.id && over) {
-      const oldIndex = items.indexOf(active.id)
-      const newIndex = items.indexOf(over.id)
-      setValue(arrayMove(items, oldIndex, newIndex))
+      const oldIndex = items.findIndex((id) => String(id) === String(active.id))
+      const newIndex = items.findIndex((id) => String(id) === String(over.id))
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setValue(arrayMove(items, oldIndex, newIndex))
+      }
     }
   }
 
@@ -316,7 +318,7 @@ export const CustomMediaFieldClient: React.FC<UploadFieldClientProps> = ({ path,
             {items.map(id => (
               <SortableMediaItem 
                 key={String(id)} 
-                id={String(id)} 
+                id={id} 
                 mediaDoc={mediaDocs[String(id)]} 
                 onRemove={handleRemove}
                 reportBrokenImage={reportBrokenImage}

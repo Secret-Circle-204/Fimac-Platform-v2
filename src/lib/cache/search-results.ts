@@ -66,6 +66,7 @@ export const getCachedSearchResults = async (
             details: true,
             propertyType: true,
             listingStatus: true,
+            constructionStatus: true,
             street: true,
             views: true,
           },

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getPayloadClient } from "@/db/client"
 import { createHash } from "crypto"
-import { triggerRevalidate } from "@/lib/cache/revalidate"
 import { cookies } from "next/headers"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
 import { analyticsCache } from "@/lib/cache/analytics-cache"
+import { sql } from "@payloadcms/db-postgres"
 
 // Helper to generate visitor fingerprint
 function generateVisitorId(req: NextRequest, userId?: string): string {
@@ -336,31 +336,22 @@ export async function POST(request: NextRequest) {
             relationTo: "sellers" as const,
             value: Number(currentUser.id),
           } : {
-            relationTo: "investors" as const,
+            relationTo: "buyers" as const,
             value: Number(currentUser.id),
           }
         } : {}),
       },
     })
 
-    // 7. Atomic-style Increment to prevent recalculating table sum
-    const currentViews = property.views || 0
-    const newViewsCount = currentViews + 1
+    // 7. Real Atomic SQL Increment to prevent race conditions and write locks
+    // @ts-ignore
+    await payload.db.drizzle.execute(
+      sql`UPDATE properties SET views = COALESCE(views, 0) + 1 WHERE id = ${propertyId}`
+    )
     
-    await payload.update({
-      collection: "properties",
-      id: propertyId,
-      data: {
-        views: newViewsCount,
-      },
-    })
-    
-    console.log(`🆕 Unique view registered! Created view ${newView.id}. Incremented property ${propertyId} views from ${currentViews} to ${newViewsCount}`)
+    console.log(`🆕 Unique view registered! Created view ${newView.id}. Incremented property ${propertyId} views atomically.`)
 
-    // 8. Revalidate Next.js cache and clear memory analytics cache
-    triggerRevalidate("featured-properties")
-    triggerRevalidate(`property:${propertyId}`)
-    analyticsCache.clear()
+    // 8. Caches will naturally refresh when their TTL expires or when the listing details are updated via the Admin panel
 
     return NextResponse.json({
       success: true,

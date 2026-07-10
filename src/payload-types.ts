@@ -64,7 +64,7 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
-    investors: InvestorAuthOperations;
+    buyers: BuyerAuthOperations;
     sellers: SellerAuthOperations;
   };
   blocks: {};
@@ -75,7 +75,7 @@ export interface Config {
     locations: Location;
     properties: Property;
     features: Feature;
-    investors: Investor;
+    buyers: Buyer;
     sellers: Seller;
     'verification-codes': VerificationCode;
     'property-views': PropertyView;
@@ -94,7 +94,7 @@ export interface Config {
     media: {
       usedInBlogPosts: 'blog-posts';
       usedInProperties: 'properties';
-      usedInInvestors: 'investors';
+      usedInBuyers: 'buyers';
     };
   };
   collectionsSelect: {
@@ -104,7 +104,7 @@ export interface Config {
     locations: LocationsSelect<false> | LocationsSelect<true>;
     properties: PropertiesSelect<false> | PropertiesSelect<true>;
     features: FeaturesSelect<false> | FeaturesSelect<true>;
-    investors: InvestorsSelect<false> | InvestorsSelect<true>;
+    buyers: BuyersSelect<false> | BuyersSelect<true>;
     sellers: SellersSelect<false> | SellersSelect<true>;
     'verification-codes': VerificationCodesSelect<false> | VerificationCodesSelect<true>;
     'property-views': PropertyViewsSelect<false> | PropertyViewsSelect<true>;
@@ -123,13 +123,17 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'company-settings': CompanySetting;
+  };
+  globalsSelect: {
+    'company-settings': CompanySettingsSelect<false> | CompanySettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User | Investor | Seller;
+  user: User | Buyer | Seller;
   jobs: {
     tasks: unknown;
     workflows: unknown;
@@ -153,7 +157,7 @@ export interface UserAuthOperations {
     password: string;
   };
 }
-export interface InvestorAuthOperations {
+export interface BuyerAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -276,10 +280,10 @@ export interface Media {
     totalDocs?: number;
   };
   /**
-   * Investors using this media
+   * Buyers using this media
    */
-  usedInInvestors?: {
-    docs?: (number | Investor)[];
+  usedInBuyers?: {
+    docs?: (number | Buyer)[];
     hasNextPage?: boolean;
     totalDocs?: number;
   };
@@ -347,6 +351,14 @@ export interface MediaFolder {
    * Nesting level (0 = root folder).
    */
   depth: number;
+  /**
+   * Custom sort order for manual drag-and-drop positioning within siblings.
+   */
+  sortOrder: number;
+  /**
+   * Optional color for visual organization.
+   */
+  color?: ('default' | 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -672,9 +684,9 @@ export interface Feature {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "investors".
+ * via the `definition` "buyers".
  */
-export interface Investor {
+export interface Buyer {
   id: number;
   full_name: string;
   company_name?: string | null;
@@ -688,7 +700,7 @@ export interface Investor {
    */
   profile_image?: string | null;
   /**
-   * Current verification status of the investor
+   * Current verification status of the buyer
    */
   verification_status: 'pending' | 'submitted' | 'verified' | 'rejected';
   /**
@@ -696,7 +708,7 @@ export interface Investor {
    */
   proof_of_funds?: (number | null) | Media;
   /**
-   * Internal notes about this investor (only visible to admins)
+   * Internal notes about this buyer (only visible to admins)
    */
   notes?: string | null;
   updatedAt: string;
@@ -716,7 +728,7 @@ export interface Investor {
       }[]
     | null;
   password?: string | null;
-  collection: 'investors';
+  collection: 'buyers';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -729,7 +741,7 @@ export interface VerificationCode {
    * 6-digit verification code
    */
   code: string;
-  user_type: 'investors' | 'sellers';
+  user_type: 'buyers' | 'sellers';
   expires_at: string;
   /**
    * Has this code been used to verify an account?
@@ -752,12 +764,12 @@ export interface PropertyView {
    */
   property: string | Property;
   /**
-   * The logged-in investor or seller who viewed the property (optional)
+   * The logged-in buyer or seller who viewed the property (optional)
    */
   user?:
     | ({
-        relationTo: 'investors';
-        value: number | Investor;
+        relationTo: 'buyers';
+        value: number | Buyer;
       } | null)
     | ({
         relationTo: 'sellers';
@@ -806,7 +818,7 @@ export interface ContactMessage {
   fullName: string;
   email: string;
   phone?: string | null;
-  inquiryType: 'investor' | 'property-owner' | 'general' | 'partnership' | 'support' | 'other';
+  inquiryType: 'buyer' | 'property-owner' | 'general' | 'partnership' | 'support' | 'other';
   subject: string;
   message: string;
   /**
@@ -924,8 +936,8 @@ export interface PayloadLockedDocument {
         value: number | Feature;
       } | null)
     | ({
-        relationTo: 'investors';
-        value: number | Investor;
+        relationTo: 'buyers';
+        value: number | Buyer;
       } | null)
     | ({
         relationTo: 'sellers';
@@ -970,8 +982,8 @@ export interface PayloadLockedDocument {
         value: number | User;
       }
     | {
-        relationTo: 'investors';
-        value: number | Investor;
+        relationTo: 'buyers';
+        value: number | Buyer;
       }
     | {
         relationTo: 'sellers';
@@ -992,8 +1004,8 @@ export interface PayloadPreference {
         value: number | User;
       }
     | {
-        relationTo: 'investors';
-        value: number | Investor;
+        relationTo: 'buyers';
+        value: number | Buyer;
       }
     | {
         relationTo: 'sellers';
@@ -1065,7 +1077,7 @@ export interface MediaSelect<T extends boolean = true> {
   originalFilename?: T;
   usedInBlogPosts?: T;
   usedInProperties?: T;
-  usedInInvestors?: T;
+  usedInBuyers?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1122,6 +1134,8 @@ export interface MediaFoldersSelect<T extends boolean = true> {
   parent?: T;
   path?: T;
   depth?: T;
+  sortOrder?: T;
+  color?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1223,9 +1237,9 @@ export interface FeaturesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "investors_select".
+ * via the `definition` "buyers_select".
  */
-export interface InvestorsSelect<T extends boolean = true> {
+export interface BuyersSelect<T extends boolean = true> {
   full_name?: T;
   company_name?: T;
   phone?: T;
@@ -1492,6 +1506,56 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "company-settings".
+ */
+export interface CompanySetting {
+  id: number;
+  companyName: string;
+  companyLogo?: (number | null) | Media;
+  partner?: {
+    /**
+     * Turn this on to show the partner integration (badge, visualization button, and design tab) across all eligible property pages.
+     */
+    isActive?: boolean | null;
+    /**
+     * e.g. Itqan
+     */
+    name?: string | null;
+    /**
+     * e.g. https://itcansolution.com/
+     */
+    websiteUrl?: string | null;
+    logo?: (number | null) | Media;
+    /**
+     * Short promotional text to show next to the logo. e.g. "Imagine your home with".
+     */
+    badgeText?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "company-settings_select".
+ */
+export interface CompanySettingsSelect<T extends boolean = true> {
+  companyName?: T;
+  companyLogo?: T;
+  partner?:
+    | T
+    | {
+        isActive?: T;
+        name?: T;
+        websiteUrl?: T;
+        logo?: T;
+        badgeText?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

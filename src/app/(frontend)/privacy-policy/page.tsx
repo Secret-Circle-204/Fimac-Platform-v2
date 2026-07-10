@@ -41,7 +41,7 @@ export default function PrivacyPolicyPage() {
             <p>We collect information that you voluntarily provide when you:</p>
             <ul>
               <li>
-                Create an investor account (full name, email address, phone number, company name)
+                Create an buyer account (full name, email address, phone number, company name)
               </li>
               <li>
                 Authenticate using third-party services such as Google OAuth (name, email address,
@@ -103,7 +103,7 @@ export default function PrivacyPolicyPage() {
             <h2>4. How We Use Your Information</h2>
             <p>We use the collected information strictly for the following purposes:</p>
             <ul>
-              <li>To create, maintain, and administer your investor account</li>
+              <li>To create, maintain, and administer your buyer account</li>
               <li>To facilitate communication regarding investment opportunities</li>
               <li>To verify your identity and financial qualifications</li>
               <li>To enforce our Terms of Service and applicable agreements including NDAs</li>

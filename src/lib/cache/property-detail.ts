@@ -34,6 +34,7 @@ export const getCachedPropertyDetail = async (id: string | number) => {
             details: true,
             propertyType: true,
             listingStatus: true,
+            constructionStatus: true,
             street: true,
             features: true,
             seller: true,

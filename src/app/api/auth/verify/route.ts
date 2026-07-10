@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const userType = ((verificationRecord.user_type as string) === "sellers" ? "sellers" : "investors") as "sellers" | "investors"
+    const userType = ((verificationRecord.user_type as string) === "sellers" ? "sellers" : "buyers") as "sellers" | "buyers"
 
     // Update user verification status
     const users = await payload.find({
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     try {
       await sendEmail({
         to: email,
-        ...emailTemplates.welcome(user.full_name, userType === "sellers" ? "Seller" : "Investor"),
+        ...emailTemplates.welcome(user.full_name, userType === "sellers" ? "Seller" : "Buyer"),
       })
     } catch (emailError) {
       console.error("Failed to send welcome email:", emailError)

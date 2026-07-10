@@ -130,11 +130,7 @@ export const PropertyGallery = () => {
               <div className="w-full h-full bg-slate-200 animate-pulse" />
             )}
             <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent pointer-events-none transition-opacity duration-500 group-hover/main:opacity-80" />
-            <div className="absolute bottom-6 left-6 text-white pointer-events-none drop-shadow-md">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-gold-royal/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-gold-royal/20">
-                Signature Estate
-              </span>
-            </div>
+
           </div>
 
           {/* Grid Side Images (Right side, takes 40% of width, hidden on mobile) */}
@@ -175,7 +171,7 @@ export const PropertyGallery = () => {
         </div>
 
         {/* Mobile View All Button (shows only when grid is hidden) */}
-        <div className="absolute bottom-6 right-6 md:hidden">
+        <div className="absolute top-6 left-6 md:hidden z-10">
           <button
             onClick={() => openGalleryAt(0)}
             className="bg-navy-deep/80 backdrop-blur-xl text-white px-6 py-3 rounded-2xl font-bold border border-white/10 shadow-gold flex items-center gap-3 text-xs z-10 uppercase tracking-widest hover:bg-gold-royal transition-all duration-500 active:scale-95"

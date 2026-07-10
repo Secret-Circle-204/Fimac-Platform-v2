@@ -78,7 +78,7 @@ export default function RegisterPageClient() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [emailWarning, setEmailWarning] = useState<string | null>(null)
-  const [userType, setUserType] = useState<"investors" | "sellers">("investors")
+  const [userType, setUserType] = useState<"buyers" | "sellers">("buyers")
 
   const [formData, setFormData] = useState({
     email: "",
@@ -168,7 +168,7 @@ export default function RegisterPageClient() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-blue-600" />
-              {userType === "investors" ? "Create Your Investor Account" : "Create Your Seller Account"}
+              {userType === "buyers" ? "Create Your Buyer Account" : "Create Your Seller Account"}
             </CardTitle>
             <CardDescription>Fill in your details to get started</CardDescription>
           </CardHeader>
@@ -179,13 +179,13 @@ export default function RegisterPageClient() {
               <button
                 type="button"
                 className={`py-3 px-4 rounded-xl text-sm font-semibold tracking-wide transition-all duration-300 ${
-                  userType === "investors"
+                  userType === "buyers"
                     ? "bg-navy-deep text-white shadow-lg-soft"
                     : "text-gray-500 hover:text-navy-deep"
                 }`}
-                onClick={() => setUserType("investors")}
+                onClick={() => setUserType("buyers")}
               >
-                I want to Invest
+                I want to Buy
               </button>
               <button
                 type="button"
@@ -200,7 +200,7 @@ export default function RegisterPageClient() {
               </button>
             </div>
 
-            {userType === "investors" && (
+            {userType === "buyers" && (
               <>
                 {/* Google Sign-Up */}
                 <Button

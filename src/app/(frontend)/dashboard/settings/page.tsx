@@ -28,7 +28,7 @@ export default async function SettingsPage() {
                 </p>
               </div>
               <Button asChild variant="outline">
-                <Link href="/dashboard/investor">Back to Dashboard</Link>
+                <Link href="/dashboard/buyer">Back to Dashboard</Link>
               </Button>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default async function SettingsPage() {
                   <div className="space-y-2">
                     <Label>Account Type</Label>
                     <div className="p-3 bg-gray-50 rounded-md">
-                      <p className="font-medium">Investor</p>
+                      <p className="font-medium">Buyer</p>
                       <p className="text-sm text-muted-foreground">
                         Looking for investment opportunities
                       </p>

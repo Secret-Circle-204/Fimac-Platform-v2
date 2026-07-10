@@ -19,7 +19,7 @@ function LoginPageContent() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [userType, setUserType] = useState<"investors" | "sellers">("investors")
+  const [userType, setUserType] = useState<"buyers" | "sellers">("buyers")
 
   const [formData, setFormData] = useState({
     email: "",
@@ -31,7 +31,7 @@ function LoginPageContent() {
     if (queryEmail) {
       setFormData((prev) => ({ ...prev, email: queryEmail }))
     }
-    if (queryUserType === "sellers" || queryUserType === "investors") {
+    if (queryUserType === "sellers" || queryUserType === "buyers") {
       setUserType(queryUserType)
     }
   }, [queryEmail, queryUserType])
@@ -93,10 +93,10 @@ function LoginPageContent() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-blue-600" />
-              {userType === "investors" ? "Investor Sign In" : "Seller Sign In"}
+              {userType === "buyers" ? "Buyer Sign In" : "Seller Sign In"}
             </CardTitle>
             <CardDescription>
-              {userType === "investors" ? "Access your investment dashboard" : "Access your property portfolio dashboard"}
+              {userType === "buyers" ? "Access your buyer dashboard" : "Access your property portfolio dashboard"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -105,13 +105,13 @@ function LoginPageContent() {
               <button
                 type="button"
                 className={`py-3 px-4 rounded-xl text-sm font-semibold tracking-wide transition-all duration-300 ${
-                  userType === "investors"
+                  userType === "buyers"
                     ? "bg-blue-600 text-white shadow-lg"
                     : "text-gray-500 hover:text-blue-600"
                 }`}
-                onClick={() => setUserType("investors")}
+                onClick={() => setUserType("buyers")}
               >
-                Investor
+                Buyer
               </button>
               <button
                 type="button"
@@ -126,7 +126,7 @@ function LoginPageContent() {
               </button>
             </div>
 
-            {userType === "investors" && (
+            {userType === "buyers" && (
               <>
                 {/* Google Sign-In */}
                 <Button
@@ -185,7 +185,7 @@ function LoginPageContent() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="investor@example.com"
+                  placeholder="buyer@example.com"
                   disabled={loading}
                 />
               </div>

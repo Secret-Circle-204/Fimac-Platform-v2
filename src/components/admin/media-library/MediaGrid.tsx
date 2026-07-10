@@ -67,10 +67,14 @@ export function MediaGrid({ library }: MediaGridProps) {
 
         const handleClick = (e: React.MouseEvent) => {
           if (isInDrawer && onSelect) {
-            onSelect({ collectionSlug: 'media', doc: item, docID: String(item.id) })
+            if (library.isSelectionMode) {
+              toggleSelect(item.id)
+            } else {
+              onSelect({ collectionSlug: 'media', doc: item, docID: String(item.id) })
+            }
             return
           }
-          if (selection.selectedIds.size > 0 || e.ctrlKey || e.metaKey) {
+          if (library.isSelectionMode || e.ctrlKey || e.metaKey) {
             toggleSelect(item.id)
           } else {
             setPreviewMedia(item)

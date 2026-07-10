@@ -28,7 +28,7 @@ export default async function SellPage() {
             </div>
             <p className="text-xl text-white/70 max-w-2xl leading-relaxed">
               Partner with Fimac Group to bring your luxury assets to a global audience of elite
-              investors. Our platform ensures maximum exposure and professional management for every
+              buyers. Our platform ensures maximum exposure and professional management for every
               transaction.
             </p>
           </div>

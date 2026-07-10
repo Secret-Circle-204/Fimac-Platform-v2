@@ -41,7 +41,7 @@ export const ContactMessages: CollectionConfig = {
       type: "select",
       required: true,
       options: [
-        { label: "Investment Opportunities", value: "investor" },
+        { label: "Buying Opportunities", value: "buyer" },
         { label: "List My Property", value: "property-owner" },
         { label: "General Inquiry", value: "general" },
         { label: "Partnership Opportunities", value: "partnership" },

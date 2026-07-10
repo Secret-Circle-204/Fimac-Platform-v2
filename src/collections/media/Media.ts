@@ -234,13 +234,13 @@ export const Media: CollectionConfig = {
       },
     },
     {
-      name: 'usedInInvestors',
+      name: 'usedInBuyers',
       type: 'join',
-      collection: 'investors',
+      collection: 'buyers',
       on: 'proof_of_funds',
       admin: {
         position: 'sidebar',
-        description: 'Investors using this media',
+        description: 'Buyers using this media',
       },
     },
   ],

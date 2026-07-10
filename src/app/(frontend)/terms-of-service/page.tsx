@@ -44,8 +44,8 @@ export default function TermsOfServicePage() {
                 using the Platform.
               </li>
               <li>
-                <strong>&quot;Investor&quot;</strong> refers to a registered user with an active
-                investor account.
+                <strong>&quot;Buyer&quot;</strong> refers to a registered user with an active
+                buyer account.
               </li>
               <li>
                 <strong>&quot;Seller&quot;</strong> refers to any individual or entity that submits
@@ -76,12 +76,12 @@ export default function TermsOfServicePage() {
 
             <h2>3. Description of Services</h2>
             <p>
-              FIMAC provides a digital platform that provides qualified investors with access to
+              FIMAC provides a digital platform that provides qualified buyers with access to
               exclusive hospitality properties. Our services include, but are not limited to:
             </p>
             <ul>
               <li>Property listing, showcase, and marketing services</li>
-              <li>Investor account registration, management, and verification</li>
+              <li>Buyer account registration, management, and verification</li>
               <li>Investment advisory information and market insights</li>
               <li>Facilitated communication between parties through the Platform</li>
             </ul>
@@ -100,7 +100,7 @@ export default function TermsOfServicePage() {
 
             <h3>4.1 Registration</h3>
             <p>
-              To access certain features, you must create an investor account using your email
+              To access certain features, you must create an buyer account using your email
               address or through Google Sign-In. You are solely responsible for:
             </p>
             <ul>
@@ -151,7 +151,7 @@ export default function TermsOfServicePage() {
                 DISPLAYED ON THE PLATFORM.
               </strong>{" "}
               All listing information is provided by independent sources and has not been
-              independently verified by FIMAC unless explicitly stated otherwise. Investors are
+              independently verified by FIMAC unless explicitly stated otherwise. Buyers are
               strongly advised to conduct thorough independent due diligence, including but not
               limited to property inspections, title searches, financial audits, and consultation
               with qualified legal and financial professionals before entering into any transaction.
@@ -163,7 +163,7 @@ export default function TermsOfServicePage() {
                 FIMAC DOES NOT GUARANTEE THAT: (A) ANY PROPERTY LISTING WILL RESULT IN A COMPLETED
                 TRANSACTION; (B) ANY INVESTMENT WILL GENERATE A RETURN OR PROFIT; (C) ANY FINANCIAL
                 PROJECTIONS OR ESTIMATES PRESENTED ON THE PLATFORM ARE ACCURATE OR WILL BE ACHIEVED;
-                (D) ANY PROPERTY WILL APPRECIATE IN VALUE; OR (E) ANY INVESTOR ON THE PLATFORM IS
+                (D) ANY PROPERTY WILL APPRECIATE IN VALUE; OR (E) ANY BUYER ON THE PLATFORM IS
                 TRUSTWORTHY, CREDITWORTHY, OR WILL FULFILL THEIR OBLIGATIONS.
               </strong>
               All investment decisions are made at your own risk and sole discretion. Past

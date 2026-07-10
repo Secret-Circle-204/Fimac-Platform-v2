@@ -6,7 +6,7 @@ export async function POST() {
     const cookieStore = await cookies()
 
     // Delete all auth cookies
-    cookieStore.delete("payload-token-investors")
+    cookieStore.delete("payload-token-buyers")
     cookieStore.delete("payload-token-sellers")
 
     return NextResponse.json({ success: true, message: "Logged out successfully" })

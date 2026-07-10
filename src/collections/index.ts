@@ -4,7 +4,7 @@ import { MediaFolders } from './MediaFolders'
 import { Locations } from './Locations'
 import { Properties } from './Properties/Properties'
 import { Features } from './Features'
-import { Investors } from './Investors'
+import { Buyers } from './Buyers'
 import { Sellers } from './Sellers'
 import { VerificationCodes } from './VerificationCodes'
 import { PropertyViews } from './PropertyViews'
@@ -22,7 +22,7 @@ export const collections = [
   Locations,
   Properties,
   Features,
-  Investors,
+  Buyers,
   Sellers,
   VerificationCodes,
   PropertyViews,

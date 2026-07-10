@@ -9,7 +9,7 @@ export const PropertyInquiry = () => {
   // const property = useProperty()
 
   return (
-    <div id="property-inquiry-section" className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 flex flex-col gap-4 sticky top-24 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+    <div id="property-inquiry-section" className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 flex flex-col gap-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       <div className="flex items-start gap-4">
         <Avatar className="size-14">
           <AvatarFallback className="bg-blue-900 text-white text-lg font-semibold">

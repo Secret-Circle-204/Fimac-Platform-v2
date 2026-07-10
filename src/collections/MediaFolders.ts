@@ -9,7 +9,11 @@
  * - Materialized path for efficient breadcrumb/tree queries
  * - Self-referential parent relationship
  * - Auto-computed slug, path, and depth
+ * - Custom sort order for drag-and-drop reordering
+ * - Folder color for visual organization
  * - Unique folder names per parent
+ * - Circular move protection
+ * - Safe deletion: media is NEVER deleted, only reassigned
  *
  * This collection works identically regardless of whether media is stored
  * on local disk, S3, R2, or any other provider.
@@ -17,10 +21,12 @@
 
 import type {
   CollectionBeforeChangeHook,
-  CollectionBeforeDeleteHook,
   CollectionConfig,
+  Where,
 } from 'payload'
 import slugify from 'slugify'
+import { FolderOperationsService } from '@/lib/media/FolderOperationsService'
+import { FOLDER_COLORS } from '@/components/admin/media-library/types'
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -31,6 +37,9 @@ import slugify from 'slugify'
  *
  * Path format: `/parent-slug/child-slug/grandchild-slug`
  * Root folders have path: `/folder-slug`
+ *
+ * Skipped when `skipPathCascade` is set in context (used during
+ * descendant cascade updates to prevent infinite recursion).
  */
 const computeFolderMetadata: CollectionBeforeChangeHook = async ({
   data,
@@ -38,6 +47,11 @@ const computeFolderMetadata: CollectionBeforeChangeHook = async ({
   operation: _operation,
   originalDoc,
 }) => {
+  // Skip computation during descendant cascade updates
+  if (req.context && (req.context as Record<string, unknown>).skipPathCascade) {
+    return data
+  }
+
   const name: string = data?.name ?? originalDoc?.name ?? ''
   const parentId: number | null | undefined = data?.parent ?? originalDoc?.parent
 
@@ -73,61 +87,66 @@ const computeFolderMetadata: CollectionBeforeChangeHook = async ({
 }
 
 /**
- * Prevents deletion of folders that still contain media items or subfolders.
- * Forces the admin to move or delete contents first.
+ * Validates that the folder name is unique among siblings
+ * (same parent). Prevents confusing duplicate names at the same level.
  */
-const preventNonEmptyFolderDeletion: CollectionBeforeDeleteHook = async ({
-  id,
+const validateUniqueNamePerParent: CollectionBeforeChangeHook = async ({
+  data,
   req,
+  operation,
+  originalDoc,
 }) => {
-  // Check for child folders
-  const childFolders = await req.payload.find({
+  const name: string | undefined = data?.name
+  if (!name) return data
+
+  const parentId: number | null | undefined = data?.parent ?? originalDoc?.parent ?? null
+  const currentId: number | undefined = originalDoc?.id
+
+  // Build query: same name, same parent, different ID (for updates)
+  const whereClause: Where = {
+    name: { equals: name },
+  }
+
+  // Handle null parent (root level) vs specific parent
+  if (parentId) {
+    whereClause['parent'] = { equals: parentId }
+  } else {
+    whereClause['parent'] = { exists: false }
+  }
+
+  const siblings = await req.payload.find({
     collection: 'media-folders',
-    where: { parent: { equals: id } },
+    where: whereClause,
     limit: 1,
     depth: 0,
     req,
   })
-  if (childFolders.totalDocs > 0) {
+
+  // If a sibling with the same name exists and it's not the current folder being updated
+  const conflict = siblings.docs.find(
+    (doc) => operation === 'create' || doc.id !== currentId,
+  )
+
+  if (conflict) {
     const { ValidationError } = await import('payload')
     throw new ValidationError({
       errors: [
         {
-          message:
-            'Cannot delete a folder that contains subfolders. Move or delete the subfolders first.',
-          path: 'parent',
+          message: `A folder named "${name}" already exists in this location. Please choose a different name.`,
+          path: 'name',
         },
       ],
     })
   }
 
-  // Check for media items in this folder
-  const mediaInFolder = await req.payload.find({
-    collection: 'media',
-    where: { folder: { equals: id } },
-    limit: 1,
-    depth: 0,
-    req,
-  })
-  if (mediaInFolder.totalDocs > 0) {
-    const { ValidationError } = await import('payload')
-    throw new ValidationError({
-      errors: [
-        {
-          message:
-            'Cannot delete a folder that contains media. Move or delete the media first.',
-          path: 'folder',
-        },
-      ],
-    })
-  }
+  return data
 }
 
 /**
- * When a folder is moved (parent changes), recursively updates the
- * `path` and `depth` of all descendant folders.
+ * Prevents moving a folder into its own descendant (would create a cycle).
+ * Also flags parent changes for cascade processing in afterChange.
  */
-const cascadePathUpdates: CollectionBeforeChangeHook = async ({
+const validateMoveAndCascade: CollectionBeforeChangeHook = async ({
   data,
   req,
   operation,
@@ -135,15 +154,46 @@ const cascadePathUpdates: CollectionBeforeChangeHook = async ({
 }) => {
   if (operation !== 'update') return data
 
+  // Skip during cascade updates
+  if (req.context && (req.context as Record<string, unknown>).skipPathCascade) {
+    return data
+  }
+
   const oldParent = originalDoc?.parent
   const newParent = data?.parent
 
-  // If parent hasn't changed, no cascade needed
+  // If parent hasn't changed, no cascade or validation needed
   if (oldParent === newParent) return data
 
-  // The path/depth for THIS folder is already computed by `computeFolderMetadata`.
-  // We need to update all descendants AFTER this folder is saved.
-  // We'll use `afterChange` for that — store a flag in context.
+  // Circular move protection: prevent moving a folder into its own descendant
+  if (newParent != null && originalDoc?.id != null) {
+    const allFolders = await req.payload.find({
+      collection: 'media-folders',
+      limit: 0,
+      depth: 0,
+      req,
+    })
+
+    const isCircular = FolderOperationsService.validateFolderMove(
+      originalDoc.id,
+      typeof newParent === 'number' ? newParent : Number(newParent),
+      allFolders.docs,
+    )
+
+    if (!isCircular) {
+      const { ValidationError } = await import('payload')
+      throw new ValidationError({
+        errors: [
+          {
+            message: 'Cannot move a folder into its own subfolder. This would create a circular reference.',
+            path: 'parent',
+          },
+        ],
+      })
+    }
+  }
+
+  // Flag for cascade processing in afterChange
   if (req.context) {
     ;(req.context as Record<string, unknown>).folderParentChanged = true
     ;(req.context as Record<string, unknown>).oldPath = originalDoc?.path
@@ -164,7 +214,7 @@ export const MediaFolders: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'path', 'depth', 'updatedAt'],
+    defaultColumns: ['name', 'path', 'depth', 'sortOrder', 'updatedAt'],
     group: 'Media',
     hidden: true,
   },
@@ -175,8 +225,11 @@ export const MediaFolders: CollectionConfig = {
     delete: ({ req: { user } }) => Boolean(user),
   },
   hooks: {
-    beforeChange: [computeFolderMetadata, cascadePathUpdates],
-    beforeDelete: [preventNonEmptyFolderDeletion],
+    beforeChange: [
+      computeFolderMetadata,
+      validateUniqueNamePerParent,
+      validateMoveAndCascade,
+    ],
     afterChange: [
       async ({ doc, req, operation }) => {
         // Cascade path updates to descendants when a folder is moved
@@ -218,7 +271,7 @@ export const MediaFolders: CollectionConfig = {
             }
           }
 
-          // Clean up context flag
+          // Clean up context flags
           delete (req.context as Record<string, unknown>).folderParentChanged
           delete (req.context as Record<string, unknown>).oldPath
         }
@@ -227,6 +280,142 @@ export const MediaFolders: CollectionConfig = {
       },
     ],
   },
+  endpoints: [
+    // ── POST /api/media-folders/reorder ─────────────────────────────────
+    {
+      path: '/reorder',
+      method: 'post',
+      handler: async (req) => {
+        const { payload, user } = req
+        if (user?.collection !== 'users') {
+          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        let body: { parentId?: number | null; orderedIds?: number[] }
+        try {
+          body = (await req.json?.()) ?? req.data ?? req.body
+        } catch {
+          return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
+        }
+
+        const { parentId, orderedIds } = body
+        if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+          return Response.json(
+            { error: 'Missing or invalid orderedIds array' },
+            { status: 400 },
+          )
+        }
+
+        try {
+          await FolderOperationsService.reorderFolders(
+            parentId ?? null,
+            orderedIds,
+            payload,
+          )
+          return Response.json({ success: true, reordered: orderedIds.length })
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Reorder failed'
+          return Response.json({ error: message }, { status: 500 })
+        }
+      },
+    },
+    // ── POST /api/media-folders/move ────────────────────────────────────
+    {
+      path: '/move',
+      method: 'post',
+      handler: async (req) => {
+        const { payload, user } = req
+        if (user?.collection !== 'users') {
+          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        let body: { folderId?: number; newParentId?: number | null }
+        try {
+          body = (await req.json?.()) ?? req.data ?? req.body
+        } catch {
+          return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
+        }
+
+        const { folderId, newParentId } = body
+        if (typeof folderId !== 'number') {
+          return Response.json(
+            { error: 'Missing or invalid folderId' },
+            { status: 400 },
+          )
+        }
+
+        try {
+          const result = await FolderOperationsService.moveFolder(
+            folderId,
+            newParentId ?? null,
+            payload,
+          )
+          return Response.json(result)
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Move failed'
+          return Response.json({ error: message }, { status: 400 })
+        }
+      },
+    },
+    // ── POST /api/media-folders/safe-delete ─────────────────────────────
+    {
+      path: '/safe-delete',
+      method: 'post',
+      handler: async (req) => {
+        const { payload, user } = req
+        if (user?.collection !== 'users') {
+          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        let body: { folderId?: number }
+        try {
+          body = (await req.json?.()) ?? req.data ?? req.body
+        } catch {
+          return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
+        }
+
+        const { folderId } = body
+        if (typeof folderId !== 'number') {
+          return Response.json(
+            { error: 'Missing or invalid folderId' },
+            { status: 400 },
+          )
+        }
+
+        try {
+          const report = await FolderOperationsService.safeDeleteFolder(
+            folderId,
+            payload,
+          )
+          return Response.json(report)
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Delete failed'
+          return Response.json({ error: message }, { status: 500 })
+        }
+      },
+    },
+    // ── GET /api/media-folders/counts ───────────────────────────────────
+    {
+      path: '/counts',
+      method: 'get',
+      handler: async (req) => {
+        const { payload, user } = req
+        if (user?.collection !== 'users') {
+          return Response.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        try {
+          const counts = await FolderOperationsService.getFolderMediaCounts(
+            payload,
+          )
+          return Response.json(counts)
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Count failed'
+          return Response.json({ error: message }, { status: 500 })
+        }
+      },
+    },
+  ],
   fields: [
     {
       name: 'name',
@@ -279,6 +468,28 @@ export const MediaFolders: CollectionConfig = {
       admin: {
         readOnly: true,
         description: 'Nesting level (0 = root folder).',
+      },
+    },
+    {
+      name: 'sortOrder',
+      type: 'number',
+      required: true,
+      label: 'Sort Order',
+      defaultValue: 0,
+      admin: {
+        readOnly: true,
+        description: 'Custom sort order for manual drag-and-drop positioning within siblings.',
+      },
+      index: true,
+    },
+    {
+      name: 'color',
+      type: 'select',
+      label: 'Color',
+      defaultValue: 'default',
+      options: [...FOLDER_COLORS],
+      admin: {
+        description: 'Optional color for visual organization.',
       },
     },
   ],

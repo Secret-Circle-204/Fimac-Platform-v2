@@ -24,7 +24,7 @@ type ReferenceConfig = {
 const REFERENCE_CONFIGS: ReferenceConfig[] = [
   { collection: 'blog-posts', field: 'featuredImage', titleField: 'title' },
   { collection: 'properties', field: 'photos', titleField: 'title' },
-  { collection: 'investors', field: 'proof_of_funds', titleField: 'full_name' },
+  { collection: 'buyers', field: 'proof_of_funds', titleField: 'full_name' },
 ]
 
 /**
@@ -52,7 +52,10 @@ export const MediaReferenceManager = {
         usages.push({
           collection: config.collection,
           count: result.totalDocs,
-          titles: result.docs.map((doc: any) => String(doc[config.titleField] || doc.id)),
+          titles: result.docs.map((doc) => {
+            const titleField = config.titleField as keyof typeof doc
+            return String(doc[titleField] || doc.id)
+          }),
         })
       }
     }
@@ -86,7 +89,7 @@ export const MediaReferenceManager = {
         })
 
         if (result.docs && result.docs.length > 0) {
-          result.docs.forEach((doc: any) => {
+          result.docs.forEach((doc) => {
             affected.push({
               collection: config.collection,
               id: doc.id,

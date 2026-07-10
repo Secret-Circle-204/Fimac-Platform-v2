@@ -102,16 +102,19 @@ export default async function HomePage() {
               <div className="tablet:w-1/2">
                 <h2 className="text-3xl font-bold mb-6">Your Partner in Real Estate Investment</h2>
                 <p className="text-muted-foreground mb-6">
-                  With deep roots in the world, we understand what makes this region special. From
-                  the Great Smoky Mountains to the Tennessee River, we help you find the perfect
-                  property that captures the essence of mountain living.
+                  FIMAC (Financial Investment Management Advice Consultants) is a premier global
+                  consultancy specializing in the sale and acquisition of hospitality properties.
+                  Our exclusive platform and services are tailored for business owners, buyers, and
+                  brokers in the hotel, motel, resort, and boutique hotel sectors. We provide a
+                  sophisticated marketplace combined with expert advisory services, including
+                  valuation, marketing, and negotiation. Our expertise ensures that every client
+                  receives personalized attention and a strategic approach designed to maximize
+                  value.
                 </p>
-                <p className="text-muted-foreground mb-6">
-                  Our team of local experts knows every corner of the world , from Knoxville&apos;s
-                  vibrant downtown to the peaceful mountain communities. We&apos;ll guide you
-                  through every step of finding your dream home in this beautiful region.
-                </p>
-                <Button className="bg-blue-brand-light text-white shadow-xs hover:bg-blue-brand-light/90 rounded-md px-6 py-2.5" asChild>
+                <Button
+                  className="bg-blue-brand-light text-white shadow-xs hover:bg-blue-brand-light/90 rounded-md px-6 py-2.5"
+                  asChild
+                >
                   <Link href="/about">SHOW MORE</Link>
                 </Button>
               </div>
@@ -121,7 +124,7 @@ export default async function HomePage() {
                   <div className="text-3xl font-bold text-primary mb-2">25+</div>
                   <p className="text-sm text-muted-foreground">
                     Years of experience in the local real estate market helping clients find their
-                    dream homes
+                    dream Propertie ?
                   </p>
                 </div>
                 <div className="bg-gray-50 py-6 rounded-md">
@@ -133,7 +136,8 @@ export default async function HomePage() {
                 <div className="bg-gray-50 py-6 rounded-md">
                   <div className="text-3xl font-bold text-primary mb-2">18+</div>
                   <p className="text-sm text-muted-foreground">
-                    Professional specialists with exceptional local knowledge ensuring quality service
+                    Professional specialists with exceptional local knowledge ensuring quality
+                    service
                   </p>
                 </div>
               </div>
@@ -189,11 +193,14 @@ export default async function HomePage() {
           <div className="container relative mx-auto px-4">
             <div className="flex flex-col tablet:flex-row bg-background/90 rounded-lg overflow-hidden shadow-2xl border border-white/10">
               <FadeIn className="tablet:w-1/2 p-12 flex flex-col justify-center space-y-6">
-                <h2 className="text-3xl font-bold">Ready to Find Your the world Dream Home?</h2>
+                <h2 className="text-3xl font-bold">
+                  Ready to Find Your the world Dream Propertie?
+                </h2>
                 <p className="text-muted-foreground">
-                  Contact us now for a free consultation with one of our expert property specialists.
-                  We&apos;ll help you find the perfect property that meets all your requirements,
-                  whether you&apos;re looking for a mountain retreat or a downtown condo.
+                  Contact us now for a free consultation with one of our expert property
+                  specialists. We&apos;ll help you find the perfect property that meets all your
+                  requirements, whether you&apos;re looking for a mountain retreat or a downtown
+                  condo.
                 </p>
                 <Button className="bg-blue-900 text-primary-foreground shadow-lg hover:bg-blue-900/90 rounded-md w-fit">
                   CONTACT US

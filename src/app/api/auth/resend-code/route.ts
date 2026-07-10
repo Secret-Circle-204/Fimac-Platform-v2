@@ -9,13 +9,13 @@ function generateVerificationCode(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, user_type = "investors" } = body
+    const { email, user_type = "buyers" } = body
 
     if (!email) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    if (user_type !== "investors" && user_type !== "sellers") {
+    if (user_type !== "buyers" && user_type !== "sellers") {
       return NextResponse.json({ error: "Invalid user type" }, { status: 400 })
     }
 

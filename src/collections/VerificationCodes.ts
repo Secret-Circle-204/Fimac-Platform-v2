@@ -33,7 +33,7 @@ export const VerificationCodes: CollectionConfig = {
       type: "select",
       required: true,
       options: [
-        { label: "Investor", value: "investors" },
+        { label: "Buyer", value: "buyers" },
         { label: "Seller", value: "sellers" },
       ],
       label: "User Type",

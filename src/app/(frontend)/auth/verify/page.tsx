@@ -18,7 +18,7 @@ function VerifyPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email")
-  const userType = searchParams.get("user_type") || "investors"
+  const userType = searchParams.get("user_type") || "buyers"
 
   const [code, setCode] = useState("")
   const [loading, setLoading] = useState(false)

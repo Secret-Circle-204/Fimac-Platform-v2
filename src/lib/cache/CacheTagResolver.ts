@@ -16,7 +16,7 @@ const resolvers: Partial<Record<CollectionSlug, (id: string | number) => string[
     `blog:${id}`,
     'blog-posts',
   ],
-  investors: () => [], // Investors might not have public cache tags
+  buyers: () => [], // Buyers might not have public cache tags
 }
 
 export const CacheTagResolver = {

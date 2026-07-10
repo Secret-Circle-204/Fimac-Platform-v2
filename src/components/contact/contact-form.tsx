@@ -154,7 +154,7 @@ export function ContactForm() {
             <SelectValue placeholder="Select inquiry type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="investor">Investment Opportunities</SelectItem>
+            <SelectItem value="buyer">Buying Opportunities</SelectItem>
             <SelectItem value="property-owner">List My Property</SelectItem>
             <SelectItem value="general">General Inquiry</SelectItem>
             <SelectItem value="partnership">Partnership Opportunities</SelectItem>

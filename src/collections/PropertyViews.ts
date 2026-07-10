@@ -48,11 +48,11 @@ export const PropertyViews: CollectionConfig = {
     {
       name: "user",
       type: "relationship",
-      relationTo: ["investors", "sellers"],
+      relationTo: ["buyers", "sellers"],
       index: true,
       admin: {
         readOnly: true,
-        description: "The logged-in investor or seller who viewed the property (optional)",
+        description: "The logged-in buyer or seller who viewed the property (optional)",
       },
     },
     {

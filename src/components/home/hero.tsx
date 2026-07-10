@@ -21,7 +21,7 @@ export default function Hero() {
         image: '/hero2.jpg',
         title: 'Your Partner in Real Estate Investment',
         subtitle:
-          'Advisory expertise for hotels, resorts, and boutique stays worldwide—crafted for discerning investors.',
+          'Advisory expertise for hotels, resorts, and boutique stays worldwide—crafted for discerning buyers.',
         cta: 'Discover Opportunities',
         tag: 'Global Expertise',
       },

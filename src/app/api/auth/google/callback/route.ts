@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayloadClient } from '@/db/client'
 import { cookies } from 'next/headers'
 import { AUTH_COOKIE_DOMAIN, NODE_ENV } from '@/env'
-import type { Investor } from '@/payload-types'
+import type { Buyer } from '@/payload-types'
 
 interface GoogleTokenResponse {
   access_token: string
@@ -72,32 +72,32 @@ export async function GET(request: NextRequest) {
 
     const payload = await getPayloadClient()
 
-    // 3. Find existing investor by google_id or email
-    let investor: Investor | null = null
+    // 3. Find existing buyer by google_id or email
+    let buyer: Buyer | null = null
 
     // Search by google_id first
     const byGoogleId = await payload.find({
-      collection: 'investors',
+      collection: 'buyers',
       where: { google_id: { equals: googleUser.sub } },
       limit: 1,
     })
 
     if (byGoogleId.docs.length > 0) {
-      investor = byGoogleId.docs[0]
+      buyer = byGoogleId.docs[0]
     } else {
       // Search by email
       const byEmail = await payload.find({
-        collection: 'investors',
+        collection: 'buyers',
         where: { email: { equals: googleUser.email } },
         limit: 1,
       })
 
       if (byEmail.docs.length > 0) {
-        investor = byEmail.docs[0]
-        // Link Google account to existing investor
+        buyer = byEmail.docs[0]
+        // Link Google account to existing buyer
         await payload.update({
-          collection: 'investors',
-          id: investor.id,
+          collection: 'buyers',
+          id: buyer.id,
           data: {
             google_id: googleUser.sub,
             profile_image: googleUser.picture || undefined,
@@ -106,13 +106,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 4. Create new investor if not found
-    if (!investor) {
+    // 4. Create new buyer if not found
+    if (!buyer) {
       // Generate a random password for the Google user (they'll use Google to login)
       const randomPassword = crypto.randomUUID() + 'Aa1!'
 
-      investor = await payload.create({
-        collection: 'investors',
+      buyer = await payload.create({
+        collection: 'buyers',
         data: {
           email: googleUser.email,
           password: randomPassword,
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
     // Use Payload's internal auth to get a token
     const loginResult = await payload
       .login({
-        collection: 'investors',
+        collection: 'buyers',
         data: {
           email: googleUser.email,
           password: 'dummy', // This won't work for password auth
@@ -149,9 +149,9 @@ export async function GET(request: NextRequest) {
       const secret = encoder.encode(payload.secret)
 
       token = await new SignJWT({
-        id: investor.id,
-        email: investor.email,
-        collection: 'investors',
+        id: buyer.id,
+        email: buyer.email,
+        collection: 'buyers',
       })
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
       cookieOptions.domain = AUTH_COOKIE_DOMAIN
     }
 
-    cookieStore.set('payload-token-investors', token, cookieOptions)
+    cookieStore.set('payload-token-buyers', token, cookieOptions)
 
     // 7. Redirect to home page with a hard refresh to bypass Next.js client cache
     return new NextResponse(

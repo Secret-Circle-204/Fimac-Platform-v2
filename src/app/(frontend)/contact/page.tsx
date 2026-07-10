@@ -114,8 +114,8 @@ export default function ContactPage() {
                   <CardContent className="p-6">
                     <h3 className="text-xl font-bold mb-4">Quick Links</h3>
                     <div className="space-y-2">
-                      <a href="/dashboard/investor" className="block text-blue-900 hover:underline">
-                        → Investor Dashboard
+                      <a href="/dashboard/buyer" className="block text-blue-900 hover:underline">
+                        → Buyer Dashboard
                       </a>
                       <a href="/sell" className="block text-blue-900 hover:underline">
                         → List Your Property

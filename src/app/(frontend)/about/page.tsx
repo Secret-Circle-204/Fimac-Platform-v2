@@ -28,7 +28,7 @@ const values = [
 
 const strengths = [
   'Niche Specialization: Our exclusive focus on hospitality properties provides us with a deep understanding of the market.',
-  'Global Network: We have a broad network of high-net-worth individuals, institutional investors, and seasoned brokers.',
+  'Global Network: We have a broad network of high-net-worth individuals, institutional buyers, and seasoned brokers.',
   'Expert Team: Our team comprises seasoned professionals with backgrounds in finance, real estate, and hospitality management.',
   'Data-Driven Insights: We use advanced analytics to provide accurate valuations and market forecasts.',
 ]
@@ -90,7 +90,7 @@ export default function AboutPage() {
               <p className="text-base sm:text-lg text-white/80 leading-relaxed max-w-3xl font-light">
                 FIMAC (Financial Investment Management Advice Consultants) is a premier global
                 consultancy specializing in the sale and acquisition of hospitality properties. Our
-                exclusive platform and services are tailored for business owners, investors, and
+                exclusive platform and services are tailored for business owners, buyers, and
                 brokers in the hotel, motel, resort, and boutique hotel sectors. We provide a
                 sophisticated marketplace combined with expert advisory services, including
                 valuation, marketing, and negotiation. Our expertise ensures that every client
@@ -118,7 +118,7 @@ export default function AboutPage() {
                 </p>
                 <p>
                   <strong>Mission:</strong> Our mission is to empower hospitality business owners,
-                  investors, and brokers by providing a seamless, secure, and expert-led platform
+                  buyers, and brokers by providing a seamless, secure, and expert-led platform
                   that facilitates successful transactions. We are dedicated to delivering
                   exceptional value through unparalleled market intelligence, strategic advice, and
                   a commitment to client success.

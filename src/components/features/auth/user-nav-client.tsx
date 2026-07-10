@@ -27,7 +27,7 @@ export function UserNavClient({ user }: UserNavClientProps) {
     .toUpperCase()
     .slice(0, 2)
 
-  const dashboardUrl = user.role === "seller" ? "/dashboard/seller" : "/dashboard/investor"
+  const dashboardUrl = user.role === "seller" ? "/dashboard/seller" : "/dashboard/buyer"
 
   return (
     <DropdownMenu>
@@ -45,7 +45,7 @@ export function UserNavClient({ user }: UserNavClientProps) {
             <p className="text-sm font-medium leading-none">{user.full_name}</p>
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
             <p className="text-xs text-blue-600 font-medium mt-1">
-              {user.role === "seller" ? "Seller" : "Investor"}
+              {user.role === "seller" ? "Seller" : "Buyer"}
             </p>
           </div>
         </DropdownMenuLabel>

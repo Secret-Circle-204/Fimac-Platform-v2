@@ -10,7 +10,7 @@ interface NewsLetterProps {
 
 export function NewsLetter({ user }: NewsLetterProps) {
   const isSeller = user?.role === "seller"
-  const dashboardUrl = isSeller ? "/dashboard/seller" : "/dashboard/investor"
+  const dashboardUrl = isSeller ? "/dashboard/seller" : "/dashboard/buyer"
 
   return (
     <section className="py-16 bg-blue-fimac text-primary-foreground relative overflow-hidden">

@@ -1,40 +1,43 @@
-"use client"
+'use client'
 
-import { useProperty } from "@/components/providers/property"
+import { useProperty } from '@/components/providers/property'
 import dynamic from 'next/dynamic'
-import { resolveGeoWithFallback } from "@/lib/geo/is-valid-coordinate"
+import { resolveGeoWithFallback } from '@/lib/geo/is-valid-coordinate'
 
-const SmartMap = dynamic(() => import("@/components/search/smart-map").then((mod) => mod.SmartMap), {
-  ssr: false,
-})
-import { MapPin, Lock, PhoneCall } from "lucide-react"
+const SmartMap = dynamic(
+  () => import('@/components/search/smart-map').then((mod) => mod.SmartMap),
+  {
+    ssr: false,
+  },
+)
+import { MapPin, Lock, PhoneCall } from 'lucide-react'
 
 export const PropertyMap = () => {
   const property = useProperty()
 
   // Resolve coordinates using the centralized helper
-  const resolved = resolveGeoWithFallback(
-    property.original.location?.geo,
-    {
-      city: property.address.city,
-      state: property.address.state,
-    }
-  )
+  const resolved = resolveGeoWithFallback(property.original.location?.geo, {
+    city: property.address.city,
+    state: property.address.state,
+  })
 
   const handleScrollToInquiry = () => {
-    const element = document.getElementById("property-inquiry-section")
+    const element = document.getElementById('property-inquiry-section')
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" })
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
       // Highlight the inquiry form briefly for visual feedback
-      element.classList.add("ring-2", "ring-gold-royal", "ring-offset-2")
+      element.classList.add('ring-2', 'ring-gold-royal', 'ring-offset-2')
       setTimeout(() => {
-        element.classList.remove("ring-2", "ring-gold-royal", "ring-offset-2")
+        element.classList.remove('ring-2', 'ring-gold-royal', 'ring-offset-2')
       }, 2000)
     }
   }
 
   return (
-    <div id="property-map-section" className="bg-white rounded-[32px] border border-navy-deep/5 shadow-2xl-soft overflow-hidden">
+    <div
+      id="property-map-section"
+      className="bg-white rounded-[32px] border border-navy-deep/5 shadow-2xl-soft overflow-hidden"
+    >
       {/* Header with Padding */}
       <div className="p-8 md:p-12 pb-0 md:pb-0 flex flex-col gap-2">
         <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gold-royal">
@@ -51,8 +54,8 @@ export const PropertyMap = () => {
           <SmartMap
             lat={resolved.point.lat}
             lng={resolved.point.lng}
-            zoom={resolved.precision === "exact" ? 17 : resolved.precision === "city" ? 13 : 10}
-            title={property.title || "Property Location"}
+            zoom={resolved.precision === 'exact' ? 17 : resolved.precision === 'city' ? 13 : 10}
+            title={property.title || 'Property Location'}
             precision={resolved.precision}
           />
         </div>
@@ -62,7 +65,7 @@ export const PropertyMap = () => {
           <div className="w-full min-h-[600px] md:min-h-[800px] bg-gradient-to-br from-navy-deep to-slate-900 rounded-2xl overflow-hidden border border-gold-royal/30 flex flex-col items-center justify-center p-8 text-center relative shadow-2xl">
             {/* Elegant Background Pattern */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(197,160,89,0.15),rgba(255,255,255,0))]" />
-            
+
             {/* Premium Icon Assembly */}
             <div className="relative mb-6 z-10">
               <div className="w-20 h-20 rounded-full bg-gold-royal/10 border border-gold-royal/20 flex items-center justify-center animate-pulse">
@@ -78,7 +81,7 @@ export const PropertyMap = () => {
               Location Map Undisclosed
             </h3>
             <p className="text-white/70 max-w-md text-sm leading-relaxed mb-6 z-10">
-              For the privacy, security, and confidentiality of our esteemed clients, the exact coordinates of this premium listing are hidden.
+              No maps are currently available. will be available soon.
             </p>
 
             <button

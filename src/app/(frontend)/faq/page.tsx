@@ -38,7 +38,7 @@ export default function FAQPage() {
                 <AccordionItem value="item-1" className="bg-white rounded-lg px-6">
                   <AccordionTrigger className="text-left">What is Fimac Group?</AccordionTrigger>
                   <AccordionContent>
-                    Fimac Group is a specialized platform connecting investors with exclusive
+                    Fimac Group is a specialized platform connecting buyers with exclusive
                     off-market hospitality properties like hotels and resorts. We facilitate the
                     buying and selling of hotels, resorts, vacation rentals, and other hospitality
                     properties in the Southeast United States.
@@ -50,7 +50,7 @@ export default function FAQPage() {
                     How does the platform work?
                   </AccordionTrigger>
                   <AccordionContent>
-                    Our platform offers a curated selection of hospitality properties. Investors can
+                    Our platform offers a curated selection of hospitality properties. Buyers can
                     browse listings, access detailed due diligence materials, and contact the
                     platform directly. We provide support throughout the entire acquisition process.
                   </AccordionContent>
@@ -69,16 +69,16 @@ export default function FAQPage() {
               </Accordion>
             </div>
 
-            {/* For Investors */}
+            {/* For Buyers */}
             <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-6">For Investors</h2>
+              <h2 className="text-2xl font-bold mb-6">For Buyers</h2>
               <Accordion type="single" collapsible className="space-y-4">
                 <AccordionItem value="inv-1" className="bg-white rounded-lg px-6">
                   <AccordionTrigger className="text-left">
-                    How do I become a verified investor?
+                    How do I become a verified buyer?
                   </AccordionTrigger>
                   <AccordionContent>
-                    To become verified, you need to: (1) Create an investor account, (2) Complete
+                    To become verified, you need to: (1) Create an buyer account, (2) Complete
                     your profile with investment preferences, (3) Upload proof of funds or financial
                     capability, (4) Sign our platform NDA. Our team typically reviews applications
                     within 2-3 business days.

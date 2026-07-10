@@ -123,7 +123,7 @@ export function MobileNav({ user }: { user?: CurrentUser | null }) {
                 <p className="text-lg font-bold text-navy-deep truncate">{user.full_name}</p>
               </div>
               <Button asChild className="w-full bg-navy-deep hover:bg-gold-royal text-white font-bold tracking-widest h-14 rounded-xl transition-all shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95">
-                <Link href={user.role === "seller" ? "/dashboard/seller" : "/dashboard/investor"} onClick={handleClose}>
+                <Link href={user.role === "seller" ? "/dashboard/seller" : "/dashboard/buyer"} onClick={handleClose}>
                   <LayoutDashboard className="w-4 h-4 mr-2" />
                   DASHBOARD
                 </Link>

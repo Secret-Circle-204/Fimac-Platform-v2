@@ -12,6 +12,10 @@ import { Suspense, cache } from 'react'
 import { getCachedPropertyDetail } from '@/lib/cache/property-detail'
 import { Skeleton } from '@/components/ui/skeleton'
 import { buildPropertySlug } from '@/repository/property/generate-url'
+import { getCachedCompanySettings } from '@/lib/cache/company-settings'
+import { PartnerBadge } from '@/components/property/partner/partner-badge'
+import { VisualizeButton } from '@/components/property/partner/visualize-button'
+import { PartnerDesignTab } from '@/components/property/partner/partner-design-tab'
 
 type Params = Promise<{ id: string; slug: string }>
 
@@ -82,6 +86,10 @@ export default async function PropertyDetailPage({
   if (!property) {
     notFound()
   }
+
+  // Fetch CompanySettings to check if the Strategic Partner is active
+  const companySettings = await getCachedCompanySettings()
+  const partner = companySettings?.partner
 
   // Canonical URL Verification: Compare incoming slug with true slug derived from backend state.
   // IMPORTANT: Must use property.original.location?.address (raw data) NOT property.location,
@@ -155,12 +163,17 @@ export default async function PropertyDetailPage({
         <ViewTracker propertyId={id} ownerId={ownerId} />
         <div className="w-full flex flex-col pt-32 pb-16 bg-slate-50/30">
           <div className="max-w-7xl w-full mx-auto px-4 flex flex-col gap-8">
-            <PropertyGallery />
+            <div className="relative">
+              <PropertyGallery />
+              <VisualizeButton partner={partner} constructionStatus={property.original.constructionStatus} />
+            </div>
 
             <div className="grid grid-cols-12 gap-8">
               <div className="col-span-12 desktop:col-span-8 flex flex-col gap-8">
                 <PropertyDetails />
-                <PropertyOverview />
+                <div className="flex flex-col gap-2">
+                  <PropertyOverview />
+                </div>
 
                 <Suspense
                   fallback={
@@ -189,8 +202,9 @@ export default async function PropertyDetailPage({
               </div>
 
               <div className="col-span-12 desktop:col-span-4">
-                <div className="sticky top-24 transition-all duration-300">
+                <div className="sticky top-24 transition-all duration-300 flex flex-col gap-6">
                   <PropertyInquiry />
+                  <PartnerDesignTab partner={partner} constructionStatus={property.original.constructionStatus} />
                 </div>
               </div>
             </div>

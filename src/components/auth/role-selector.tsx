@@ -5,8 +5,8 @@ import { TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface RoleSelectorProps {
-  selected: "investor" | null
-  onSelect: (role: "investor") => void
+  selected: "buyer" | null
+  onSelect: (role: "buyer") => void
 }
 
 export function RoleSelector({ selected, onSelect }: RoleSelectorProps) {
@@ -15,22 +15,22 @@ export function RoleSelector({ selected, onSelect }: RoleSelectorProps) {
       <Card
         className={cn(
           "cursor-pointer transition-all hover:shadow-lg",
-          selected === "investor" && "ring-2 ring-blue-600 border-blue-600",
+          selected === "buyer" && "ring-2 ring-blue-600 border-blue-600",
         )}
-        onClick={() => onSelect("investor")}
+        onClick={() => onSelect("buyer")}
       >
         <CardHeader>
           <div className="flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-blue-600" />
-            <CardTitle>Investor / Buyer</CardTitle>
+            <CardTitle>Buyer</CardTitle>
           </div>
           <CardDescription className="text-right" dir="rtl">
-            مستثمر / مشتري
+            مشتري
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Looking to invest in or purchase hospitality properties in Tennessee.
+            Looking to purchase hospitality properties in Tennessee.
           </p>
           <div className="mt-4 text-xs space-y-1 text-muted-foreground">
             <p>✓ Access exclusive investment opportunities</p>
