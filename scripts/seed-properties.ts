@@ -4,10 +4,14 @@ import configPromise from '../src/payload.config'
 import fs from 'fs'
 import path from 'path'
 import { SellerCounterService } from '../src/services/seller-counter.service'
+import { seedPropertyCategories } from '../src/db/seedPropertyCategories'
 
 async function main() {
   console.log('🏁 Initializing Payload...')
   const payload = await getPayload({ config: configPromise })
+
+  console.log('⚡ Running categories seeder...')
+  await seedPropertyCategories(payload)
 
   console.log('📊 Counting existing properties...')
   const countResult = await payload.count({
@@ -68,6 +72,16 @@ async function main() {
     console.log(`%c[PropertiesSeed] Created new seller: ${newSeller.full_name}`, 'color: green')
   }
 
+  console.log('🔍 Fetching categories for type mapping...')
+  const categoriesRes = await payload.find({
+    collection: 'property-categories',
+    limit: 100,
+  })
+  const categoryIdMap: Record<string, number> = {}
+  categoriesRes.docs.forEach((doc) => {
+    categoryIdMap[doc.slug] = Number(doc.id)
+  })
+
   console.log('🏷️ Finding or creating property types...')
   const propertyTypeNames = ['Apartment', 'Villa', 'Chalet', 'Office', 'Studio']
   const typeMap: Record<string, number> = {}
@@ -83,15 +97,19 @@ async function main() {
       typeMap[name] = Number(existingType.docs[0].id)
       console.log(`[PropertiesSeed] Using existing type: ${name}`)
     } else {
+      const typeCategorySlug = name === 'Office' ? 'commercial' : 'residential'
+      const typeCategoryId = categoryIdMap[typeCategorySlug]
+
       const newType = await payload.create({
         collection: 'property-types',
         data: {
           name,
           slug: name.toLowerCase(),
+          category: typeCategoryId,
         },
       })
       typeMap[name] = Number(newType.id)
-      console.log(`[PropertiesSeed] Created type: ${name}`)
+      console.log(`[PropertiesSeed] Created type: ${name} linked to category ${typeCategorySlug}`)
     }
   }
 
@@ -119,7 +137,10 @@ async function main() {
     } else {
       const newFeat = await payload.create({
         collection: 'features',
-        data: feat,
+        data: {
+          name: feat.name,
+          slug: feat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        },
       })
       featureIds.push(Number(newFeat.id))
       console.log(`[PropertiesSeed] Created feature: ${feat.name}`)
@@ -457,6 +478,7 @@ async function main() {
       const typesKeys = Object.keys(typeMap)
       const typeName = typesKeys[Math.floor(Math.random() * typesKeys.length)]
       const propertyTypeId = typeMap[typeName]
+      const category = typeName === 'Office' ? 'commercial' : 'residential'
 
       // Construct random titles and details
       const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
@@ -564,15 +586,23 @@ async function main() {
               listingStatus: listingStatusId,
               constructionStatus: constructionStatusId,
               seller: sellerId,
-              details: {
+              category,
+              area: squareMeters,
+              residential: category === 'residential' ? {
                 bedrooms,
                 bathrooms,
-                squareMeters,
-                lotSize,
                 yearBuilt,
                 heatingType: heatingTypes[Math.floor(Math.random() * heatingTypes.length)],
-                features: selectedFeatures,
-              },
+              } : undefined,
+              commercial: category === 'commercial' ? {
+                floor: Math.floor(Math.random() * 5) + 1,
+                parkingSpaces: Math.floor(Math.random() * 10),
+                office: {
+                  meetingRooms: Math.floor(Math.random() * 3),
+                  elevators: Math.floor(Math.random() * 2),
+                }
+              } : undefined,
+              features: selectedFeatures,
               photos: selectedPhotos,
               location: {
                 geo: {

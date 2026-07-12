@@ -41,23 +41,27 @@ export const PropertyDetails = () => {
           </h1>
         </div>
 
-        <div onClick={handleScrollToMap} className="flex items-center gap-2 group cursor-pointer w-fit">
-          <div className="p-2 rounded-xl bg-gold-royal/10 text-gold-royal transition-colors group-hover:bg-gold-royal group-hover:text-white">
-            <MapPin className="w-4 h-4" />
+        {property.location?.address && (
+          <div onClick={handleScrollToMap} className="flex items-center gap-2 group cursor-pointer w-fit">
+            <div className="p-2 rounded-xl bg-gold-royal/10 text-gold-royal transition-colors group-hover:bg-gold-royal group-hover:text-white">
+              <MapPin className="w-4 h-4" />
+            </div>
+            <PropertyAddress />
           </div>
-          <PropertyAddress />
-        </div>
+        )}
 
-        <div className="pt-4 border-t border-slate-100/80 w-full">
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-royal">
-              Listing Price
-            </span>
-            <h3 className="text-3xl md:text-4xl font-bold text-navy-deep tracking-tight">
-              {priceFormatted}
-            </h3>
+        {property.original.price !== undefined && property.original.price !== null && (
+          <div className="pt-4 border-t border-slate-100/80 w-full">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-royal">
+                Listing Price
+              </span>
+              <h3 className="text-3xl md:text-4xl font-bold text-navy-deep tracking-tight">
+                {priceFormatted}
+              </h3>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="flex md:flex-col gap-3">

@@ -1,4 +1,5 @@
 import type { Payload } from 'payload'
+import slugify from 'slugify'
 
 export const defaultFeatures = [
   // Features
@@ -53,7 +54,10 @@ export async function seedFeatures(payload: Payload): Promise<void> {
       for (const feature of defaultFeatures) {
         await payload.create({
           collection: 'features',
-          data: feature,
+          data: {
+            name: feature.name,
+            slug: slugify(feature.name, { lower: true, strict: true }),
+          },
         })
       }
       

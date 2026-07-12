@@ -23,6 +23,7 @@ export async function seedPropertyCategories(payload: Payload): Promise<void> {
           collection: 'property-categories',
           data: {
             name: item.name,
+            slug: item.slug,
             icon: item.icon,
             sortOrder: item.sortOrder,
           },

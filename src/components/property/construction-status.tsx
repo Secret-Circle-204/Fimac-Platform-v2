@@ -11,11 +11,15 @@ interface PropertyConstructionStatusProps {
 export const PropertyConstructionStatus = ({ className }: PropertyConstructionStatusProps) => {
   const property = useProperty()
   
+  if (!property.constructionStatus) {
+    return null
+  }
+
   // Safely resolve the slug (it can be an object if populated)
   const statusSlug =
-    property.constructionStatus && typeof property.constructionStatus === 'object'
+    typeof property.constructionStatus === 'object'
       ? (property.constructionStatus.slug as ConstructionStatusType)
-      : (property.constructionStatus as unknown as ConstructionStatusType) || 'ready'
+      : (property.constructionStatus as unknown as ConstructionStatusType)
 
   const statusInfo = constructionStatusMap[statusSlug]
 

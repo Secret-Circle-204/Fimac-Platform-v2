@@ -389,9 +389,9 @@ export function AnimatedGlobe({ properties, variant = 'default' }: AnimatedGlobe
             price: foundProp.price,
             currency: foundProp.currency,
             status: typeof foundProp.listingStatus === 'object' && foundProp.listingStatus ? foundProp.listingStatus.slug : (typeof foundProp.listingStatus === 'string' ? foundProp.listingStatus : undefined),
-            beds: foundProp.details?.bedrooms,
-            baths: foundProp.details?.bathrooms,
-            sqM: foundProp.details?.squareMeters,
+            beds: foundProp.residential?.bedrooms,
+            baths: foundProp.residential?.bathrooms,
+            sqM: foundProp.area,
             type: typeof foundProp.propertyType === 'object' && foundProp.propertyType !== null ? foundProp.propertyType.name : undefined,
             img: foundProp.photos?.[0] && typeof foundProp.photos[0] === 'object' && 'url' in foundProp.photos[0]
               ? foundProp.photos[0].sizes?.thumbnail?.url || foundProp.photos[0].url
@@ -424,9 +424,9 @@ export function AnimatedGlobe({ properties, variant = 'default' }: AnimatedGlobe
             price: foundProp.price,
             currency: foundProp.currency,
             status: typeof foundProp.listingStatus === 'object' && foundProp.listingStatus ? foundProp.listingStatus.slug : (typeof foundProp.listingStatus === 'string' ? foundProp.listingStatus : undefined),
-            beds: foundProp.details?.bedrooms,
-            baths: foundProp.details?.bathrooms,
-            sqM: foundProp.details?.squareMeters,
+            beds: foundProp.residential?.bedrooms,
+            baths: foundProp.residential?.bathrooms,
+            sqM: foundProp.area,
             type: typeof foundProp.propertyType === 'object' && foundProp.propertyType !== null ? foundProp.propertyType.name : undefined,
             img: foundProp.photos?.[0] && typeof foundProp.photos[0] === 'object' && 'url' in foundProp.photos[0]
               ? foundProp.photos[0].sizes?.thumbnail?.url || foundProp.photos[0].url

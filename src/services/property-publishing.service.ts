@@ -135,6 +135,23 @@ export class PropertyPublishingService {
         sellerRequest.property_type as number | { id: number },
       )
 
+      // Fetch property type category slug
+      let category: 'residential' | 'commercial' | 'hospitality' | 'land' = 'residential'
+      if (propertyTypeId) {
+        const pType = await payload.findByID({
+          collection: 'property-types',
+          id: propertyTypeId,
+          depth: 1,
+        })
+        if (pType && pType.category) {
+          const catObj = pType.category
+          const slug = typeof catObj === 'object' && catObj !== null ? catObj.slug : undefined
+          if (slug === 'residential' || slug === 'commercial' || slug === 'hospitality' || slug === 'land') {
+            category = slug
+          }
+        }
+      }
+
       // Get the 'forsale' / 'for-sale' listing status ID from database
       const listingStatusResult = await payload.find({
         collection: 'listing-statuses',
@@ -156,11 +173,12 @@ export class PropertyPublishingService {
         currency: sellerRequest.currency,
         listingStatus: forsaleStatusId,
         constructionStatus: sellerRequest.constructionStatus,
-        details: {
+        category,
+        area: sellerRequest.property_size ?? undefined,
+        residential: category === 'residential' ? {
           bedrooms: sellerRequest.bedrooms ?? undefined,
           bathrooms: sellerRequest.bathrooms ?? undefined,
-          squareMeters: sellerRequest.property_size ?? undefined,
-        },
+        } : undefined,
         seller: sellerId,
         seller_request: numericId,
         // Feed the Google Maps URL into the smart location helper

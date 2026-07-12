@@ -1,4 +1,5 @@
 import { default as default_26ea60a4763d0a50f25f8064c00e9c4a } from '@/components/admin/media-library/MediaLibraryView'
+import { PropertyTypeWatcherField as PropertyTypeWatcherField_420ce17ff9e7dfe4decff066fcec28df } from '@/components/admin/fields/PropertyTypeWatcher'
 import { CustomMediaField as CustomMediaField_d7832aab67f4ade48c24f37558dee955 } from '@/components/admin/fields/CustomMediaField'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -31,6 +32,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 /** @type import('payload').ImportMap */
 export const importMap = {
   "@/components/admin/media-library/MediaLibraryView#default": default_26ea60a4763d0a50f25f8064c00e9c4a,
+  "@/components/admin/fields/PropertyTypeWatcher#PropertyTypeWatcherField": PropertyTypeWatcherField_420ce17ff9e7dfe4decff066fcec28df,
   "@/components/admin/fields/CustomMediaField#CustomMediaField": CustomMediaField_d7832aab67f4ade48c24f37558dee955,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,

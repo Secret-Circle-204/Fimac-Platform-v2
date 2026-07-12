@@ -253,6 +253,29 @@ export const syncLocationHook: CollectionBeforeChangeHook<Property> = measureBef
       } else {
         data.basePriceInUSD = null
       }
+      // 7. Sync propertyTypeSlug for conditional field logic
+      if (data.propertyType) {
+        const propertyTypeId = typeof data.propertyType === 'object' && data.propertyType !== null
+          ? (data.propertyType as any).id
+          : data.propertyType;
+          
+        if (propertyTypeId) {
+          try {
+            const pType = await req.payload.findByID({
+              collection: 'property-types',
+              id: propertyTypeId,
+              depth: 0,
+            })
+            if (pType && pType.slug) {
+              data.propertyTypeSlug = pType.slug
+            }
+          } catch (err) {
+            req.payload.logger.error(`Error resolving propertyType slug: ${err instanceof Error ? err.message : 'Unknown'}`)
+          }
+        }
+      } else {
+        data.propertyTypeSlug = ''
+      }
     } catch (error) {
       if (error instanceof CustomValidationError) {
         throw error // Re-throw validation errors so they map directly to the fields in the UI

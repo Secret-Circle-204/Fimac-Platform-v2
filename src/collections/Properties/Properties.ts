@@ -1,5 +1,10 @@
 import type { CollectionConfig } from 'payload'
-import { heatingTypeOptions } from './heating-options'
+import {
+  residentialSchema,
+  commercialSchema,
+  hospitalitySchema,
+  landSchema,
+} from './schemas'
 import {
   formatAddress,
   syncLocationHook,
@@ -78,7 +83,22 @@ export const Properties: CollectionConfig = {
         readOnly: true,
       },
     },
-
+    {
+      name: 'propertyTypeSlug',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'propertyTypeWatcher',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/components/admin/fields/PropertyTypeWatcher#PropertyTypeWatcherField',
+        },
+      },
+    },
     {
       type: 'tabs',
       tabs: [
@@ -103,6 +123,14 @@ export const Properties: CollectionConfig = {
               index: true,
               admin: {
                 description: 'Select or add the type of this property.',
+              },
+            },
+            {
+              name: 'area',
+              type: 'number',
+              index: true,
+              admin: {
+                description: 'Total area in square meters (m²)',
               },
             },
             {
@@ -152,53 +180,88 @@ export const Properties: CollectionConfig = {
               name: 'constructionStatus',
               type: 'relationship',
               relationTo: 'construction-statuses',
-              required: true,
+              required: false,
               index: true,
               admin: {
                 description: 'The physical construction state of the property.',
               },
             },
             {
-              name: 'details',
+              name: 'category',
+              type: 'select',
+              required: true,
+              index: true,
+              options: [
+                { label: 'Residential', value: 'residential' },
+                { label: 'Commercial', value: 'commercial' },
+                { label: 'Hospitality', value: 'hospitality' },
+                { label: 'Land', value: 'land' },
+              ],
+              admin: {
+                description: 'Select the main category for this property.',
+              },
+            },
+            residentialSchema,
+            commercialSchema,
+            hospitalitySchema,
+            landSchema,
+            {
+              name: 'features',
+              type: 'relationship',
+              relationTo: 'features',
+              hasMany: true,
+              index: true,
+              admin: {
+                description: 'Select the features for this property.',
+              },
+            },
+            {
+              name: 'operationalData',
               type: 'group',
+              label: 'Operational Metrics',
+              admin: {
+                condition: (data) => data?.category === 'hospitality',
+                description: 'Business metrics — updated regularly. Separate from property specifications.',
+              },
               fields: [
+                { name: 'avgDailyRate', type: 'number', label: 'ADR (Average Daily Rate)' },
+                { name: 'occupancyRate', type: 'number', label: 'Occupancy Rate (%)' },
+                { name: 'revPAR', type: 'number', label: 'RevPAR' },
+                { name: 'lastReportDate', type: 'date', label: 'Last Report Date' },
+              ],
+            },
+            {
+              name: 'customSpecifications',
+              label: 'Custom Specifications',
+              type: 'array',
+              admin: {
+                initCollapsed: true,
+                description: 'Additional specifications for rare/special cases. Not searchable.',
+              },
+              fields: [
+                { name: 'label', type: 'text', required: true },
                 {
-                  name: 'bedrooms',
-                  type: 'number',
-                  index: true,
-                },
-                {
-                  name: 'bathrooms',
-                  type: 'number',
-                  index: true,
-                },
-                {
-                  name: 'squareMeters',
-                  type: 'number',
-                },
-                {
-                  name: 'lotSize',
-                  type: 'number',
-                },
-                {
-                  name: 'yearBuilt',
-                  type: 'number',
-                },
-                {
-                  name: 'heatingType',
-                  type: 'select',
-                  options: heatingTypeOptions,
-                },
-                {
-                  name: 'features',
-                  type: 'relationship',
-                  relationTo: 'features',
-                  hasMany: true,
-                  index: true,
+                  name: 'icon',
+                  type: 'text',
+                  label: 'Lucide Icon Name',
                   admin: {
-                    description: 'Select the features for this property.',
+                    description: 'Optional Lucide icon name (e.g. Wind, Sun, Battery, Wifi)',
                   },
                 },
+                {
+                  name: 'valueType',
+                  type: 'select',
+                  required: true,
+                  defaultValue: 'text',
+                  options: [
+                    { label: 'Text', value: 'text' },
+                    { label: 'Number', value: 'number' },
+                    { label: 'Date', value: 'date' },
+                    { label: 'Yes/No', value: 'boolean' },
+                    { label: 'URL', value: 'url' },
+                  ],
+                },
+                { name: 'value', type: 'text', required: true },
               ],
             },
           ],

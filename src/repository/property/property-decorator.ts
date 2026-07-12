@@ -28,11 +28,29 @@ export class PropertyDecorator extends BaseDecorator<Property> {
     return generateUrl(this.original)
   }
 
+  get propertyTypeSlug(): string | undefined {
+    if (this.original.propertyTypeSlug) {
+      return this.original.propertyTypeSlug
+    }
+    if (
+      this.original.propertyType &&
+      typeof this.original.propertyType === 'object' &&
+      'slug' in this.original.propertyType
+    ) {
+      return this.original.propertyType.slug
+    }
+    return undefined
+  }
+
+  get propertyType(): Property["propertyType"] {
+    return this.original.propertyType
+  }
+
   get features(): Feature[] {
-    if (!this.original.details?.features) {
+    if (!this.original.features) {
       return []
     }
-    const features = this.original.details.features as Feature[]
+    const features = this.original.features as Feature[]
     return features
   }
 
@@ -68,17 +86,49 @@ export class PropertyDecorator extends BaseDecorator<Property> {
     return photos
   }
 
+  get category(): string | undefined {
+    return this.original.category
+  }
+
+  get area(): number | null | undefined {
+    return this.original.area
+  }
+
+  get residential() {
+    return this.original.residential
+  }
+
+  get commercial() {
+    return this.original.commercial
+  }
+
+  get hospitality() {
+    return this.original.hospitality
+  }
+
+  get land() {
+    return this.original.land
+  }
+
+  get operationalData() {
+    return this.original.operationalData
+  }
+
+  get customSpecifications() {
+    return this.original.customSpecifications ?? []
+  }
+
   get details() {
     return {
-      bedrooms: this.original.details?.bedrooms ?? 0,
-      bathrooms: this.original.details?.bathrooms ?? 0,
-      squareMeters: this.original.details?.squareMeters?.toLocaleString() ?? "0",
-      lotSize: this.original.details?.lotSize?.toLocaleString() ?? "0",
-      yearBuilt: this.original.details?.yearBuilt ?? 0,
+      bedrooms: this.original.residential?.bedrooms ?? 0,
+      bathrooms: this.original.residential?.bathrooms ?? 0,
+      squareMeters: this.original.area?.toLocaleString() ?? "0",
+      lotSize: this.original.category === 'land' ? (this.original.area?.toLocaleString() ?? "0") : "0",
+      yearBuilt: this.original.residential?.yearBuilt ?? 0,
       Property: typeof this.original.propertyType === 'object' && this.original.propertyType !== null
         ? this.original.propertyType.name
         : undefined,
-      heatingType: this.original.details?.heatingType,
+      heatingType: this.original.residential?.heatingType,
     }
   }
 

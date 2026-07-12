@@ -6,6 +6,7 @@ import { PropertyGallery } from '@/components/property/gallery'
 import { PropertyMap } from '@/components/property/map'
 import { PropertyOverview } from '@/components/property/overview'
 import { ViewTracker } from '@/components/property/view-tracker'
+import { OperationalMetrics } from '@/components/property/specs/OperationalMetrics'
 import { permanentRedirect, notFound } from 'next/navigation'
 import { SERVER_URL } from '@/env'
 import { Suspense, cache } from 'react'
@@ -190,6 +191,14 @@ export default async function PropertyDetailPage({
                 <div className="flex flex-col gap-2">
                   <PropertyOverview />
                 </div>
+
+                {property.original.category === 'hospitality' && property.original.operationalData && (
+                  <OperationalMetrics
+                    operationalData={property.original.operationalData}
+                    currency={property.original.currency}
+                  />
+                )}
+
 
                 <Suspense
                   fallback={

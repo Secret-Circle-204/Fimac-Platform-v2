@@ -17,7 +17,7 @@ export async function seedPropertyTypes(payload: Payload): Promise<void> {
       limit: 100,
     })
 
-    const categoryMap = new Map<string, string>()
+    const categoryMap = new Map<string, number>()
     categoriesResult.docs.forEach((cat) => {
       categoryMap.set(cat.slug, cat.id)
     })

@@ -87,6 +87,7 @@ export interface Config {
     'property-types': PropertyType;
     'listing-statuses': ListingStatus;
     'construction-statuses': ConstructionStatus;
+    'property-categories': PropertyCategory;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -118,6 +119,7 @@ export interface Config {
     'property-types': PropertyTypesSelect<false> | PropertyTypesSelect<true>;
     'listing-statuses': ListingStatusesSelect<false> | ListingStatusesSelect<true>;
     'construction-statuses': ConstructionStatusesSelect<false> | ConstructionStatusesSelect<true>;
+    'property-categories': PropertyCategoriesSelect<false> | PropertyCategoriesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -485,12 +487,17 @@ export interface Property {
    * Total tracked property views
    */
   views?: number | null;
+  propertyTypeSlug?: string | null;
   title: string;
   description: string;
   /**
    * Select or add the type of this property.
    */
   propertyType?: (number | null) | PropertyType;
+  /**
+   * Total area in square meters (m²)
+   */
+  area?: number | null;
   price?: number | null;
   currency: 'EGP' | 'USD' | 'EUR';
   basePriceInUSD?: number | null;
@@ -498,19 +505,235 @@ export interface Property {
   /**
    * The physical construction state of the property.
    */
-  constructionStatus: number | ConstructionStatus;
-  details?: {
+  constructionStatus?: (number | null) | ConstructionStatus;
+  /**
+   * Select the main category for this property.
+   */
+  category: 'residential' | 'commercial' | 'hospitality' | 'land';
+  residential?: {
+    /**
+     * Number of bedrooms
+     */
     bedrooms?: number | null;
+    /**
+     * Number of bathrooms
+     */
     bathrooms?: number | null;
-    squareMeters?: number | null;
-    lotSize?: number | null;
+    /**
+     * Floor number (e.g. for apartments)
+     */
+    floor?: number | null;
+    /**
+     * Total number of floors/stories (e.g. for villas)
+     */
+    floors?: number | null;
+    /**
+     * The year the property was built
+     */
     yearBuilt?: number | null;
+    /**
+     * Type of heating system
+     */
     heatingType?: ('central' | 'electric' | 'gas' | 'oil' | 'propane') | null;
     /**
-     * Select the features for this property.
+     * Details specific to villas, penthouses, and townhouses
      */
-    features?: (number | Feature)[] | null;
+    villa?: {
+      pools?: number | null;
+      hasGarden?: boolean | null;
+      hasGarage?: boolean | null;
+      hasMajlis?: boolean | null;
+      hasDriverRoom?: boolean | null;
+      hasMaidRoom?: boolean | null;
+    };
+    /**
+     * Details specific to apartments, studios, and duplexes
+     */
+    apartment?: {
+      hasBalcony?: boolean | null;
+      hasMaidRoom?: boolean | null;
+    };
+    /**
+     * Details specific to chalets and holiday homes
+     */
+    chalet?: {
+      hasPool?: boolean | null;
+      hasGarden?: boolean | null;
+      isBeachfront?: boolean | null;
+    };
   };
+  commercial?: {
+    /**
+     * Floor number where the property is located
+     */
+    floor?: number | null;
+    /**
+     * Number of dedicated parking spaces
+     */
+    parkingSpaces?: number | null;
+    /**
+     * Type of license required/available (e.g. Commercial, Administrative, Medical)
+     */
+    licenseType?: string | null;
+    office?: {
+      meetingRooms?: number | null;
+      hasReception?: boolean | null;
+      internetType?: ('fiber' | 'adsl' | 'none') | null;
+      securityLevel?: ('24_7' | 'business_hours' | 'none') | null;
+      elevators?: number | null;
+    };
+    restaurant?: {
+      kitchenCount?: number | null;
+      hasExhaust?: boolean | null;
+      hasGasConnection?: boolean | null;
+      outdoorSeatingCapacity?: number | null;
+    };
+    warehouse?: {
+      loadingDocks?: number | null;
+      /**
+       * Ceiling height in meters
+       */
+      ceilingHeight?: number | null;
+      hasTruckAccess?: boolean | null;
+      fireSystem?: ('sprinkler' | 'extinguisher' | 'full' | 'none') | null;
+    };
+    factory?: {
+      /**
+       * Power capacity in Kilowatts (KW)
+       */
+      powerCapacityKW?: number | null;
+      hazardZone?: ('none' | 'low' | 'medium' | 'high') | null;
+      industrialLicense?: string | null;
+    };
+    retail?: {
+      /**
+       * Frontage width in meters
+       */
+      frontageWidth?: number | null;
+      hasStorageRoom?: boolean | null;
+      ceilingHeight?: number | null;
+    };
+    medical?: {
+      hasWaitingRoom?: boolean | null;
+      medicalLicense?: string | null;
+      numberOfExamRooms?: number | null;
+    };
+  };
+  hospitality?: {
+    /**
+     * Total number of rooms / keys available
+     */
+    totalRooms?: number | null;
+    /**
+     * Total number of floors/stories
+     */
+    floors?: number | null;
+    starRating?: ('1' | '2' | '3' | '4' | '5') | null;
+    /**
+     * The operating brand or management brand (e.g. Hilton, Marriott, Wyndham, Independent)
+     */
+    brand?: string | null;
+    /**
+     * The year of last major renovation
+     */
+    lastRenovationYear?: number | null;
+    hasBeachAccess?: boolean | null;
+    hotel?: {
+      suites?: number | null;
+      restaurants?: number | null;
+      conferenceRooms?: number | null;
+    };
+    motel?: {
+      /**
+       * Number of dedicated parking spaces for guests
+       */
+      parkingSpaces?: number | null;
+      /**
+       * Has rooms with direct exterior drive-up access from parking
+       */
+      driveUpRooms?: boolean | null;
+      /**
+       * Has direct visibility or access to/from a highway
+       */
+      isHighwayAccess?: boolean | null;
+    };
+    resort?: {
+      suites?: number | null;
+      hasPrivateBeach?: boolean | null;
+      hasGolfCourse?: boolean | null;
+    };
+    camp?: {
+      tentCapacity?: number | null;
+      hasShowers?: boolean | null;
+      hasElectricity?: boolean | null;
+    };
+  };
+  land?: {
+    /**
+     * Approved zoning classification for the land
+     */
+    zoning?: ('residential' | 'commercial' | 'industrial' | 'agricultural' | 'mixed') | null;
+    /**
+     * Width of the main road facing the land (in meters)
+     */
+    roadWidth?: number | null;
+    /**
+     * Length of the property line bordering the street (in meters)
+     */
+    frontageWidth?: number | null;
+    /**
+     * Electricity, water, and sewage connections available
+     */
+    hasUtilities?: boolean | null;
+    /**
+     * Maximum number of building floors allowed by permit
+     */
+    allowedFloors?: number | null;
+    /**
+     * Maximum footprint percentage allowed to build on (e.g. 60 for 60%)
+     */
+    buildingRatio?: number | null;
+    /**
+     * Is the plot located on a corner (faces two streets)
+     */
+    isCorner?: boolean | null;
+    /**
+     * The physical gradient/slope of the land
+     */
+    slope?: ('flat' | 'gentle' | 'moderate' | 'steep') | null;
+    /**
+     * Type of soil or ground structure (e.g. Sandy, Rocky, Clay)
+     */
+    soilType?: string | null;
+  };
+  /**
+   * Select the features for this property.
+   */
+  features?: (number | Feature)[] | null;
+  /**
+   * Business metrics — updated regularly. Separate from property specifications.
+   */
+  operationalData?: {
+    avgDailyRate?: number | null;
+    occupancyRate?: number | null;
+    revPAR?: number | null;
+    lastReportDate?: string | null;
+  };
+  /**
+   * Additional specifications for rare/special cases. Not searchable.
+   */
+  customSpecifications?:
+    | {
+        label: string;
+        /**
+         * Optional Lucide icon name (e.g. Wind, Sun, Battery, Wifi)
+         */
+        icon?: string | null;
+        valueType: 'text' | 'number' | 'date' | 'boolean' | 'url';
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
   photos?: (number | Media)[] | null;
   /**
    * Paste a Google Maps URL (short/long), coordinates (lat,lng), or search address to auto-fill details.
@@ -671,9 +894,35 @@ export interface PropertyType {
    */
   name: string;
   /**
+   * Select the main category for this property type.
+   */
+  category: number | PropertyCategory;
+  /**
    * URL-friendly identifier (lowercase, e.g., "villa", "elite-real-estate").
    */
   slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "property-categories".
+ */
+export interface PropertyCategory {
+  id: number;
+  /**
+   * Display name for this category (e.g., Residential, Commercial, Hospitality, Land).
+   */
+  name: string;
+  /**
+   * URL-friendly identifier.
+   */
+  slug: string;
+  /**
+   * Icon name from Lucide (e.g., Home, Building2, Hotel, Map).
+   */
+  icon?: string | null;
+  sortOrder?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -729,6 +978,26 @@ export interface Feature {
    * Name of the feature (e.g., "Hardwood Floors", "Swimming Pool")
    */
   name: string;
+  /**
+   * URL-friendly identifier.
+   */
+  slug: string;
+  /**
+   * Icon name from Lucide (e.g. Waves, Wifi, Car)
+   */
+  icon?: string | null;
+  /**
+   * Specify which property categories can use this feature. Leave empty for all.
+   */
+  visibleInCategories?: ('residential' | 'commercial' | 'hospitality' | 'land')[] | null;
+  /**
+   * Specify which property types can use this feature. Leave empty for all.
+   */
+  visibleInPropertyTypes?: (number | PropertyType)[] | null;
+  /**
+   * Categorization grouping for display in front-end.
+   */
+  featureGroup?: ('lifestyle' | 'security' | 'utilities' | 'amenities') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1069,6 +1338,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'construction-statuses';
         value: number | ConstructionStatus;
+      } | null)
+    | ({
+        relationTo: 'property-categories';
+        value: number | PropertyCategory;
       } | null);
   globalSlug?: string | null;
   user:
@@ -1260,24 +1533,171 @@ export interface PropertiesSelect<T extends boolean = true> {
   seller?: T;
   seller_request?: T;
   views?: T;
+  propertyTypeSlug?: T;
   title?: T;
   description?: T;
   propertyType?: T;
+  area?: T;
   price?: T;
   currency?: T;
   basePriceInUSD?: T;
   listingStatus?: T;
   constructionStatus?: T;
-  details?:
+  category?: T;
+  residential?:
     | T
     | {
         bedrooms?: T;
         bathrooms?: T;
-        squareMeters?: T;
-        lotSize?: T;
+        floor?: T;
+        floors?: T;
         yearBuilt?: T;
         heatingType?: T;
-        features?: T;
+        villa?:
+          | T
+          | {
+              pools?: T;
+              hasGarden?: T;
+              hasGarage?: T;
+              hasMajlis?: T;
+              hasDriverRoom?: T;
+              hasMaidRoom?: T;
+            };
+        apartment?:
+          | T
+          | {
+              hasBalcony?: T;
+              hasMaidRoom?: T;
+            };
+        chalet?:
+          | T
+          | {
+              hasPool?: T;
+              hasGarden?: T;
+              isBeachfront?: T;
+            };
+      };
+  commercial?:
+    | T
+    | {
+        floor?: T;
+        parkingSpaces?: T;
+        licenseType?: T;
+        office?:
+          | T
+          | {
+              meetingRooms?: T;
+              hasReception?: T;
+              internetType?: T;
+              securityLevel?: T;
+              elevators?: T;
+            };
+        restaurant?:
+          | T
+          | {
+              kitchenCount?: T;
+              hasExhaust?: T;
+              hasGasConnection?: T;
+              outdoorSeatingCapacity?: T;
+            };
+        warehouse?:
+          | T
+          | {
+              loadingDocks?: T;
+              ceilingHeight?: T;
+              hasTruckAccess?: T;
+              fireSystem?: T;
+            };
+        factory?:
+          | T
+          | {
+              powerCapacityKW?: T;
+              hazardZone?: T;
+              industrialLicense?: T;
+            };
+        retail?:
+          | T
+          | {
+              frontageWidth?: T;
+              hasStorageRoom?: T;
+              ceilingHeight?: T;
+            };
+        medical?:
+          | T
+          | {
+              hasWaitingRoom?: T;
+              medicalLicense?: T;
+              numberOfExamRooms?: T;
+            };
+      };
+  hospitality?:
+    | T
+    | {
+        totalRooms?: T;
+        floors?: T;
+        starRating?: T;
+        brand?: T;
+        lastRenovationYear?: T;
+        hasBeachAccess?: T;
+        hotel?:
+          | T
+          | {
+              suites?: T;
+              restaurants?: T;
+              conferenceRooms?: T;
+            };
+        motel?:
+          | T
+          | {
+              parkingSpaces?: T;
+              driveUpRooms?: T;
+              isHighwayAccess?: T;
+            };
+        resort?:
+          | T
+          | {
+              suites?: T;
+              hasPrivateBeach?: T;
+              hasGolfCourse?: T;
+            };
+        camp?:
+          | T
+          | {
+              tentCapacity?: T;
+              hasShowers?: T;
+              hasElectricity?: T;
+            };
+      };
+  land?:
+    | T
+    | {
+        zoning?: T;
+        roadWidth?: T;
+        frontageWidth?: T;
+        hasUtilities?: T;
+        allowedFloors?: T;
+        buildingRatio?: T;
+        isCorner?: T;
+        slope?: T;
+        soilType?: T;
+      };
+  features?: T;
+  operationalData?:
+    | T
+    | {
+        avgDailyRate?: T;
+        occupancyRate?: T;
+        revPAR?: T;
+        lastReportDate?: T;
+      };
+  customSpecifications?:
+    | T
+    | {
+        label?: T;
+        icon?: T;
+        valueType?: T;
+        value?: T;
+        id?: T;
       };
   photos?: T;
   mapsUrlInput?: T;
@@ -1329,6 +1749,11 @@ export interface PropertiesSelect<T extends boolean = true> {
  */
 export interface FeaturesSelect<T extends boolean = true> {
   name?: T;
+  slug?: T;
+  icon?: T;
+  visibleInCategories?: T;
+  visibleInPropertyTypes?: T;
+  featureGroup?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1573,6 +1998,7 @@ export interface SellerRequestsSelect<T extends boolean = true> {
  */
 export interface PropertyTypesSelect<T extends boolean = true> {
   name?: T;
+  category?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1596,6 +2022,18 @@ export interface ConstructionStatusesSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   colorTheme?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "property-categories_select".
+ */
+export interface PropertyCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  icon?: T;
+  sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
 }

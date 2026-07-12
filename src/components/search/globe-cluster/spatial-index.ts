@@ -106,9 +106,9 @@ export class SpatialIndex {
               : typeof prop.listingStatus === 'string'
                 ? prop.listingStatus
                 : undefined,
-          beds: prop.details?.bedrooms,
-          baths: prop.details?.bathrooms,
-          sqM: prop.details?.squareMeters,
+          beds: prop.residential?.bedrooms,
+          baths: prop.residential?.bathrooms,
+          sqM: prop.area,
           type:
             typeof prop.propertyType === 'object' && prop.propertyType !== null
               ? prop.propertyType.name

@@ -2,10 +2,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Property } from '@/payload-types'
-import { Bed, Bath, Maximize, MapPin, Globe, ChevronRight } from 'lucide-react'
+import { Bed, Bath, Maximize, MapPin, Globe, ChevronRight, Key, Award, Compass, ParkingCircle, Layers } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useState, useRef, useCallback } from 'react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { buildPropertyUrl } from '@/repository/property/generate-url'
 import { ViewsBadge } from '@/components/property/views-badge'
@@ -224,22 +224,123 @@ export function PropertySearchCard({ property }: PropertySearchCardProps) {
 
         <div className="mt-auto pt-3 border-t border-navy-deep/5">
           {/* Property Short Details */}
-          <div className="flex items-center justify-between text-[13px] font-bold text-navy-deep/80 mb-4.5 pt-0.5 pb-0.5">
-            <div className="flex items-center gap-2">
-              <Bed className="h-[18px] w-[18px] text-gold-royal" />
-              <span>{property.details?.bedrooms || 0} Beds</span>
-            </div>
-            <div className="w-px  h-3.5 bg-navy-deep/10" />
-            <div className="flex items-center gap-2">
-              <Bath className="h-[18px] w-[18px] text-gold-royal" />
-              <span>{property.details?.bathrooms || 0} Baths</span>
-            </div>
-            <div className="w-px  h-3.5 bg-navy-deep/10" />
-            <div className="flex items-center gap-2">
-              <Maximize className="h-[18px] w-[18px] text-gold-royal" />
-              <span>{property.details?.squareMeters?.toLocaleString() || 0} Sq M</span>
-            </div>
+          <div className="flex items-center justify-start flex-wrap gap-x-4 gap-y-2 text-[13px] font-bold text-navy-deep/80 mb-4.5 pt-0.5 pb-0.5">
+            {(() => {
+              const detailsList: React.ReactNode[] = []
+
+              if (property.category === 'land' && property.land) {
+                if (property.land.zoning) {
+                  detailsList.push(
+                    <div key="zoning" className="flex items-center gap-2">
+                      <Compass className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{property.land.zoning.charAt(0).toUpperCase() + property.land.zoning.slice(1)}</span>
+                    </div>
+                  )
+                }
+                if (property.area !== undefined && property.area !== null && property.area > 0) {
+                  detailsList.push(
+                    <div key="area" className="flex items-center gap-2">
+                      <Maximize className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{property.area.toLocaleString()} m²</span>
+                    </div>
+                  )
+                }
+                if (property.land.isCorner === true) {
+                  detailsList.push(
+                    <div key="corner" className="flex items-center gap-2">
+                      <Compass className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>Corner</span>
+                    </div>
+                  )
+                }
+              } else if (property.category === 'commercial' && property.commercial) {
+                if (property.commercial.floor !== undefined && property.commercial.floor !== null) {
+                  detailsList.push(
+                    <div key="floor" className="flex items-center gap-2">
+                      <Layers className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>Floor {property.commercial.floor}</span>
+                    </div>
+                  )
+                }
+                if (property.area !== undefined && property.area !== null && property.area > 0) {
+                  detailsList.push(
+                    <div key="area" className="flex items-center gap-2">
+                      <Maximize className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{property.area.toLocaleString()} m²</span>
+                    </div>
+                  )
+                }
+                if (property.commercial.parkingSpaces !== undefined && property.commercial.parkingSpaces !== null && property.commercial.parkingSpaces > 0) {
+                  detailsList.push(
+                    <div key="parking" className="flex items-center gap-2">
+                      <ParkingCircle className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{property.commercial.parkingSpaces} Park</span>
+                    </div>
+                  )
+                }
+              } else if (property.category === 'hospitality' && property.hospitality) {
+                if (property.hospitality.totalRooms !== undefined && property.hospitality.totalRooms !== null && property.hospitality.totalRooms > 0) {
+                  detailsList.push(
+                    <div key="rooms" className="flex items-center gap-2">
+                      <Key className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{property.hospitality.totalRooms} Rooms</span>
+                    </div>
+                  )
+                }
+                if (property.area !== undefined && property.area !== null && property.area > 0) {
+                  detailsList.push(
+                    <div key="area" className="flex items-center gap-2">
+                      <Maximize className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{property.area.toLocaleString()} m²</span>
+                    </div>
+                  )
+                }
+                const starRating = property.hospitality.starRating
+                if (starRating) {
+                  detailsList.push(
+                    <div key="stars" className="flex items-center gap-2">
+                      <Award className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{starRating} Stars</span>
+                    </div>
+                  )
+                }
+              } else if (property.category === 'residential' && property.residential) {
+                if (property.residential.bedrooms !== undefined && property.residential.bedrooms !== null && property.residential.bedrooms > 0) {
+                  detailsList.push(
+                    <div key="bedrooms" className="flex items-center gap-2">
+                      <Bed className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{property.residential.bedrooms} Beds</span>
+                    </div>
+                  )
+                }
+                if (property.residential.bathrooms !== undefined && property.residential.bathrooms !== null && property.residential.bathrooms > 0) {
+                  detailsList.push(
+                    <div key="bathrooms" className="flex items-center gap-2">
+                      <Bath className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{property.residential.bathrooms} Baths</span>
+                    </div>
+                  )
+                }
+                if (property.area !== undefined && property.area !== null && property.area > 0) {
+                  detailsList.push(
+                    <div key="area" className="flex items-center gap-2">
+                      <Maximize className="h-[18px] w-[18px] text-gold-royal" />
+                      <span>{property.area.toLocaleString()} m²</span>
+                    </div>
+                  )
+                }
+              }
+
+              // Join items with vertical separator
+              return detailsList.map((item, idx) => (
+                <React.Fragment key={idx}>
+                  {idx > 0 && <div className="w-px h-3.5 bg-navy-deep/10 shrink-0" />}
+                  {item}
+                </React.Fragment>
+              ))
+            })()}
           </div>
+
 
           <div className="flex items-center justify-between mb-3.5 pt-3 px-0.5 border-t border-dashed border-navy-deep/10 mt-2">
             <div className="text-[10px] font-bold text-navy-deep/40">Community Sync</div>

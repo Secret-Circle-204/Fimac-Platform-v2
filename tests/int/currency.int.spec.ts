@@ -44,6 +44,13 @@ describe('Multi-Currency Property Pricing Integration', () => {
       })
       const forsaleId = statusRes.docs[0]?.id
 
+      const constRes = await payload.find({
+        collection: 'construction-statuses',
+        where: { slug: { equals: 'ready' } },
+        limit: 1,
+      })
+      const readyId = constRes.docs[0]?.id
+
       const property = await payload.create({
         collection: 'properties',
         data: {
@@ -52,7 +59,8 @@ describe('Multi-Currency Property Pricing Integration', () => {
           price: priceVal,
           currency: 'EGP',
           listingStatus: forsaleId,
-          constructionStatus: 'ready',
+          constructionStatus: readyId,
+          category: 'residential',
         },
       })
 

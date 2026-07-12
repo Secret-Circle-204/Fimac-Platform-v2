@@ -2,7 +2,7 @@
 import { Card, CardContent } from "../ui/card"
 import { PropertyStatus } from "./status"
 import { PropertyConstructionStatus } from "./construction-status"
-import { BathIcon, BedDoubleIcon, RulerIcon } from "lucide-react"
+import { BathIcon, BedDoubleIcon, RulerIcon, Compass, Key, Award, ParkingCircle, Layers } from "lucide-react"
 import Link from "next/link"
 import { PropertyShare } from "./share"
 import { useProperty } from "../providers/property"
@@ -49,18 +49,97 @@ export const FeaturedPropertyCard = () => {
               </div>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground border-t pt-3">
-              <span className="flex items-center gap-1">
-                <BedDoubleIcon size={20} />
-                {property.details?.bedrooms} beds
-              </span>
-              <span className="flex items-center gap-1">
-                <BathIcon size={20} />
-                {property.details?.bathrooms} baths
-              </span>
-              <span className="flex items-center gap-1">
-                <RulerIcon size={20} />
-                {property.details?.squareMeters} Sq M
-              </span>
+              {property.category === 'land' && property.land && (
+                <>
+                  {property.land.zoning && (
+                    <span className="flex items-center gap-1">
+                      <Compass size={20} />
+                      {property.land.zoning.charAt(0).toUpperCase() + property.land.zoning.slice(1)}
+                    </span>
+                  )}
+                  {property.area !== undefined && property.area !== null && property.area > 0 && (
+                    <span className="flex items-center gap-1">
+                      <RulerIcon size={20} />
+                      {property.area.toLocaleString()} m²
+                    </span>
+                  )}
+                  {property.land.isCorner === true && (
+                    <span className="flex items-center gap-1">
+                      <Compass size={20} />
+                      Corner
+                    </span>
+                  )}
+                </>
+              )}
+
+              {property.category === 'commercial' && property.commercial && (
+                <>
+                  {property.commercial.floor !== undefined && property.commercial.floor !== null && (
+                    <span className="flex items-center gap-1">
+                      <Layers size={20} />
+                      Floor {property.commercial.floor}
+                    </span>
+                  )}
+                  {property.area !== undefined && property.area !== null && property.area > 0 && (
+                    <span className="flex items-center gap-1">
+                      <RulerIcon size={20} />
+                      {property.area.toLocaleString()} m²
+                    </span>
+                  )}
+                  {property.commercial.parkingSpaces !== undefined && property.commercial.parkingSpaces !== null && property.commercial.parkingSpaces > 0 && (
+                    <span className="flex items-center gap-1">
+                      <ParkingCircle size={20} />
+                      {property.commercial.parkingSpaces} Park
+                    </span>
+                  )}
+                </>
+              )}
+
+              {property.category === 'hospitality' && property.hospitality && (
+                <>
+                  {property.hospitality.totalRooms !== undefined && property.hospitality.totalRooms !== null && property.hospitality.totalRooms > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Key size={20} />
+                      {property.hospitality.totalRooms} Rooms
+                    </span>
+                  )}
+                  {property.area !== undefined && property.area !== null && property.area > 0 && (
+                    <span className="flex items-center gap-1">
+                      <RulerIcon size={20} />
+                      {property.area.toLocaleString()} m²
+                    </span>
+                  )}
+                  {property.hospitality.starRating && (
+                    <span className="flex items-center gap-1">
+                      <Award size={20} />
+                      {property.hospitality.starRating} Stars
+                    </span>
+                  )}
+                </>
+              )}
+
+              {property.category === 'residential' && property.residential && (
+                <>
+                  {property.residential.bedrooms !== undefined && property.residential.bedrooms !== null && property.residential.bedrooms > 0 && (
+                    <span className="flex items-center gap-1">
+                      <BedDoubleIcon size={20} />
+                      {property.residential.bedrooms} beds
+                    </span>
+                  )}
+                  {property.residential.bathrooms !== undefined && property.residential.bathrooms !== null && property.residential.bathrooms > 0 && (
+                    <span className="flex items-center gap-1">
+                      <BathIcon size={20} />
+                      {property.residential.bathrooms} baths
+                    </span>
+                  )}
+                  {property.area !== undefined && property.area !== null && property.area > 0 && (
+                    <span className="flex items-center gap-1">
+                      <RulerIcon size={20} />
+                      {property.area.toLocaleString()} m²
+                    </span>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </CardContent>
