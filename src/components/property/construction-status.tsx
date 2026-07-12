@@ -8,17 +8,19 @@ interface PropertyConstructionStatusProps {
   locale?: 'en' | 'ar'
 }
 
-export const PropertyConstructionStatus = ({ className, locale = 'en' }: PropertyConstructionStatusProps) => {
+export const PropertyConstructionStatus = ({ className }: PropertyConstructionStatusProps) => {
   const property = useProperty()
   
-  // Safely cast or fallback
-  const status = (property.constructionStatus || 'ready') as ConstructionStatusType
-  const statusInfo = constructionStatusMap[status]
+  // Safely resolve the slug (it can be an object if populated)
+  const statusSlug =
+    property.constructionStatus && typeof property.constructionStatus === 'object'
+      ? (property.constructionStatus.slug as ConstructionStatusType)
+      : (property.constructionStatus as unknown as ConstructionStatusType) || 'ready'
+
+  const statusInfo = constructionStatusMap[statusSlug]
 
   if (!statusInfo) return null
 
-  const label = locale === 'ar' ? statusInfo.labelAr : statusInfo.label
-  
   return (
     <div
       className={cn(
@@ -27,8 +29,7 @@ export const PropertyConstructionStatus = ({ className, locale = 'en' }: Propert
         className
       )}
     >
-      <span className="text-sm leading-none">{statusInfo.icon}</span>
-      <span>{label}</span>
+      <span>{statusInfo.label}</span>
     </div>
   )
 }

@@ -99,8 +99,12 @@ export function PropertySearchCard({ property }: PropertySearchCardProps) {
     }
   }
 
-  const constructionStatus = (property.constructionStatus || 'ready') as ConstructionStatusType
-  const constructionInfo = constructionStatusMap[constructionStatus]
+  const resolvedConstructionStatus =
+    property.constructionStatus && typeof property.constructionStatus === 'object'
+      ? (property.constructionStatus.slug as ConstructionStatusType)
+      : (property.constructionStatus as unknown as ConstructionStatusType) || 'ready'
+
+  const constructionInfo = constructionStatusMap[resolvedConstructionStatus]
 
   return (
     <Card
@@ -131,23 +135,40 @@ export function PropertySearchCard({ property }: PropertySearchCardProps) {
         )}
 
         <div className="absolute top-4 left-4 flex flex-col gap-1.5 items-start">
-          <Badge
-            variant="default"
-            className={`px-3 py-1 text-[10px] font-bold border-0 ${
-              property.listingStatus === 'forsale'
-                ? 'bg-gold-royal text-white shadow-gold'
-                : 'bg-navy-deep text-white'
-            }`}
-          >
-            {property.listingStatus === 'forsale' ? 'For Sale' : property.listingStatus}
-          </Badge>
+          {(() => {
+            const statusSlug =
+              typeof property.listingStatus === 'object' && property.listingStatus
+                ? property.listingStatus.slug
+                : typeof property.listingStatus === 'string'
+                  ? property.listingStatus
+                  : 'draft'
+
+            const statusLabel =
+              typeof property.listingStatus === 'object' && property.listingStatus
+                ? property.listingStatus.name
+                : typeof property.listingStatus === 'string'
+                  ? property.listingStatus
+                  : 'Draft'
+
+            return (
+              <Badge
+                variant="default"
+                className={`px-3 py-1 text-[10px] font-bold border-0 ${
+                  statusSlug === 'forsale'
+                    ? 'bg-gold-royal text-white shadow-gold'
+                    : 'bg-navy-deep text-white'
+                }`}
+              >
+                {statusSlug === 'forsale' ? 'For Sale' : statusLabel}
+              </Badge>
+            )
+          })()}
           
           {constructionInfo && (
             <Badge
               variant="outline"
               className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider border shadow-xs backdrop-blur-xs flex items-center gap-1 ${constructionInfo.color}`}
             >
-              <span>{constructionInfo.icon}</span>
               <span>{constructionInfo.label}</span>
             </Badge>
           )}

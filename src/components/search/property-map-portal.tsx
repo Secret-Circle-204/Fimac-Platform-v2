@@ -12,9 +12,9 @@ import { Button } from '@/components/ui/button'
 import { resolveGeoWithFallback } from '@/lib/geo/is-valid-coordinate'
 import { formatPrice } from '@/lib/format-price'
 
-// We need to type the property prop.
-// For now, exporting GlobeDataPoint from search-results-map.tsx or redefining it here is needed.
-// To avoid circular dependencies and keep it simple, we'll redefine the necessary fields or import it.
+// MapPortalProperty is the stable contract for the property map portal.
+// It is satisfied by GlobeDataPoint (search-results-map.tsx) and
+// by GlobePropertyData (globe-cluster/types.ts) via the toPortalProperty mapper.
 export interface MapPortalProperty {
   id: string | number
   realLat: number
@@ -50,7 +50,7 @@ export function PropertyMapPortal({ property, onClose }: PropertyMapPortalProps)
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className="fixed inset-0 flex items-center justify-center z-9999 p-2 sm:p-8 pointer-events-none"
           >
-            <div className="relative w-[95vw] sm:w-[90vw] max-w-7xl bg-navy-deep/95 backdrop-blur-3xl rounded-[32px] sm:rounded-[48px] border border-gold-royal/30 shadow-2xl overflow-hidden pointer-events-auto flex flex-col max-h-[96vh] sm:max-h-[90vh]">
+            <div className="relative w-[95vw] sm:w-[90vw] max-w-7xl bg-navy-deep/95 backdrop-blur-3xl rounded-[32px] sm:rounded-[48px] border border-gold-royal/30 shadow-2xl overflow-y-auto pointer-events-auto flex flex-col max-h-[96vh] sm:max-h-[90vh]">
               {/* Header */}
               <div className="flex justify-between items-center p-3 sm:p-10 border-b border-white/10">
                 <div className="flex items-center gap-6">
@@ -58,7 +58,15 @@ export function PropertyMapPortal({ property, onClose }: PropertyMapPortalProps)
                     <MapPin className="w-6 h-6 sm:w-8 sm:h-8 text-gold-royal" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-xl sm:text-2xl text-white tracking-tight">
+                    <h3 
+                      className="font-bold text-lg sm:text-2xl text-white tracking-tight"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
                       {property.title}
                     </h3>
                     <div className="flex items-center gap-4 mt-2">
@@ -131,7 +139,6 @@ export function PropertyMapPortal({ property, onClose }: PropertyMapPortalProps)
                       </div>
                     )
                   })()}
-
                 </div>
               </div>
 
@@ -146,7 +153,9 @@ export function PropertyMapPortal({ property, onClose }: PropertyMapPortalProps)
                       </span>
                     </div>
                     <span className="text-2xl sm:text-3xl font-bold text-white whitespace-nowrap">
-                      {property.price ? formatPrice(property.price, property.currency) : 'Price upon request'}
+                      {property.price
+                        ? formatPrice(property.price, property.currency)
+                        : 'Price upon request'}
                     </span>
                   </div>
 
@@ -156,25 +165,20 @@ export function PropertyMapPortal({ property, onClose }: PropertyMapPortalProps)
                   {/* Property Stats (Beds, Baths, Sq M) - Clear font, no letter-spacing */}
                   <div className="flex items-center gap-8 text-white">
                     <div className="text-center sm:text-left">
-                      <p className="text-[11px] font-bold text-gold-royal mb-0.5">
-                        Beds
-                      </p>
+                      <p className="text-[11px] font-bold text-gold-royal mb-0.5">Beds</p>
                       <p className="text-xl sm:text-2xl font-bold">{property.beds || 0}</p>
                     </div>
                     <div className="w-px h-8 bg-white/10" />
                     <div className="text-center sm:text-left">
-                      <p className="text-[11px] font-bold text-gold-royal mb-0.5">
-                        Baths
-                      </p>
+                      <p className="text-[11px] font-bold text-gold-royal mb-0.5">Baths</p>
                       <p className="text-xl sm:text-2xl font-bold">{property.baths || 0}</p>
                     </div>
                     <div className="w-px h-8 bg-white/10" />
                     <div className="text-center sm:text-left">
-                      <p className="text-[11px] font-bold text-gold-royal mb-0.5">
-                        Total Space
-                      </p>
+                      <p className="text-[11px] font-bold text-gold-royal mb-0.5">Total Space</p>
                       <p className="text-xl sm:text-2xl font-bold">
-                        {property.sqM?.toLocaleString() || 0} <span className="text-xs sm:text-sm font-medium text-white/60">Sq M</span>
+                        {property.sqM?.toLocaleString() || 0}{' '}
+                        <span className="text-xs sm:text-sm font-medium text-white/60">Sq M</span>
                       </p>
                     </div>
                   </div>

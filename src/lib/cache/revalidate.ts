@@ -14,6 +14,10 @@ export const triggerRevalidate = (tag: string) => {
     revalidateTag(tag)
     console.log(`[CacheRevalidation] Invalidated cache tag: ${tag}`)
   } catch (err) {
+    if (err instanceof Error && err.message.includes('static generation store missing')) {
+      // Safely ignore Next.js revalidation errors outside of request contexts (e.g. CLI scripts)
+      return
+    }
     console.error(`[CacheRevalidation] Error during revalidation for tag: ${tag}`, err)
   }
 }

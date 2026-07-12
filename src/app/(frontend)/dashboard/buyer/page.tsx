@@ -65,6 +65,7 @@ export default async function BuyerDashboard() {
         ],
       },
       limit: 1000,
+      depth: 0,
     })
 
     const uniqueProperties = new Set()

@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
 import { getPayloadClient } from "@/db/client"
+import { sql } from "@payloadcms/db-postgres"
 import { createHash } from "crypto"
 import { cookies } from "next/headers"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
-import { analyticsCache } from "@/lib/cache/analytics-cache"
-import { sql } from "@payloadcms/db-postgres"
 
 // Helper to generate visitor fingerprint
 function generateVisitorId(req: NextRequest, userId?: string): string {
@@ -26,13 +25,28 @@ function hashIP(ip: string): string {
 // Helper to detect device type
 function detectDevice(userAgent: string): "desktop" | "mobile" | "tablet" {
   const ua = userAgent.toLowerCase()
-  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+  if (
+    ua.includes("tablet") ||
+    ua.includes("ipad") ||
+    ua.includes("playbook") ||
+    ua.includes("silk") ||
+    (ua.includes("android") && !ua.includes("mobi"))
+  ) {
     return "tablet"
   }
   if (
-    /mobile|android|ip(hone|od)|iemobile|blackberry|kindle|silk-accelerated|(hpw|web)os|opera m(obi|ini)/i.test(
-      ua,
-    )
+    ua.includes("mobile") ||
+    ua.includes("android") ||
+    ua.includes("iphone") ||
+    ua.includes("ipod") ||
+    ua.includes("iemobile") ||
+    ua.includes("blackberry") ||
+    ua.includes("kindle") ||
+    ua.includes("silk-accelerated") ||
+    ua.includes("hpwos") ||
+    ua.includes("webos") ||
+    ua.includes("opera mobi") ||
+    ua.includes("opera mini")
   ) {
     return "mobile"
   }
@@ -101,8 +115,36 @@ function getCountryName(code: string): string {
   return countries[code.toUpperCase()] || code
 }
 
-// Helper to fetch geographical location from IP address
-async function getIPLocation(ip: string): Promise<{ country: string; city: string; region: string } | null> {
+interface GeoCacheEntry {
+  data: { country: string; city: string; region: string } | null
+  timestamp: number
+}
+
+const GEO_CACHE_KEY = "FIMAC_GEO_IP_CACHE"
+const MAX_CACHE_SIZE = 10000
+
+const globalGeoCache = global as unknown as {
+  [GEO_CACHE_KEY]?: Map<string, GeoCacheEntry>
+}
+if (!globalGeoCache[GEO_CACHE_KEY]) {
+  globalGeoCache[GEO_CACHE_KEY] = new Map()
+}
+const geoCache = globalGeoCache[GEO_CACHE_KEY]!
+
+// Safe setter that prevents unbounded memory growth
+function setGeoCacheSafe(key: string, entry: GeoCacheEntry) {
+  if (geoCache.size >= MAX_CACHE_SIZE && !geoCache.has(key)) {
+    // Map iterates in insertion order, so the first key is the oldest
+    const oldestKey = geoCache.keys().next().value
+    if (oldestKey) {
+      geoCache.delete(oldestKey)
+    }
+  }
+  geoCache.set(key, entry)
+}
+
+// Helper to fetch geographical location from IP address (internal)
+async function getIPLocationInternal(ip: string): Promise<{ country: string; city: string; region: string } | null> {
   const cleanIp = ip.trim()
   console.log(`🔍 [IP Lookup] Server-side getIPLocation requested for IP: "${cleanIp}"`)
   
@@ -207,6 +249,20 @@ async function getIPLocation(ip: string): Promise<{ country: string; city: strin
   return null
 }
 
+async function getIPLocation(ip: string): Promise<{ country: string; city: string; region: string } | null> {
+  const cleanIp = ip.trim()
+  const cached = geoCache.get(cleanIp)
+  const now = Date.now()
+  if (cached && (now - cached.timestamp < 24 * 60 * 60 * 1000 || (!cached.data && now - cached.timestamp < 60 * 60 * 1000))) {
+    console.log(`🔍 [IP Lookup Cache] Hit for IP "${cleanIp}":`, cached.data)
+    return cached.data
+  }
+
+  const result = await getIPLocationInternal(cleanIp)
+  setGeoCacheSafe(cleanIp, { data: result, timestamp: Date.now() })
+  return result
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -220,7 +276,8 @@ export async function POST(request: NextRequest) {
 
     // 2. Bot / Crawler Exclusion Check
     const userAgent = request.headers.get("user-agent") || ""
-    const isBot = /bot|googlebot|bingbot|yandexbot|baiduspider|crawler|spider|robot|crawling|lighthouse/i.test(userAgent)
+    const uaLow = userAgent.toLowerCase()
+    const isBot = uaLow.includes("bot") || uaLow.includes("crawler") || uaLow.includes("spider") || uaLow.includes("robot") || uaLow.includes("crawling") || uaLow.includes("lighthouse")
     if (isBot) {
       console.log(`🤖 Ignored view request from bot/crawler: ${userAgent}`)
       return NextResponse.json({ success: true, ignored: "bot" })
@@ -291,8 +348,10 @@ export async function POST(request: NextRequest) {
       ip = ip.split(",")[0].trim()
     }
 
+    const hashedIp = hashIP(ip)
     let location = null
-    console.log(`\n👤 [Track View] Incoming view request. Detected server IP: "${ip}"`)
+
+    console.log(`\n👤 [Track View] Incoming view request. Hashed IP: "${hashedIp}"`)
     if (clientLocation) {
       console.log("🌍 [Track View] Client provided location object:", clientLocation)
     }
@@ -309,10 +368,27 @@ export async function POST(request: NextRequest) {
         console.log(`🌍 [Track View] Overriding server IP with client IP: "${ip}"`)
       }
     } else {
-      console.log("🌍 [Track View] Client geolocation not provided or incomplete. Falling back to server-side lookup.")
-      location = await getIPLocation(ip)
+      // DB Cache Lookup: Find if we already geocoded this hashed IP
+      console.log(`🔍 [Track View] Checking database cache for hashed IP: "${hashedIp}"`)
+      const cachedView = await payload.find({
+        collection: "property-views",
+        where: {
+          and: [
+            { ipAddress: { equals: hashedIp } },
+            { "location.country": { exists: true } },
+            { "location.country": { not_equals: "" } },
+          ],
+        },
+        limit: 1,
+        depth: 0,
+        select: { location: true },
+      })
+
+      if (cachedView.docs.length > 0 && cachedView.docs[0].location) {
+        console.log("🌍 [Track View] DB Geolocation cache hit!", cachedView.docs[0].location)
+        location = cachedView.docs[0].location
+      }
     }
-    console.log("🌍 [Track View] Final resolved view location:", location)
 
     const referrer = request.headers.get("referer")
     const device = detectDevice(userAgent)
@@ -326,7 +402,7 @@ export async function POST(request: NextRequest) {
         sessionId: sessionId || visitorId,
         viewedAt: new Date().toISOString(),
         userAgent,
-        ipAddress: hashIP(ip),
+        ipAddress: hashedIp,
         source,
         referrer: referrer || undefined,
         device,
@@ -343,15 +419,40 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // 7. Real Atomic SQL Increment to prevent race conditions and write locks
-    // @ts-ignore
-    await payload.db.drizzle.execute(
-      sql`UPDATE properties SET views = COALESCE(views, 0) + 1 WHERE id = ${propertyId}`
-    )
-    
-    console.log(`🆕 Unique view registered! Created view ${newView.id}. Incremented property ${propertyId} views atomically.`)
+    // 7. Increment property views count directly using SQL after the response finishes to prevent Cache Invalidation Storm
+    after(async () => {
+      try {
+        const db = payload.db.drizzle
+        await db.execute(
+          sql`UPDATE properties SET views = COALESCE(views, 0) + 1 WHERE id = ${propertyId}`
+        )
+        console.log(`🆕 Unique view registered! Created view ${newView.id}. Incremented property ${propertyId} views in background.`)
+      } catch (err) {
+        console.error("❌ Failed to increment property views in background:", err)
+      }
+    })
 
-    // 8. Caches will naturally refresh when their TTL expires or when the listing details are updated via the Admin panel
+    // 8. If location is null, trigger asynchronous background geolocation fetch
+    if (!location) {
+      console.log("📡 [Track View] Geolocation cache miss. Triggering background resolution...")
+      getIPLocation(ip)
+        .then(async (resolvedLocation) => {
+          if (resolvedLocation) {
+            console.log(`🌍 [Track View Background] IP resolved! Updating view ${newView.id} with location:`, resolvedLocation)
+            const backgroundPayload = await getPayloadClient()
+            await backgroundPayload.update({
+              collection: "property-views",
+              id: newView.id,
+              data: {
+                location: resolvedLocation,
+              },
+            })
+          }
+        })
+        .catch((err) => {
+          console.error("❌ [Track View Background] Failed to resolve IP geolocation:", err)
+        })
+    }
 
     return NextResponse.json({
       success: true,

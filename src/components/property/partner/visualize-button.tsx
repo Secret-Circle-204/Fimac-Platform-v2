@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { CompanySettingsData } from '@/lib/cache/company-settings'
+import type { ConstructionStatus } from '@/payload-types'
 import {
   Dialog,
   DialogContent,
@@ -15,15 +16,11 @@ import Image from 'next/image'
 
 interface VisualizeButtonProps {
   partner?: CompanySettingsData['partner']
-  constructionStatus?: string | null
+  constructionStatus?: string | number | ConstructionStatus | null
 }
 
-export function VisualizeButton({ partner, constructionStatus }: VisualizeButtonProps) {
+export function VisualizeButton({ partner, constructionStatus: _constructionStatus }: VisualizeButtonProps) {
   if (!partner || !partner.isActive || !partner.name) return null
-
-  if (constructionStatus !== 'ready' && constructionStatus !== 'brand_new') {
-    return null
-  }
 
   const logoUrl =
     typeof partner.logo === 'object' && partner.logo && 'url' in partner.logo
@@ -69,7 +66,7 @@ export function VisualizeButton({ partner, constructionStatus }: VisualizeButton
             Your space, styled by {partner.name}
           </DialogTitle>
           <DialogDescription className="text-base text-slate-500 leading-relaxed">
-            This property's spaces have been carefully planned. Discover how {partner.name}'s
+            This property&apos;s spaces have been carefully planned. Discover how {partner.name}&apos;s
             furnishing solutions can bring your new home to life.
           </DialogDescription>
         </DialogHeader>

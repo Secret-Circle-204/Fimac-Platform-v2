@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
 import { getPayloadClient } from "@/db/client"
 import { sendEmail, emailTemplates } from "@/lib/email/nodemailer"
 
@@ -56,15 +56,17 @@ export async function POST(request: NextRequest) {
     })
 
     // Send verification email
-    try {
-      await sendEmail({
-        to: email,
-        ...emailTemplates.verification(verificationCode, full_name),
-      })
-    } catch (emailError) {
-      console.error("Failed to send verification email:", emailError)
-      // Continue anyway - user can request resend
-    }
+    after(async () => {
+      try {
+        await sendEmail({
+          to: email,
+          ...emailTemplates.verification(verificationCode, full_name),
+        })
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError)
+        // Continue anyway - user can request resend
+      }
+    })
 
     // Create user account (unverified)
     const newUser = await payload.create({

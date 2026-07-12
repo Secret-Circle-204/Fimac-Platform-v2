@@ -1,7 +1,12 @@
 import type { CollectionConfig } from 'payload'
-import { listingStatusOptions } from './listing-status-map'
 import { heatingTypeOptions } from './heating-options'
-import { formatAddress, syncLocationHook, revalidatePropertyCache, revalidatePropertyDeleteCache } from './hooks'
+import {
+  formatAddress,
+  syncLocationHook,
+  revalidatePropertyCache,
+  revalidatePropertyDeleteCache,
+  deleteAssociatedPropertyData,
+} from './hooks'
 import {
   diagnosticAccessWrapper,
   measureBeforeValidate,
@@ -18,22 +23,14 @@ export const Properties: CollectionConfig = {
   },
   access: {
     read: diagnosticAccessWrapper('read', () => true),
-    create: diagnosticAccessWrapper(
-      'create',
-      ({ req }) => req.user?.collection === 'users',
-    ),
-    update: diagnosticAccessWrapper(
-      'update',
-      ({ req }) => req.user?.collection === 'users',
-    ),
-    delete: diagnosticAccessWrapper(
-      'delete',
-      ({ req }) => req.user?.collection === 'users',
-    ),
+    create: diagnosticAccessWrapper('create', ({ req }) => req.user?.collection === 'users'),
+    update: diagnosticAccessWrapper('update', ({ req }) => req.user?.collection === 'users'),
+    delete: diagnosticAccessWrapper('delete', ({ req }) => req.user?.collection === 'users'),
   },
   hooks: {
     beforeValidate: [measureBeforeValidate('property_beforeValidate')],
     beforeChange: [syncLocationHook],
+    beforeDelete: [deleteAssociatedPropertyData],
     afterChange: [measureAfterChange('property_afterChange', revalidatePropertyCache)],
     afterRead: [formatAddress],
     afterDelete: [revalidatePropertyDeleteCache],
@@ -74,6 +71,7 @@ export const Properties: CollectionConfig = {
       name: 'views',
       type: 'number',
       defaultValue: 0,
+      index: true,
       admin: {
         description: 'Total tracked property views',
         position: 'sidebar',
@@ -91,6 +89,7 @@ export const Properties: CollectionConfig = {
               name: 'title',
               type: 'text',
               required: true,
+              index: true,
             },
             {
               name: 'description',
@@ -144,24 +143,17 @@ export const Properties: CollectionConfig = {
             },
             {
               name: 'listingStatus',
-              type: 'select',
+              type: 'relationship',
+              relationTo: 'listing-statuses',
               required: true,
               index: true,
-              options: listingStatusOptions,
             },
             {
               name: 'constructionStatus',
-              type: 'select',
+              type: 'relationship',
+              relationTo: 'construction-statuses',
               required: true,
-              defaultValue: 'ready',
               index: true,
-              options: [
-                { label: 'Ready to Move In', value: 'ready' },
-                { label: 'Under Construction', value: 'under_construction' },
-                { label: 'Brand New (First Occupancy)', value: 'brand_new' },
-                { label: 'Off-Plan', value: 'off_plan' },
-                { label: 'Fully Renovated', value: 'renovated' },
-              ],
               admin: {
                 description: 'The physical construction state of the property.',
               },
@@ -173,10 +165,12 @@ export const Properties: CollectionConfig = {
                 {
                   name: 'bedrooms',
                   type: 'number',
+                  index: true,
                 },
                 {
                   name: 'bathrooms',
                   type: 'number',
+                  index: true,
                 },
                 {
                   name: 'squareMeters',
@@ -194,6 +188,16 @@ export const Properties: CollectionConfig = {
                   name: 'heatingType',
                   type: 'select',
                   options: heatingTypeOptions,
+                },
+                {
+                  name: 'features',
+                  type: 'relationship',
+                  relationTo: 'features',
+                  hasMany: true,
+                  index: true,
+                  admin: {
+                    description: 'Select the features for this property.',
+                  },
                 },
               ],
             },
@@ -223,7 +227,8 @@ export const Properties: CollectionConfig = {
               type: 'text',
               label: 'Smart Location Helper',
               admin: {
-                description: 'Paste a Google Maps URL (short/long), coordinates (lat,lng), or search address to auto-fill details.',
+                description:
+                  'Paste a Google Maps URL (short/long), coordinates (lat,lng), or search address to auto-fill details.',
               },
             },
             {
@@ -239,8 +244,20 @@ export const Properties: CollectionConfig = {
                     {
                       type: 'row',
                       fields: [
-                        { name: 'lat', type: 'number', label: 'Latitude', index: true, validate: validateLatField },
-                        { name: 'lng', type: 'number', label: 'Longitude', index: true, validate: validateLngField },
+                        {
+                          name: 'lat',
+                          type: 'number',
+                          label: 'Latitude',
+                          index: true,
+                          validate: validateLatField,
+                        },
+                        {
+                          name: 'lng',
+                          type: 'number',
+                          label: 'Longitude',
+                          index: true,
+                          validate: validateLngField,
+                        },
                       ],
                     },
                   ],
@@ -254,10 +271,10 @@ export const Properties: CollectionConfig = {
                     {
                       type: 'row',
                       fields: [
-                        { name: 'city', type: 'text' },
-                        { name: 'state', type: 'text' },
+                        { name: 'city', type: 'text', index: true },
+                        { name: 'state', type: 'text', index: true },
                         { name: 'country', type: 'text', label: 'Country', defaultValue: 'Egypt' },
-                        { name: 'zip', type: 'text' },
+                        { name: 'zip', type: 'text', index: true },
                       ],
                     },
                     {
@@ -330,16 +347,29 @@ export const Properties: CollectionConfig = {
           ],
         },
         {
-          label: 'Features',
+          label: 'Project',
           fields: [
             {
-              name: 'features',
-              type: 'relationship',
-              relationTo: 'features',
-              hasMany: true,
-              index: true,
+              name: 'hasProject',
+              type: 'checkbox',
+              label: 'Has Project Details',
+              defaultValue: false,
+            },
+            {
+              name: 'projectImage',
+              type: 'upload',
+              relationTo: 'media',
+              label: 'Project Image',
               admin: {
-                description: 'Select the features for this property.',
+                condition: (data) => !!data?.hasProject,
+              },
+            },
+            {
+              name: 'projectDescription',
+              type: 'richText',
+              label: 'Project Description',
+              admin: {
+                condition: (data) => !!data?.hasProject,
               },
             },
           ],

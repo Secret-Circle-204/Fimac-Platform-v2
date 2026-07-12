@@ -37,19 +37,19 @@ export async function GET() {
         ],
       },
       limit: 100,
-      depth: 2,
+      depth: 1,
     })
 
     // 2. Fetch popular/recent active properties as fallback
     const popularProperties = await payload.find({
       collection: "properties",
       where: {
-        listingStatus: {
-          equals: "forsale",
+        'listingStatus.slug': {
+          in: ["forsale", "for-sale"],
         },
       },
       limit: 6,
-      depth: 2,
+      depth: 1,
       sort: "-createdAt",
     })
 
@@ -103,8 +103,8 @@ export async function GET() {
     // 4. Construct smart query based on behavioral attributes
     const andConditions: Where[] = [
       {
-        listingStatus: {
-          equals: "forsale",
+        'listingStatus.slug': {
+          in: ["forsale", "for-sale"],
         },
       },
     ]
@@ -147,7 +147,7 @@ export async function GET() {
       collection: "properties",
       where: behavioralQuery,
       limit: 6,
-      depth: 2,
+      depth: 1,
       sort: "-createdAt",
     })
 
@@ -156,8 +156,8 @@ export async function GET() {
       console.log("⚠️ Restrictive constraints, relaxing behavioral budget limits...")
       const relaxedConditions: Where[] = [
         {
-          listingStatus: {
-            equals: "forsale",
+          'listingStatus.slug': {
+            in: ["forsale", "for-sale"],
           },
         },
         {
@@ -177,7 +177,7 @@ export async function GET() {
         collection: "properties",
         where: { and: relaxedConditions },
         limit: 6,
-        depth: 2,
+        depth: 1,
         sort: "-createdAt",
       })
     }

@@ -403,4 +403,144 @@ export const emailTemplates = {
       ),
     }
   },
+  sellerRequestReceipt: ({
+    fullName,
+    propertyTitle,
+    propertyTypeLabel,
+    askingPrice,
+    currency,
+    propertyLocation,
+    city,
+    state,
+    country,
+    googleMapsUrl,
+    propertySize,
+    bedrooms,
+    bathrooms,
+    constructionStatus,
+  }: {
+    fullName: string
+    propertyTitle: string
+    propertyTypeLabel: string
+    askingPrice: number
+    currency: string
+    propertyLocation: string
+    city: string
+    state: string
+    country: string
+    googleMapsUrl?: string
+    propertySize?: number
+    bedrooms?: number
+    bathrooms?: number
+    constructionStatus?: string
+  }) => ({
+    subject: `FIMAC Group - Listing Request Received: ${propertyTitle}`,
+    html: emailShell({
+      title: 'Listing Request Received',
+      body: `
+        <p>Dear ${fullName},</p>
+        <p>Thank you for submitting your property listing request to <strong>FIMAC Group</strong>. We review all submissions against our standards to ensure absolute quality and compliance.</p>
+        
+        <h3 style="color: #312e81; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-top: 24px;">Property Details</h3>
+        <table width="100%" cellpadding="6" cellspacing="0" style="font-size: 14px; margin-top: 12px;">
+          <tr><td width="35%"><strong>Title:</strong></td><td>${propertyTitle}</td></tr>
+          <tr><td><strong>Type:</strong></td><td>${propertyTypeLabel}</td></tr>
+          <tr><td><strong>Asking Price:</strong></td><td>${askingPrice.toLocaleString()} ${currency}</td></tr>
+          <tr><td><strong>Location:</strong></td><td>${propertyLocation}, ${city}, ${state}, ${country}</td></tr>
+          ${propertySize ? `<tr><td><strong>Size:</strong></td><td>${propertySize} Sq M</td></tr>` : ''}
+          ${bedrooms ? `<tr><td><strong>Bedrooms:</strong></td><td>${bedrooms}</td></tr>` : ''}
+          ${bathrooms ? `<tr><td><strong>Bathrooms:</strong></td><td>${bathrooms}</td></tr>` : ''}
+          ${constructionStatus ? `<tr><td><strong>Status:</strong></td><td>${constructionStatus === 'ready' ? 'Ready to Move In' : constructionStatus}</td></tr>` : ''}
+          ${googleMapsUrl ? `<tr><td><strong>Coordinates Pin:</strong></td><td><a href="${googleMapsUrl}" target="_blank" style="color: #312e81; font-weight: bold;">View on Google Maps</a></td></tr>` : ''}
+        </table>
+        
+        <p style="margin-top: 24px;">Our regional consultants will audit this request and contact you within 24 to 48 hours. Please prepare your international valuation files and HD photos prior to our call.</p>
+      `,
+      cta: googleMapsUrl ? { label: 'View Pin on Google Maps', url: googleMapsUrl } : undefined,
+    }),
+    text: plainText([
+      `Dear ${fullName},`,
+      `We have received your listing request for: ${propertyTitle}`,
+      `Asking Price: ${askingPrice} ${currency}`,
+      `Location: ${propertyLocation}, ${city}, ${state}, ${country}`,
+      `FIMAC Group will contact you within 24-48 hours.`,
+    ]),
+  }),
+  sellerRequestAdminNotification: ({
+    sellerName,
+    sellerEmail,
+    sellerPhone,
+    propertyTitle,
+    propertyTypeLabel,
+    askingPrice,
+    currency,
+    propertyLocation,
+    city,
+    state,
+    country,
+    latitude,
+    longitude,
+    googleMapsUrl,
+    propertySize,
+    bedrooms,
+    bathrooms,
+    constructionStatus,
+    adminUrl,
+  }: {
+    sellerName: string
+    sellerEmail: string
+    sellerPhone: string
+    propertyTitle: string
+    propertyTypeLabel: string
+    askingPrice: number
+    currency: string
+    propertyLocation: string
+    city: string
+    state: string
+    country: string
+    latitude?: number
+    longitude?: number
+    googleMapsUrl?: string
+    propertySize?: number
+    bedrooms?: number
+    bathrooms?: number
+    constructionStatus?: string
+    adminUrl: string
+  }) => ({
+    subject: `[New Listing Request] ${propertyTitle} from ${sellerName}`,
+    html: emailShell({
+      title: 'New Seller Request Submitted',
+      body: `
+        <p>A new listing request has been submitted by a registered seller and is awaiting review in the CRM.</p>
+        
+        <h3 style="color: #312e81; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-top: 24px;">Seller Profile</h3>
+        <table width="100%" cellpadding="6" cellspacing="0" style="font-size: 14px; margin-top: 12px;">
+          <tr><td width="35%"><strong>Name:</strong></td><td>${sellerName}</td></tr>
+          <tr><td><strong>Email:</strong></td><td><a href="mailto:${sellerEmail}">${sellerEmail}</a></td></tr>
+          <tr><td><strong>Phone:</strong></td><td>${sellerPhone}</td></tr>
+        </table>
+        
+        <h3 style="color: #312e81; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; margin-top: 24px;">Asset Characteristics</h3>
+        <table width="100%" cellpadding="6" cellspacing="0" style="font-size: 14px; margin-top: 12px;">
+          <tr><td width="35%"><strong>Title:</strong></td><td>${propertyTitle}</td></tr>
+          <tr><td><strong>Type:</strong></td><td>${propertyTypeLabel}</td></tr>
+          <tr><td><strong>Asking Price:</strong></td><td>${askingPrice.toLocaleString()} ${currency}</td></tr>
+          <tr><td><strong>Address:</strong></td><td>${propertyLocation}, ${city}, ${state}, ${country}</td></tr>
+          ${propertySize ? `<tr><td><strong>Size:</strong></td><td>${propertySize} Sq M</td></tr>` : ''}
+          ${bedrooms ? `<tr><td><strong>Bedrooms:</strong></td><td>${bedrooms}</td></tr>` : ''}
+          ${bathrooms ? `<tr><td><strong>Bathrooms:</strong></td><td>${bathrooms}</td></tr>` : ''}
+          ${constructionStatus ? `<tr><td><strong>Status:</strong></td><td>${constructionStatus === 'ready' ? 'Ready to Move In' : constructionStatus}</td></tr>` : ''}
+          ${latitude && longitude ? `<tr><td><strong>Coordinates:</strong></td><td>${latitude}, ${longitude}</td></tr>` : ''}
+          ${googleMapsUrl ? `<tr><td><strong>Google Maps Link:</strong></td><td><a href="${googleMapsUrl}" target="_blank" style="color: #312e81; font-weight: bold;">Locate Asset on Google Maps</a></td></tr>` : ''}
+        </table>
+      `,
+      cta: { label: 'Open CRM Request', url: adminUrl },
+    }),
+    text: plainText([
+      `New seller request submitted by ${sellerName} (${sellerEmail}).`,
+      `Asset: ${propertyTitle}`,
+      `Price: ${askingPrice} ${currency}`,
+      `Open Request: ${adminUrl}`,
+    ]),
+  }),
 }

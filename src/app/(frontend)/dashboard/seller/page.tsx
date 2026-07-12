@@ -2,16 +2,17 @@ import { requireSeller } from '@/lib/auth/get-current-user'
 import { redirect } from 'next/navigation'
 import { getPayloadClient } from '@/db/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { sql } from '@payloadcms/db-postgres'
 
 import { Button } from '@/components/ui/button'
 import { Building2, Eye, TrendingUp, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { SellerPortfolioClient } from './portfolio-client'
 import type { SiblingProperty } from './portfolio-client'
-import { local } from '@/repository'
-import type { Where } from 'payload'
-import { geocodeSearch } from '@/lib/location/geocode-search'
 import { getCachedPropertyTypes } from '@/lib/cache/property-types'
+import { getCachedListingStatuses } from '@/lib/cache/listing-statuses'
+import { SellerDashboardRepository, DashboardSellerRequest } from '@/repository/dashboard/seller-dashboard-repository'
+import { SellerRequestsClient } from './requests-client'
 
 function toTitleCase(str: string): string {
   return str
@@ -45,15 +46,26 @@ export default async function SellerDashboard({
   const type = typeof resolvedParams.type === 'string' ? resolvedParams.type : 'all'
   const country = typeof resolvedParams.country === 'string' ? resolvedParams.country : 'all'
   const state = typeof resolvedParams.state === 'string' ? resolvedParams.state : 'all'
-  const quickPrice = typeof resolvedParams.quickPrice === 'string' ? resolvedParams.quickPrice : 'all'
   const status = typeof resolvedParams.status === 'string' ? resolvedParams.status : 'all'
   const city = typeof resolvedParams.city === 'string' ? resolvedParams.city : 'all'
 
   let properties: SiblingProperty[] = []
+  let sellerRequests: DashboardSellerRequest[] = []
   let propertyTypeOptions: Array<{ label: string; value: string }> = []
+  let listingStatusOptions: Array<{ label: string; value: string }> = []
   let countryOptions: Array<{ label: string; value: string }> = []
   let stateOptions: Array<{ label: string; value: string }> = []
   let cityOptions: Array<{ label: string; value: string }> = []
+  let resultPagination = {
+    page: 1,
+    totalPages: 1,
+    totalDocs: 0,
+  }
+  let requestsPagination = {
+    page: 1,
+    totalPages: 1,
+    totalDocs: 0,
+  }
   let stats = {
     totalProperties: 0,
     totalViews: 0,
@@ -63,272 +75,155 @@ export default async function SellerDashboard({
   try {
     const payload = await getPayloadClient()
 
-    // 1. Fetch overall analytics stats (unfiltered for this seller)
-    const statsResult = await payload.find({
-      collection: 'properties',
-      where: {
-        seller: {
-          equals: user.id,
-        },
-      },
-      depth: 0,
-      limit: 1000,
-    })
+    // 1. Fetch overall analytics stats (unfiltered for this seller) using direct SQL aggregation
+    const db = payload.db.drizzle
+     const statsQueryRaw = await db.execute(
+      sql`SELECT 
+            COUNT(*) FILTER (WHERE listing_status_id IN (SELECT id FROM listing_statuses WHERE slug IN ('forsale', 'for-sale', 'sold')))::int as total_properties,
+            COALESCE(SUM(views) FILTER (WHERE listing_status_id IN (SELECT id FROM listing_statuses WHERE slug IN ('forsale', 'for-sale', 'sold'))), 0)::int as total_views,
+            COUNT(*) FILTER (WHERE listing_status_id IN (SELECT id FROM listing_statuses WHERE slug IN ('forsale', 'for-sale')))::int as active_listings
+          FROM properties 
+          WHERE seller_id = ${Number(user.id)}`
+    )
 
-    const totalViews = statsResult.docs.reduce((acc, p) => acc + (p.views || 0), 0)
-    const activeListings = statsResult.docs.filter((p) => p.listingStatus === 'forsale').length
+    let totalProperties = 0
+    let totalViews = 0
+    let activeListings = 0
+
+    const row = Array.isArray(statsQueryRaw) ? statsQueryRaw[0] : (statsQueryRaw.rows ? statsQueryRaw.rows[0] : null)
+    if (row) {
+      const typedRow = row as { total_properties?: number; total_views?: number; active_listings?: number }
+      totalProperties = typedRow.total_properties || 0
+      totalViews = typedRow.total_views || 0
+      activeListings = typedRow.active_listings || 0
+    }
 
     stats = {
-      totalProperties: statsResult.totalDocs,
+      totalProperties,
       totalViews,
       activeListings,
     }
 
-    // 2. Fetch Property Type Options
-    const typesData = await getCachedPropertyTypes()
+    // 2. Fetch Property Type & Listing Status Options
+    const [typesData, listingStatuses] = await Promise.all([
+      getCachedPropertyTypes(),
+      getCachedListingStatuses(),
+    ])
     propertyTypeOptions = typesData.map((t) => ({
       label: t.name,
       value: t.slug,
     }))
+    listingStatusOptions = listingStatuses
+      .filter((status) => status.slug === 'forsale' || status.slug === 'for-sale' || status.slug === 'sold')
+      .map((status) => ({
+        label: (status.slug === 'forsale' || status.slug === 'for-sale') ? 'Open Contract' : 'Closed Contract',
+        value: status.slug,
+      }))
 
-    // Extract unique active countries for this seller
-    const uniqueCountries = Array.from(
-      new Set(
-        statsResult.docs
-          .map((p) => {
-            const rawCountry = p.location?.address?.country?.trim() || 'Egypt'
-            return toTitleCase(rawCountry)
-          })
-          .filter(Boolean)
-      )
-    ).sort()
-    countryOptions = uniqueCountries.map((c) => ({
+    // 2.5 Extract unique active countries, states, and cities for this seller using direct SQL SELECT DISTINCT
+    const locationsQuery = await db.execute(
+      sql`SELECT DISTINCT 
+            COALESCE(location_address_country, 'Egypt') as country,
+            location_address_state as state,
+            location_address_city as city
+          FROM properties 
+          WHERE seller_id = ${Number(user.id)}`
+    )
+
+    const locationRows = Array.isArray(locationsQuery) ? locationsQuery : (locationsQuery.rows || [])
+    
+    const countriesSet = new Set<string>()
+    const statesSet = new Set<string>()
+    const citiesSet = new Set<string>()
+
+    for (const r of locationRows) {
+      const rowData = r as { country?: string; state?: string; city?: string }
+      if (rowData.country) {
+        countriesSet.add(toTitleCase(rowData.country.trim()))
+      }
+      if (rowData.state) {
+        statesSet.add(toTitleCase(rowData.state.trim()))
+      }
+      if (rowData.city) {
+        citiesSet.add(toTitleCase(rowData.city.trim()))
+      }
+    }
+
+    countryOptions = Array.from(countriesSet).sort().map((c) => ({
       label: c,
       value: c,
     }))
 
-    // Extract unique active states for this seller
-    const uniqueStates = Array.from(
-      new Set(
-        statsResult.docs
-          .map((p) => {
-            const rawState = p.location?.address?.state?.trim()
-            return rawState ? toTitleCase(rawState) : ''
-          })
-          .filter(Boolean)
-      )
-    ).sort()
-    stateOptions = uniqueStates.map((s) => ({
+    stateOptions = Array.from(statesSet).sort().map((s) => ({
       label: s,
       value: s,
     }))
 
-    // Extract unique active cities for this seller
-    const uniqueCities = Array.from(
-      new Set(
-        statsResult.docs
-          .map((p) => {
-            const rawCity = p.location?.address?.city?.trim()
-            return rawCity ? toTitleCase(rawCity) : ''
-          })
-          .filter(Boolean)
-      )
-    ).sort()
-    cityOptions = uniqueCities.map((c) => ({
+    cityOptions = Array.from(citiesSet).sort().map((c) => ({
       label: c,
       value: c,
     }))
 
-    // 3. Construct filtered query for seller's properties
-    const andConditions: Where[] = [
-      {
-        seller: {
-          equals: user.id,
+    const page = typeof resolvedParams.page === 'string' ? Math.max(1, parseInt(resolvedParams.page) || 1) : 1
+    const reqPage = typeof resolvedParams.reqPage === 'string' ? Math.max(1, parseInt(resolvedParams.reqPage) || 1) : 1
+    const sort = typeof resolvedParams.sort === 'string' ? resolvedParams.sort : 'newest'
+
+    const [propertiesResult, requestsResult] = await Promise.all([
+      SellerDashboardRepository.getSellerProperties(
+        user.id,
+        {
+          type,
+          country,
+          state,
+          city,
+          status,
+          location,
+          lat,
+          lng,
+          radius,
         },
-      },
-    ]
-
-    // Type Filter
-    if (type !== 'all') {
-      andConditions.push({
-        'propertyType.slug': {
-          equals: type,
-        },
-      })
-    }
-
-    // Country Filter
-    if (country !== 'all') {
-      andConditions.push({
-        or: [
-          { 'location.address.country': { contains: country } },
-          ...(country.toLowerCase() === 'egypt'
-            ? [
-                { 'location.address.country': { exists: false } },
-                { 'location.address.country': { equals: null } },
-              ]
-            : []),
-        ],
-      })
-    }
-
-    // State Filter
-    if (state !== 'all') {
-      andConditions.push({
-        'location.address.state': {
-          contains: state,
-        },
-      })
-    }
-
-    // City Filter
-    if (city !== 'all') {
-      andConditions.push({
-        'location.address.city': {
-          contains: city, // Case-insensitive exact word containment
-        },
-      })
-    }
-
-    // Price Filter
-    if (quickPrice !== 'all') {
-      if (quickPrice === '0-1m') {
-        andConditions.push({ price: { less_than: 1000000 } })
-      } else if (quickPrice === '1m-3m') {
-        andConditions.push({ price: { greater_than_equal: 1000000, less_than: 3000000 } })
-      } else if (quickPrice === '3m-5m') {
-        andConditions.push({ price: { greater_than_equal: 3000000, less_than: 5000000 } })
-      } else if (quickPrice === '5m-10m') {
-        andConditions.push({ price: { greater_than_equal: 5000000, less_than: 10000000 } })
-      } else if (quickPrice === '10m+') {
-        andConditions.push({ price: { greater_than_equal: 10000000 } })
-      }
-    }
-
-    // Status Filter
-    if (status !== 'all') {
-      andConditions.push({
-        listingStatus: {
-          equals: status,
-        },
-      })
-    }
-
-    // Location / Spatial Filter (Parallelized geocoding & database legacy search)
-    const [locationIds, geoBox] = await Promise.all([
-      location
-        ? local.location
-            .getAll(
-              {
-                or: [
-                  { city: { contains: location } },
-                  { state_name: { contains: location } },
-                  { state_abbr: { contains: location } },
-                  { zip: { contains: location } },
-                ],
-              },
-              {
-                depth: 0,
-                select: { id: true },
-              },
-            )
-            .then((locs) => locs.map((l) => l.id))
-        : Promise.resolve([] as (string | number)[]),
-      location ? geocodeSearch(location) : Promise.resolve(null),
+        page,
+        sort
+      ),
+      SellerDashboardRepository.getSellerRequests(user.id, reqPage),
     ])
 
-    if (location) {
-      const orConditions: Where[] = [
-        { title: { contains: location } },
-        { 'location.address.city': { contains: location } },
-        { 'location.address.state': { contains: location } },
-        { 'location.address.zip': { contains: location } },
-        ...(locationIds.length > 0 ? [{ location_legacy: { in: locationIds } }] : []),
-      ]
+    let redirectRequired = false
+    const redirectParams = new URLSearchParams()
 
-      if (geoBox) {
-        orConditions.push({
-          and: [
-            { 'location.geo.lat': { greater_than_equal: geoBox.minLat } },
-            { 'location.geo.lat': { less_than_equal: geoBox.maxLat } },
-            { 'location.geo.lng': { greater_than_equal: geoBox.minLng } },
-            { 'location.geo.lng': { less_than_equal: geoBox.maxLng } },
-          ],
-        })
+    Object.entries(resolvedParams).forEach(([key, val]) => {
+      if (val !== undefined) {
+        redirectParams.set(key, Array.isArray(val) ? val.join(',') : val.toString())
       }
-
-      andConditions.push({
-        or: orConditions,
-      })
-    } else if (lat !== null && lng !== null) {
-      const kmPerDegree = 111
-      const latDelta = radius / kmPerDegree
-      const lngDelta = radius / (kmPerDegree * Math.cos((lat * Math.PI) / 180))
-
-      andConditions.push({
-        'location.geo.lat': { greater_than_equal: lat - latDelta },
-      })
-      andConditions.push({
-        'location.geo.lat': { less_than_equal: lat + latDelta },
-      })
-      andConditions.push({
-        'location.geo.lng': { greater_than_equal: lng - lngDelta },
-      })
-      andConditions.push({
-        'location.geo.lng': { less_than_equal: lng + lngDelta },
-      })
-    }
-
-    const whereClause: Where = {
-      and: andConditions,
-    }
-
-    const result = await payload.find({
-      collection: 'properties',
-      where: whereClause,
-      depth: 2,
-      limit: 100,
     })
 
-    properties = result.docs.map((doc) => ({
-      id: doc.id,
-      title: doc.title,
-      price: doc.price,
-      currency: doc.currency,
-      listingStatus: doc.listingStatus,
-      views: doc.views,
-      location: doc.location
-        ? {
-            address: doc.location.address
-              ? {
-                  fullAddress: doc.location.address.fullAddress,
-                  country: doc.location.address.country,
-                  city: doc.location.address.city,
-                  state: doc.location.address.state,
-                  street: doc.location.address.street,
-                }
-              : null,
-          }
-        : null,
-      propertyType:
-        doc.propertyType && typeof doc.propertyType === 'object'
-          ? {
-              name: doc.propertyType.name,
-            }
-          : null,
-      photos: doc.photos
-        ? (doc.photos
-            .map((p) =>
-              p && typeof p === 'object'
-                ? {
-                    url: p.url,
-                    id: p.id ? String(p.id) : undefined,
-                  }
-                : null,
-            )
-            .filter((p) => p !== null) as { url?: string | null; id?: string | null }[])
-        : null,
-    }))
+    if (propertiesResult.shouldRedirect && propertiesResult.redirectToPage) {
+      redirectParams.set('page', propertiesResult.redirectToPage.toString())
+      redirectRequired = true
+    }
+
+    if (requestsResult.shouldRedirect && requestsResult.redirectToPage) {
+      redirectParams.set('reqPage', requestsResult.redirectToPage.toString())
+      redirectRequired = true
+    }
+
+    if (redirectRequired) {
+      redirect(`/dashboard/seller?${redirectParams.toString()}`)
+    }
+
+    properties = propertiesResult.docs
+    resultPagination = {
+      page: propertiesResult.page,
+      totalPages: propertiesResult.totalPages,
+      totalDocs: propertiesResult.totalDocs,
+    }
+
+    sellerRequests = requestsResult.docs
+    requestsPagination = {
+      page: requestsResult.page,
+      totalPages: requestsResult.totalPages,
+      totalDocs: requestsResult.totalDocs,
+    }
   } catch (error) {
     console.error('Error fetching seller properties:', error)
   }
@@ -437,13 +332,25 @@ export default async function SellerDashboard({
           </Card>
         </div>
 
+        {/* Listing Requests Status Tracker */}
+        <SellerRequestsClient
+          initialRequests={sellerRequests}
+          currentPage={requestsPagination.page}
+          totalPages={requestsPagination.totalPages}
+          totalCount={requestsPagination.totalDocs}
+        />
+
         {/* Portfolio Live Manager */}
         <SellerPortfolioClient
           initialProperties={properties}
           propertyTypeOptions={propertyTypeOptions}
+          listingStatusOptions={listingStatusOptions}
           cityOptions={cityOptions}
           stateOptions={stateOptions}
           countryOptions={countryOptions}
+          currentPage={resultPagination.page}
+          totalPages={resultPagination.totalPages}
+          totalCount={resultPagination.totalDocs}
         />
       </div>
     </div>

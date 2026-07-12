@@ -24,28 +24,5 @@ export const Features: CollectionConfig = {
         description: 'Name of the feature (e.g., "Hardwood Floors", "Swimming Pool")',
       },
     },
-    {
-      name: 'category',
-      type: 'select',
-      required: true,
-      options: [
-        {
-          label: 'Interior',
-          value: 'interior',
-        },
-        {
-          label: 'Exterior',
-          value: 'exterior',
-        },
-        {
-          label: 'Community',
-          value: 'community',
-        },
-        {
-          label: 'Other',
-          value: 'other',
-        },
-      ],
-    },
   ],
 }

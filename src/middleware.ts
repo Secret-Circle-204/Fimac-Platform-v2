@@ -18,7 +18,9 @@ export function middleware(request: NextRequest) {
 
   // الحصول على معرف العميل (IP أو User ID)
   const clientId =
-    request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown'
 
   // تحديد الحد المناسب حسب المسار
   let limitPreset = RATE_LIMIT_PRESETS.API // الافتراضي للـ API
@@ -39,8 +41,20 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // التحقق من Rate Limiting
-  if (!checkRateLimit(clientId, limitPreset)) {
+  // التحقق من Rate Limiting (يتم تخطيه في التطوير المحلي لتجنب حظر المطور أثناء العمل)
+  const isDev = process.env.NODE_ENV === 'development'
+  const isLocal = clientId === '::1' || clientId === '127.0.0.1' || clientId === 'unknown'
+
+  if (!isDev && !isLocal && !checkRateLimit(clientId, limitPreset)) {
+    const acceptHeader = request.headers.get('accept') || ''
+    if (acceptHeader.includes('application/json') || request.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Too Many Requests' }, {
+        status: 429,
+        headers: {
+          'Retry-After': '900', // 15 دقيقة
+        },
+      })
+    }
     return new NextResponse('Too Many Requests', {
       status: 429,
       headers: {

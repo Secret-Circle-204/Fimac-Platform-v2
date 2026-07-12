@@ -6,13 +6,8 @@ interface PartnerBadgeProps {
   constructionStatus?: string | null
 }
 
-export function PartnerBadge({ partner, constructionStatus }: PartnerBadgeProps) {
+export function PartnerBadge({ partner, constructionStatus: _constructionStatus }: PartnerBadgeProps) {
   if (!partner || !partner.isActive || !partner.name) return null
-  
-  // Only show if the property is ready or brand new
-  if (constructionStatus !== 'ready' && constructionStatus !== 'brand_new') {
-    return null
-  }
 
   return (
     <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-600 px-4 py-2 rounded-full border border-amber-500/20 shadow-sm animate-in fade-in zoom-in duration-500 mb-4">

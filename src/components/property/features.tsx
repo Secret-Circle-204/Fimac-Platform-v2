@@ -1,35 +1,29 @@
 "use client"
-import { Feature } from "@/payload-types"
 import { useProperty } from "../providers/property"
 
 export const PropertyFeatures = () => {
   const property = useProperty()
-  const groupedFeatures = property.features.reduce(
-    (acc, feature) => {
-      acc[feature.category] = [...(acc[feature.category] || []), feature]
-      return acc
-    },
-    {} as Record<string, Feature[]>,
-  )
+  const features = property.features
+
+  if (!features || features.length === 0) {
+    return null
+  }
+
   return (
-    <div className="bg-white rounded-lg p-6">
+    <div className="bg-white rounded-[32px] p-6 md:p-8 shadow-sm-soft border border-gray-100/50">
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-2xl font-semibold leading-none mb-4">Features</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-navy-deep leading-none mb-6">Features & Amenities</h2>
         </div>
         <div>
-          <div className="grid grid-cols-2 gap-2">
-            {Object.entries(groupedFeatures).map(([category, features]) => (
-              <div key={category}>
-                <h3 className="text-base font-semibold mb-3 capitalize">{category}</h3>
-                <ul className="list-disc list-inside flex flex-col gap-2">
-                  {features.map((feature) => (
-                    <li key={feature.id}>{feature.name}</li>
-                  ))}
-                </ul>
-              </div>
+          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6 text-gray-700">
+            {features.map((feature) => (
+              <li key={feature.id} className="flex items-center gap-3">
+                <span className="w-2 h-2 rounded-full bg-gold-royal shrink-0" />
+                <span className="text-base font-medium text-slate-700">{feature.name}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </div>
     </div>

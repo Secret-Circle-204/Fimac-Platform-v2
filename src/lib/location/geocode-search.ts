@@ -6,6 +6,17 @@ export type GeoBoundingBox = {
   displayName: string
 }
 
+// Global hot-reload-safe cache for geocoded queries
+const globalForGeocode = globalThis as unknown as {
+  geocodeCache: Map<string, GeoBoundingBox | null>
+}
+
+const geocodeCache = globalForGeocode.geocodeCache || new Map<string, GeoBoundingBox | null>()
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForGeocode.geocodeCache = geocodeCache
+}
+
 /**
  * Geocodes a search query using the public, free OpenStreetMap Nominatim API.
  * Uses a short timeout to prevent slow responses from blocking page load.
@@ -13,6 +24,12 @@ export type GeoBoundingBox = {
 export async function geocodeSearch(query: string): Promise<GeoBoundingBox | null> {
   if (!query || query.trim().length < 2) {
     return null
+  }
+
+  const cacheKey = query.trim().toLowerCase()
+  if (geocodeCache.has(cacheKey)) {
+    console.log(`🎯 [Geocode Cache] Cache hit for query "${cacheKey}"`)
+    return geocodeCache.get(cacheKey) || null
   }
 
   // Define a custom controller to enforce a strict timeout
@@ -41,10 +58,17 @@ export async function geocodeSearch(query: string): Promise<GeoBoundingBox | nul
     const data = await response.json()
 
     if (!Array.isArray(data) || data.length === 0) {
+      // Cache empty result to prevent repeated failed lookups
+      if (geocodeCache.size >= 1000) {
+        const firstKey = geocodeCache.keys().next().value
+        if (firstKey !== undefined) geocodeCache.delete(firstKey)
+      }
+      geocodeCache.set(cacheKey, null)
       return null
     }
 
     const result = data[0]
+    let boundingBoxResult: GeoBoundingBox | null = null
     
     // Check if the place has a bounding box and is of reasonable importance
     if (Array.isArray(result.boundingbox) && result.boundingbox.length === 4) {
@@ -54,7 +78,7 @@ export async function geocodeSearch(query: string): Promise<GeoBoundingBox | nul
       const maxLng = parseFloat(result.boundingbox[3])
 
       if (!isNaN(minLat) && !isNaN(maxLat) && !isNaN(minLng) && !isNaN(maxLng)) {
-        return {
+        boundingBoxResult = {
           minLat,
           maxLat,
           minLng,
@@ -64,7 +88,14 @@ export async function geocodeSearch(query: string): Promise<GeoBoundingBox | nul
       }
     }
 
-    return null
+    // Cache the result
+    if (geocodeCache.size >= 1000) {
+      const firstKey = geocodeCache.keys().next().value
+      if (firstKey !== undefined) geocodeCache.delete(firstKey)
+    }
+    geocodeCache.set(cacheKey, boundingBoxResult)
+
+    return boundingBoxResult
   } catch (error) {
     // Silently handle timeouts or network errors
     console.warn(`[GeocodeSearch] Failed to geocode query "${query}":`, error)

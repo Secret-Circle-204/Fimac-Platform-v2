@@ -36,6 +36,14 @@ describe('Multi-Currency Property Pricing Integration', () => {
       const rates = await getExchangeRates()
       const priceVal = 5000000 // 5 Million
       
+      // Fetch dynamic forsale listing status ID
+      const statusRes = await payload.find({
+        collection: 'listing-statuses',
+        where: { slug: { equals: 'forsale' } },
+        limit: 1,
+      })
+      const forsaleId = statusRes.docs[0]?.id
+
       const property = await payload.create({
         collection: 'properties',
         data: {
@@ -43,7 +51,7 @@ describe('Multi-Currency Property Pricing Integration', () => {
           description: 'A temporary property for multi-currency testing.',
           price: priceVal,
           currency: 'EGP',
-          listingStatus: 'forsale',
+          listingStatus: forsaleId,
           constructionStatus: 'ready',
         },
       })

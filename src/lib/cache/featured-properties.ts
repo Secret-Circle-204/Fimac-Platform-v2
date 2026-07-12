@@ -18,12 +18,13 @@ export const getCachedFeaturedProperties = async () => {
       console.log(`⚡ [CACHE MISS]: featured-properties-list (Querying PostgreSQL Remote DB...)`)
       const data = await local.property._getRawInternal(
         {
-          listingStatus: {
-            equals: "forsale",
+          'listingStatus.slug': {
+            in: ["forsale", "for-sale"],
           },
         },
         {
           depth: 1,
+          limit: 12,
           select: {
             title: true,
             price: true,

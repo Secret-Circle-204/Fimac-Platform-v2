@@ -68,34 +68,11 @@ export const Sellers: CollectionConfig = {
       name: 'properties_count',
       type: 'number',
       label: 'Linked Properties Count',
+      defaultValue: 0,
       admin: {
         readOnly: true,
         position: 'sidebar',
         description: 'Total number of properties listed on the platform for this seller',
-      },
-      hooks: {
-        afterRead: [
-          async ({ data, req, siblingData }) => {
-            const id = data?.id || siblingData?.id
-            if (!id) return 0
-            try {
-              const properties = await req.payload.find({
-                collection: 'properties',
-                where: {
-                  seller: {
-                    equals: id,
-                  },
-                },
-                limit: 1,
-                depth: 0,
-              })
-              return properties.totalDocs
-            } catch (err) {
-              console.error('Error fetching properties count:', err)
-              return 0
-            }
-          },
-        ],
       },
     },
   ],

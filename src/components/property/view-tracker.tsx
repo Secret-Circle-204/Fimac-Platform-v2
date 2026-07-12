@@ -165,6 +165,11 @@ export function ViewTracker({ propertyId, ownerId }: ViewTrackerProps) {
             clientLocation,
           }),
         })
+        if (!response.ok) {
+          const text = await response.text()
+          console.warn(`⚠️ Failed to track view: ${response.status} (${text})`)
+          return
+        }
         const data = await response.json()
         console.log("✅ View tracked successfully:", data)
       } catch (err) {

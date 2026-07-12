@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 
-import { Hand } from 'lucide-react'
+import { Hand, ChevronLeft, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 
 import { useSoundEffects } from './hooks/use-sound-effects'
 import { useVoiceNarrator, buildPropertyNarration } from './hooks/use-voice-narrator'
@@ -396,7 +397,7 @@ export function FeaturedPropertiesClient({ properties }: { properties: CarouselP
         {/* 3D Carousel Stage */}
         <div
           ref={containerRef}
-          className="carousel3d-stage h-[700px] md:h-[560px]"
+          className="carousel3d-stage h-[700px] md:h-[560px] relative"
           onMouseDown={handleDragStart}
           onMouseMove={handleDragMove}
           onMouseUp={handleDragEnd}
@@ -405,6 +406,22 @@ export function FeaturedPropertiesClient({ properties }: { properties: CarouselP
           onTouchMove={handleDragMove}
           onTouchEnd={handleDragEnd}
         >
+          {/* Desktop Navigation Arrows - Thin design & positioned lower */}
+          <button
+            onClick={() => navigate(-1)}
+            className="carousel3d-nav-arrow carousel3d-nav-arrow--prev"
+            aria-label="Previous property"
+          >
+            <ChevronLeft size={28} strokeWidth={1} />
+          </button>
+          <button
+            onClick={() => navigate(1)}
+            className="carousel3d-nav-arrow carousel3d-nav-arrow--next"
+            aria-label="Next property"
+          >
+            <ChevronRight size={28} strokeWidth={1} />
+          </button>
+
           <div className="carousel3d-track">
             {properties.map((property, index) => {
               const offset = getOffset(index)
@@ -468,6 +485,13 @@ export function FeaturedPropertiesClient({ properties }: { properties: CarouselP
             setTimeout(() => setIsTransitioning(false), 600)
           }}
         />
+
+        {/* View All Properties button below controls */}
+        <div className="carousel3d-view-all-container animate-fade-in">
+          <Link href="/search" className="carousel3d-view-all-btn">
+            View All Properties
+          </Link>
+        </div>
       </div>
 
       {/* Fullscreen Gallery */}

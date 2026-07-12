@@ -1,6 +1,7 @@
 import { cookies } from "next/headers"
 import { jwtVerify } from "jose"
 import { getPayloadClient } from "@/db/client"
+import { cache } from "react"
 
 export type CurrentUser = {
   id: string
@@ -96,7 +97,7 @@ type GetCurrentUserOptions = {
   headers?: Headers
 }
 
-export async function getCurrentUser(options?: GetCurrentUserOptions): Promise<CurrentUser | null> {
+export const getCurrentUser = cache(async (options?: GetCurrentUserOptions): Promise<CurrentUser | null> => {
   if (options?.headers) {
     const headerUser = await authenticateViaHeaders(options.headers)
     if (headerUser) {
@@ -137,7 +138,7 @@ export async function getCurrentUser(options?: GetCurrentUserOptions): Promise<C
   }
 
   return null
-}
+})
 
 export async function requireAuth(): Promise<CurrentUser> {
   const user = await getCurrentUser()

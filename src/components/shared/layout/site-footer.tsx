@@ -1,6 +1,8 @@
 import { Logo } from "@/components/logo"
 import Link from "next/link"
-export const Footer = () => {
+import type { CurrentUser } from "@/lib/auth/get-current-user"
+
+export const Footer = ({ user }: { user?: CurrentUser | null }) => {
   return (
     <footer className="bg-background text-foreground">
       <div className="container mx-auto px-4 py-12">
@@ -115,11 +117,13 @@ export const Footer = () => {
                     Contact
                   </Link>
                 </li>
-                <li>
-                  <Link href="/sell" className="text-muted-foreground hover:text-primary">
-                    Sell Your Property
-                  </Link>
-                </li>
+                {user?.role === "seller" && (
+                  <li>
+                    <Link href="/sell" className="text-muted-foreground hover:text-primary">
+                      Sell Your Property
+                    </Link>
+                  </li>
+                )}
               </ul>
             </div>
           </div>

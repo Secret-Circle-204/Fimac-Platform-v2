@@ -11,6 +11,7 @@ import { formatDistanceToNow } from "date-fns"
 import { unstable_cache } from "next/cache"
 import { cache } from "react"
 import { after } from "next/server"
+import { sql } from "@payloadcms/db-postgres"
 
 // Deduplicated and cached single post lookup (Server Caching Layer)
 const getPost = cache(async (slug: string) => {
@@ -90,19 +91,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     notFound()
   }
 
-  // Schedule DB write in background thread. Next.js 15 will NOT block visual rendering!
+  // Schedule DB write in background thread without triggering Payload hooks (Cache Invalidation Storm)
   after(async () => {
     try {
       const payload = await getPayloadClient()
-      await payload.update({
-        collection: "blog-posts",
-        id: post.id,
-        data: {
-          views: (post.views || 0) + 1,
-        },
-      })
+      const db = payload.db.drizzle
+      await db.execute(sql`UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ${Number(post.id)}`)
     } catch (err) {
-      console.error("Background task error updating view count:", err)
+      console.error("Background task error incrementing blog view count:", err)
     }
   })
 

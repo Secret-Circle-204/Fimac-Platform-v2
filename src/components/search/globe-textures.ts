@@ -7,5 +7,5 @@ export const GLOBE_TEXTURES = {
   earthNight: "/earth/2k_earth_night.jpg",
 
   // Starry background
-  starrySky: "//unpkg.com/three-globe/example/img/night-sky.png",
+  starrySky: "https://unpkg.com/three-globe/example/img/night-sky.png",
 }

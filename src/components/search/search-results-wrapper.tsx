@@ -25,9 +25,11 @@ const AnimatedGlobe = dynamic(
 
 interface SearchResultsWrapperProps {
   properties: Property[]
+  totalCount: number
+  currentPage: number
 }
 
-export function SearchResultsWrapper({ properties }: SearchResultsWrapperProps) {
+export function SearchResultsWrapper({ properties, totalCount, currentPage }: SearchResultsWrapperProps) {
   const [activeView, setActiveView] = useState<"list" | "map">("list")
   const [isDesktop, setIsDesktop] = useState(false)
   const [activePortalProperty, setActivePortalProperty] = useState<MapPortalProperty | null>(null)
@@ -103,7 +105,11 @@ export function SearchResultsWrapper({ properties }: SearchResultsWrapperProps) 
           }`}
         >
           <div className="px-2 py-6 sm:p-8 flex-1 bg-gray-50/30">
-            <SearchResults properties={properties} />
+            <SearchResults
+              properties={properties}
+              totalCount={totalCount}
+              currentPage={currentPage}
+            />
           </div>
         </div>
 

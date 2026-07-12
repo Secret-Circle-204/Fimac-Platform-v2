@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
 import { getPayloadClient } from "@/db/client"
 import { sendEmail, emailTemplates } from "@/lib/email/nodemailer"
 
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     const payload = await getPayloadClient()
 
-    // Find verification code
+    // Find verification code by email only to check attempts
     const verificationRecords = await payload.find({
       collection: "verification-codes" as 'verification-codes',
       where: {
@@ -21,11 +21,6 @@ export async function POST(request: NextRequest) {
           {
             email: {
               equals: email,
-            },
-          },
-          {
-            code: {
-              equals: code,
             },
           },
           {
@@ -44,6 +39,23 @@ export async function POST(request: NextRequest) {
     }
 
     const verificationRecord = verificationRecords.docs[0]
+    const currentAttempts = verificationRecord.attempts || 0
+
+    if (currentAttempts >= 5) {
+      return NextResponse.json({ error: "Too many failed attempts. Please request a new code." }, { status: 429 })
+    }
+
+    // Check if code matches
+    if (verificationRecord.code !== code) {
+      await payload.update({
+        collection: "verification-codes" as 'verification-codes',
+        id: verificationRecord.id,
+        data: {
+          attempts: currentAttempts + 1,
+        },
+      })
+      return NextResponse.json({ error: "Invalid verification code" }, { status: 400 })
+    }
 
     // Check if code is expired
     const expiresAt = new Date(verificationRecord.expires_at)
@@ -89,14 +101,16 @@ export async function POST(request: NextRequest) {
     })
 
     // Send welcome email
-    try {
-      await sendEmail({
-        to: email,
-        ...emailTemplates.welcome(user.full_name, userType === "sellers" ? "Seller" : "Buyer"),
-      })
-    } catch (emailError) {
-      console.error("Failed to send welcome email:", emailError)
-    }
+    after(async () => {
+      try {
+        await sendEmail({
+          to: email,
+          ...emailTemplates.welcome(user.full_name, userType === "sellers" ? "Seller" : "Buyer"),
+        })
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError)
+      }
+    })
 
     return NextResponse.json({
       success: true,

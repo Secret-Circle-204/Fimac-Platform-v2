@@ -69,6 +69,15 @@ export const VerificationCodes: CollectionConfig = {
         },
       },
     },
+    {
+      name: "attempts",
+      type: "number",
+      defaultValue: 0,
+      admin: {
+        readOnly: true,
+        description: "Number of failed verification attempts",
+      },
+    },
   ],
   hooks: {
     beforeChange: [

@@ -2,9 +2,14 @@ import { SellForm } from "./sell-form"
 import { Building2 } from "lucide-react"
 import { getCachedPropertyTypes } from "@/lib/cache/property-types"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
+import { redirect } from "next/navigation"
 
 export default async function SellPage() {
   const user = await getCurrentUser()
+  if (!user || user.role !== "seller") {
+    redirect("/")
+  }
+
   const propertyTypesData = await getCachedPropertyTypes()
   const propertyTypeOptions = propertyTypesData.map((t) => ({
     label: t.name,
@@ -104,14 +109,25 @@ export default async function SellPage() {
 
                 <div className="p-10 rounded-[40px] bg-navy-deep text-white flex flex-col gap-6 transition-all duration-500 hover:-translate-y-2 hover:shadow-gold">
                   <div className="w-16 h-16 rounded-2xl bg-gold-royal/20 flex items-center justify-center border border-gold-royal/30">
-                    <span className="text-2xl font-bold text-gold-royal">$10k</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-gold-royal"
+                    >
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-3 text-gold-royal">Full Service Option</h3>
+                    <h3 className="text-xl font-bold mb-3 text-gold-royal">Ownership Verification</h3>
                     <p className="text-white/70 leading-relaxed">
-                      Clients unable to provide these assets will be charged a fixed{" "}
-                      <strong>$10,000 USD</strong> fee, and our elite team will handle all
-                      professional valuation and photography.
+                      Proper authorization and proof of ownership must be uploaded to confirm legal authority for listing the asset.
                     </p>
                   </div>
                 </div>

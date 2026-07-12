@@ -14,6 +14,9 @@ import { ContactMessages } from './ContactMessages'
 import { Newsletters } from './Newsletters'
 import { SellerRequests } from './SellerRequests'
 import { PropertyTypes } from './PropertyTypes'
+import { ListingStatuses } from './ListingStatuses'
+import { ConstructionStatuses } from './ConstructionStatuses'
+import { PropertyCategories } from './PropertyCategories'
 
 export const collections = [
   Users,
@@ -32,4 +35,7 @@ export const collections = [
   Newsletters,
   SellerRequests,
   PropertyTypes,
+  ListingStatuses,
+  ConstructionStatuses,
+  PropertyCategories,
 ]

@@ -95,14 +95,15 @@ export function CarouselSlide({
           </div>
         ) : isCenter ? (
           property.images.map((img, i) =>
-            img.url ? (
+            img.url && Math.abs(i - safeImageIndex) <= 1 ? (
               <Image
                 key={`${property.id}-img-${i}`}
                 src={img.url}
                 alt={img.alt || property.title}
                 fill
                 className={`carousel3d-image ${i === safeImageIndex ? 'carousel3d-image--visible' : ''}`}
-                priority={i === 0}
+                priority={i === 0 || i === safeImageIndex}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 680px"
               />
             ) : null,
           )
@@ -112,6 +113,7 @@ export function CarouselSlide({
             alt={currentImage?.alt ?? property.title}
             fill
             className="carousel3d-image carousel3d-image--visible"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 680px"
           />
         )}
 

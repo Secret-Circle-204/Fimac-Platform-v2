@@ -6,6 +6,8 @@ import { Calendar, Clock, User, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
+import { unstable_cache } from "next/cache"
+import type { Where } from "payload"
 
 export const metadata = {
   title: "Blog | Fimac Group",
@@ -13,64 +15,89 @@ export const metadata = {
     "Stay updated with the latest hospitality investment trends, market analysis, and expert advice",
 }
 
-import { unstable_cache } from "next/cache"
+const getCachedBlogData = async (page: number, categoryId: string) => {
+  return unstable_cache(
+    async () => {
+      const payload = await getPayloadClient()
 
-const getCachedBlogData = unstable_cache(
-  async () => {
-    const payload = await getPayloadClient()
+      const limit = 9
+      const where: Where = {
+        status: {
+          equals: "published",
+        },
+      }
 
-    // Fetch published blog posts and categories in parallel
-    const [postsRes, categoriesRes] = await Promise.all([
-      payload.find({
-        collection: "blog-posts",
-        where: {
-          status: {
-            equals: "published",
+      if (categoryId && categoryId !== "all") {
+        where.category = {
+          equals: categoryId,
+        }
+      }
+
+      // Fetch published blog posts and categories in parallel
+      const [postsRes, categoriesRes] = await Promise.all([
+        payload.find({
+          collection: "blog-posts",
+          where,
+          sort: "-publishedDate",
+          limit,
+          page,
+          depth: 1, // Need featuredImage and category populated
+          select: {
+            title: true,
+            slug: true,
+            excerpt: true,
+            featuredImage: true,
+            category: true,
+            publishedDate: true,
+            readTime: true,
+            author: true,
+            featured: true,
           },
-        },
-        sort: "-publishedDate",
-        limit: 50,
-        depth: 1, // Need featuredImage and category populated
-        select: {
-          title: true,
-          slug: true,
-          excerpt: true,
-          featuredImage: true,
-          category: true,
-          publishedDate: true,
-          readTime: true,
-          author: true,
-          featured: true,
-        },
-      }),
-      payload.find({
-        collection: "blog-categories",
-        limit: 20,
-        depth: 0,
-        select: {
-          name: true,
-        },
-      }),
-    ])
+        }),
+        payload.find({
+          collection: "blog-categories",
+          limit: 50,
+          depth: 0,
+          select: {
+            name: true,
+          },
+        }),
+      ])
 
-    return {
-      posts: postsRes.docs,
-      categories: categoriesRes.docs,
+      return {
+        posts: postsRes.docs,
+        categories: categoriesRes.docs,
+        totalPages: postsRes.totalPages || 1,
+        currentPage: postsRes.page || 1,
+      }
+    },
+    [`blog-page-data-${page}-${categoryId}`],
+    {
+      revalidate: 300, // 5 minutes cache
+      tags: ["blog-posts", "blog-categories"],
     }
-  },
-  ["blog-page-data"],
-  {
-    revalidate: 300, // 5 minutes cache
-    tags: ["blog-posts", "blog-categories"],
-  }
-)
+  )()
+}
 
-export default async function BlogPage() {
-  const { posts, categories } = await getCachedBlogData()
+export default async function BlogPage(props: {
+  searchParams?: Promise<{ page?: string; category?: string }>
+}) {
+  const resolvedParams = (await props.searchParams) || {}
+  const page = Math.max(1, parseInt(resolvedParams.page || "1") || 1)
+  const categoryId = resolvedParams.category || "all"
 
-  // Get featured post
+  const { posts, categories, totalPages, currentPage } = await getCachedBlogData(page, categoryId)
+
+  // Get featured post (only on the first page when showing all posts)
   const featuredPost =
-    posts.find((post: { featured?: boolean | null }) => post.featured) || posts[0]
+    page === 1 && categoryId === "all"
+      ? posts.find((post: { featured?: boolean | null }) => post.featured) || posts[0]
+      : null
+
+  // Filter out featured post from grid listings if visible
+  const displayPosts = featuredPost
+    ? posts.filter((post: { id?: string | number | null }) => post.id !== featuredPost.id)
+    : posts
 
   return (
     <div className="flex min-h-screen flex-col pt-24">
@@ -161,12 +188,17 @@ export default async function BlogPage() {
           <section className="py-8 bg-white border-b">
             <div className="container mx-auto px-4">
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm">
-                  All Posts
+                <Button asChild variant={categoryId === "all" ? "default" : "outline"} size="sm">
+                  <Link href="/blog">All Posts</Link>
                 </Button>
                 {categories.map((category) => (
-                  <Button key={category.id} variant="outline" size="sm">
-                    {category.name}
+                  <Button
+                    key={category.id}
+                    asChild
+                    variant={String(categoryId) === String(category.id) ? "default" : "outline"}
+                    size="sm"
+                  >
+                    <Link href={`/blog?category=${category.id}`}>{category.name}</Link>
                   </Button>
                 ))}
               </div>
@@ -179,17 +211,16 @@ export default async function BlogPage() {
           <div className="container mx-auto px-4">
             <h2 className="text-2xl font-bold mb-8">Latest Articles</h2>
 
-            {posts.length === 0 ? (
+            {displayPosts.length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-6xl mb-4">📝</div>
                 <h3 className="text-2xl font-bold mb-2">No Posts Yet</h3>
                 <p className="text-gray-600">Check back soon for new content</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {posts
-                  .filter((post: { id?: string | number | null }) => post.id !== featuredPost?.id)
-                  .map((post) => (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {displayPosts.map((post) => (
                     <Card
                       key={post.id}
                       className="overflow-hidden hover:shadow-lg transition-shadow"
@@ -260,7 +291,45 @@ export default async function BlogPage() {
                       </CardContent>
                     </Card>
                   ))}
-              </div>
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-4 mt-12">
+                    {currentPage > 1 ? (
+                      <Button asChild variant="outline">
+                        <Link
+                          href={`/blog?page=${currentPage - 1}${categoryId !== "all" ? `&category=${categoryId}` : ""}`}
+                        >
+                          Previous
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="outline" disabled>
+                        Previous
+                      </Button>
+                    )}
+
+                    <span className="text-sm font-medium text-gray-700">
+                      Page {currentPage} of {totalPages}
+                    </span>
+
+                    {currentPage < totalPages ? (
+                      <Button asChild variant="outline">
+                        <Link
+                          href={`/blog?page=${currentPage + 1}${categoryId !== "all" ? `&category=${categoryId}` : ""}`}
+                        >
+                          Next
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="outline" disabled>
+                        Next
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>

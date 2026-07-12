@@ -46,9 +46,11 @@ export function buildSearchCacheKey(params: Record<string, string>): string {
 export const getCachedSearchResults = async (
   where: Where,
   cacheKey: string,
-  page: number = 1
+  page: number = 1,
+  sort: string | string[] = '-createdAt'
 ): Promise<SearchResultsResponse> => {
-  const paginatedKey = `${cacheKey}:p${page}`
+  const sortKey = Array.isArray(sort) ? sort.join(',') : sort
+  const paginatedKey = `${cacheKey}:p${page}:s${sortKey}`
 
   return await unstable_cache(
     async () => {
@@ -72,6 +74,7 @@ export const getCachedSearchResults = async (
           },
           limit: 24,
           page,
+          sort,
         }
       )
       return result

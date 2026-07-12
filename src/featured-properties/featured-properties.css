@@ -1219,3 +1219,96 @@
     color: #d4af37; /* Royal gold */
   }
 }
+
+/* ═══════════════════════════════════════════
+   VIEW ALL PROPERTIES BUTTON
+   ═══════════════════════════════════════════ */
+
+.carousel3d-view-all-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.75rem;
+  z-index: 10;
+  position: relative;
+}
+
+.carousel3d-view-all-btn {
+  display: inline-block;
+  padding: 0.95rem 2.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: white;
+  background: linear-gradient(135deg, rgba(161, 128, 82, 0.9) 0%, rgba(201, 169, 110, 0.8) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 1rem;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(212, 175, 55, 0.15) inset;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  will-change: transform, box-shadow;
+}
+
+.carousel3d-view-all-btn:hover {
+  color: white;
+  background: linear-gradient(135deg, rgba(181, 148, 102, 1) 0%, rgba(221, 189, 130, 0.9) 100%);
+  border-color: rgba(212, 175, 55, 0.75);
+  box-shadow: 0 8px 25px rgba(161, 128, 82, 0.35), 0 0 20px rgba(212, 175, 55, 0.2);
+  transform: translateY(-2px);
+}
+
+.carousel3d-view-all-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(161, 128, 82, 0.2);
+}
+
+/* ═══════════════════════════════════════════
+   THIN DESKTOP NAVIGATION ARROWS
+   ═══════════════════════════════════════════ */
+
+.carousel3d-nav-arrow {
+  position: absolute;
+  top: 58%; /* Positioned slightly below center */
+  transform: translateY(-50%);
+  z-index: 25;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.carousel3d-nav-arrow:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.35);
+  color: white;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+}
+
+.carousel3d-nav-arrow:active {
+  transform: translateY(-50%) scale(0.95);
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.carousel3d-nav-arrow--prev {
+  left: 2.5rem;
+}
+
+.carousel3d-nav-arrow--next {
+  right: 2.5rem;
+}
+
+@media (max-width: 1024px) {
+  .carousel3d-nav-arrow {
+    display: none; /* Hide on smaller screens to prioritize swipe gestures */
+  }
+}
+
+

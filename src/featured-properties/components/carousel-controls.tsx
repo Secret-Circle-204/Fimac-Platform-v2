@@ -1,6 +1,6 @@
 "use client"
 
-import { Volume2, VolumeX, Mic, MicOff, Hand } from "lucide-react"
+import { Mic, MicOff, Hand } from "lucide-react"
 
 interface CarouselControlsProps {
   soundOn: boolean
@@ -18,14 +18,14 @@ interface CarouselControlsProps {
 }
 
 export function CarouselControls({
-  soundOn,
+  soundOn: _soundOn,
   voiceOn,
   gestureActive,
   showGestureControl,
   totalProperties,
   activeIndex,
   isTransitioning,
-  onToggleSound,
+  onToggleSound: _onToggleSound,
   onToggleVoice,
   onToggleGesture,
   onRequestGesture,
@@ -33,7 +33,7 @@ export function CarouselControls({
 }: CarouselControlsProps) {
   return (
     <div className="carousel3d-controls">
-      {/* Sound toggle */}
+      {/* Sound toggle - Hidden from UI as requested
       <button
         className={`carousel3d-control-btn ${soundOn ? "carousel3d-control-btn--active" : ""}`}
         onClick={onToggleSound}
@@ -42,6 +42,7 @@ export function CarouselControls({
         {soundOn ? <Volume2 size={16} /> : <VolumeX size={16} />}
         <span>{soundOn ? "Sound" : "Sound"}</span>
       </button>
+      */}
 
       {/* Voice toggle */}
       <button

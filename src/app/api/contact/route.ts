@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { getPayloadClient } from '@/db/client'
 import { ADMIN_NOTIFICATIONS_EMAIL, SERVER_URL } from '@/env'
 import { emailTemplates, sendEmail } from '@/lib/email/nodemailer'
@@ -44,48 +44,50 @@ export async function POST(req: NextRequest) {
 
     const confirmationUrl = `${SERVER_URL}/api/contact/confirm?token=${confirmationToken}`
 
-    await Promise.all([
-      sendEmail({
-        to: email,
-        subject: 'Please confirm your contact request',
-        html: emailTemplates.contactConfirmation({
-          fullName,
-          subject,
-          confirmationUrl,
-        }).html,
-        text: emailTemplates.contactConfirmation({
-          fullName,
-          subject,
-          confirmationUrl,
-        }).text,
-      }),
-      sendEmail({
-        to: ADMIN_NOTIFICATIONS_EMAIL,
-        subject: `Pending contact request from ${fullName}`,
-        html: emailTemplates.contactAdminNotification({
-          fullName,
-          email,
-          phone,
-          inquiryType,
-          subject,
-          message,
-          ipAddress,
-          userAgent,
-          confirmed: false,
-        }).html,
-        text: emailTemplates.contactAdminNotification({
-          fullName,
-          email,
-          phone,
-          inquiryType,
-          subject,
-          message,
-          ipAddress,
-          userAgent,
-          confirmed: false,
-        }).text,
-      }),
-    ])
+    after(async () => {
+      await Promise.all([
+        sendEmail({
+          to: email,
+          subject: 'Please confirm your contact request',
+          html: emailTemplates.contactConfirmation({
+            fullName,
+            subject,
+            confirmationUrl,
+          }).html,
+          text: emailTemplates.contactConfirmation({
+            fullName,
+            subject,
+            confirmationUrl,
+          }).text,
+        }),
+        sendEmail({
+          to: ADMIN_NOTIFICATIONS_EMAIL,
+          subject: `Pending contact request from ${fullName}`,
+          html: emailTemplates.contactAdminNotification({
+            fullName,
+            email,
+            phone,
+            inquiryType,
+            subject,
+            message,
+            ipAddress,
+            userAgent,
+            confirmed: false,
+          }).html,
+          text: emailTemplates.contactAdminNotification({
+            fullName,
+            email,
+            phone,
+            inquiryType,
+            subject,
+            message,
+            ipAddress,
+            userAgent,
+            confirmed: false,
+          }).text,
+        }),
+      ])
+    })
 
     return NextResponse.json(
       {

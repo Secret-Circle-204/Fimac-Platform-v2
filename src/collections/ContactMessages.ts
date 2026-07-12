@@ -197,6 +197,7 @@ export const ContactMessages: CollectionConfig = {
     {
       name: "confirmationToken",
       type: "text",
+      index: true,
       label: "Confirmation Token",
       admin: {
         position: "sidebar",

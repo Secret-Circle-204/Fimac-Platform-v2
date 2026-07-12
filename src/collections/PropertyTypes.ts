@@ -44,6 +44,16 @@ export const PropertyTypes: CollectionConfig = {
       },
     },
     {
+      name: 'category',
+      type: 'relationship',
+      relationTo: 'property-categories',
+      required: true,
+      index: true,
+      admin: {
+        description: 'Select the main category for this property type.',
+      },
+    },
+    {
       name: 'slug',
       type: 'text',
       required: true,

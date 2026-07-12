@@ -67,12 +67,14 @@ export function SiteHeader({ userNav, user }: { userNav: React.ReactNode, user: 
           >
             CONTACT
           </Link>
-          <Link
-            href="/sell"
-            className="text-sm font-medium text-primary hover:text-gold-royal transition-colors"
-          >
-            SELL
-          </Link>
+          {user?.role === "seller" && (
+            <Link
+              href="/sell"
+              className="text-sm font-medium text-primary hover:text-gold-royal transition-colors"
+            >
+              SELL
+            </Link>
+          )}
         </nav>
 
         <div className="hidden tablet:flex items-center gap-4">{userNav}</div>

@@ -62,6 +62,10 @@ export function MobileNav({ user }: { user?: CurrentUser | null }) {
     setOpen(false)
   }, [])
 
+  const filteredLinks = NAV_LINKS.filter(
+    (item) => item.href !== "/sell" || user?.role === "seller"
+  )
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -90,7 +94,7 @@ export function MobileNav({ user }: { user?: CurrentUser | null }) {
           initial="hidden"
           animate="show"
         >
-          {NAV_LINKS.map((item) => {
+          {filteredLinks.map((item) => {
             const isActive = pathname === item.href
             return (
               <motion.div key={item.label} variants={itemVariants}>

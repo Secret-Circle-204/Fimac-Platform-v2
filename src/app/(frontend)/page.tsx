@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Star } from 'lucide-react'
+
 import Hero from '@/components/home/hero'
 
 import { NewsLetter } from '@/components/shared/newsletter'
@@ -13,7 +13,7 @@ import { FadeIn } from '@/components/animations/fade-in'
 // import { SearchFilters } from "@/components/home/search-filters"
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
-const company_name = 'Fimac Group'
+
 
 const propertyTypes = [
   { title: 'HOTELS', slug: 'hotel', count: 'Premium Hotels', image: '/propertyTypes/HOTELS-1.jpg' },
@@ -98,49 +98,24 @@ export default async function HomePage() {
         {/* About Section */}
         <section className="py-16 bg-background text-foreground">
           <div className="container mx-auto px-4">
-            <div className="flex flex-col tablet:flex-row gap-12">
-              <div className="tablet:w-1/2">
-                <h2 className="text-3xl font-bold mb-6">Your Partner in Real Estate Investment</h2>
-                <p className="text-muted-foreground mb-6">
-                  FIMAC (Financial Investment Management Advice Consultants) is a premier global
-                  consultancy specializing in the sale and acquisition of hospitality properties.
-                  Our exclusive platform and services are tailored for business owners, buyers, and
-                  brokers in the hotel, motel, resort, and boutique hotel sectors. We provide a
-                  sophisticated marketplace combined with expert advisory services, including
-                  valuation, marketing, and negotiation. Our expertise ensures that every client
-                  receives personalized attention and a strategic approach designed to maximize
-                  value.
-                </p>
-                <Button
-                  className="bg-blue-brand-light text-white shadow-xs hover:bg-blue-brand-light/90 rounded-md px-6 py-2.5"
-                  asChild
-                >
-                  <Link href="/about">SHOW MORE</Link>
-                </Button>
-              </div>
-
-              <div className="tablet:w-1/2 grid grid-cols-1 desktop:grid-cols-2 large:grid-cols-3 gap-4">
-                <div className="bg-gray-50 py-6 rounded-md">
-                  <div className="text-3xl font-bold text-primary mb-2">25+</div>
-                  <p className="text-sm text-muted-foreground">
-                    Years of experience in the local real estate market helping clients find their
-                    dream Propertie ?
-                  </p>
-                </div>
-                <div className="bg-gray-50 py-6 rounded-md">
-                  <div className="text-3xl font-bold text-primary mb-2">1.5k</div>
-                  <p className="text-sm text-muted-foreground">
-                    Happy clients whose dream homes we&apos;ve helped them find and purchase
-                  </p>
-                </div>
-                <div className="bg-gray-50 py-6 rounded-md">
-                  <div className="text-3xl font-bold text-primary mb-2">18+</div>
-                  <p className="text-sm text-muted-foreground">
-                    Professional specialists with exceptional local knowledge ensuring quality
-                    service
-                  </p>
-                </div>
-              </div>
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl font-bold mb-6">Your Partner in Real Estate Investment</h2>
+              <p className="text-muted-foreground mb-6">
+                FIMAC (Financial Investment Management Advice Consultants) is a premier global
+                consultancy specializing in the sale and acquisition of hospitality properties.
+                Our exclusive platform and services are tailored for business owners, buyers, and
+                brokers in the hotel, motel, resort, and boutique hotel sectors. We provide a
+                sophisticated marketplace combined with expert advisory services, including
+                valuation, marketing, and negotiation. Our expertise ensures that every client
+                receives personalized attention and a strategic approach designed to maximize
+                value.
+              </p>
+              <Button
+                className="bg-blue-brand-light text-white shadow-xs hover:bg-blue-brand-light/90 rounded-md px-6 py-2.5"
+                asChild
+              >
+                <Link href="/about">SHOW MORE</Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -223,86 +198,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Testimonials */}
-        <section className="py-16 bg-background text-foreground">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-12">Testimonials</h2>
-
-            <div className="grid grid-cols-1 tablet:grid-cols-3 gap-8">
-              <div className="bg-accent p-8 rounded-lg">
-                <div className="flex text-yellow-400 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-6 italic">
-                  &quot;Working with Fimac was an absolute pleasure. They understood exactly what we
-                  were looking for in the Smoky Mountains and made the entire process smooth. They
-                  found our dream home with the perfect mountain view!&quot;
-                </p>
-                <div className="flex items-center">
-                  <div className="mr-4 h-12 w-12 overflow-hidden rounded-full bg-accent">
-                    <Image
-                      src="/mom-avatar.png"
-                      alt="Client"
-                      width={48}
-                      height={48}
-                      className="object-cover size-12"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Sarah Johnson</h4>
-                    <p className="text-sm text-muted-foreground">Knoxville, TN</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-accent p-8 rounded-lg">
-                <div className="flex text-yellow-400 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-6 italic">
-                  &quot;I was impressed by the professionalism and local knowledge of the team at{' '}
-                  {company_name}. They sold our home in Knoxville quickly and at the best price.
-                  Their understanding of the the world market is unmatched!&quot;
-                </p>
-                <div className="flex items-center">
-                  <div className="mr-4 h-12 w-12 overflow-hidden rounded-full bg-accent">
-                    <Image src="/attorney-avatar.png" alt="Client" width={48} height={48} />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">James Smith</h4>
-                    <p className="text-sm text-muted-foreground">Gatlinburg, TN</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-accent p-8 rounded-lg">
-                <div className="flex text-yellow-400 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-6 italic">
-                  &quot;As a first-time homebuyer in Johnson City, I was nervous. But they made the
-                  process so easy. They were always there to answer my questions about the area and
-                  helped me find the perfect starter home in a great neighborhood.&quot;
-                </p>
-                <div className="flex items-center">
-                  <div className="mr-4 h-12 w-12 overflow-hidden rounded-full bg-accent">
-                    <Image src="/rural-mom-avatar.png" alt="Client" width={48} height={48} />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Emily Rodriguez</h4>
-                    <p className="text-sm text-muted-foreground">Johnson City, TN</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* Blog Section */}
         <section className="py-16 bg-accent text-accent-foreground">

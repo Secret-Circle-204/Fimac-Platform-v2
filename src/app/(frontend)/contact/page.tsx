@@ -1,13 +1,15 @@
 import { ContactForm } from "@/components/contact/contact-form"
 import { Card, CardContent } from "@/components/ui/card"
 import { Mail, Phone, MapPin, Clock } from "lucide-react"
+import { getCurrentUser } from "@/lib/auth/get-current-user"
 
 export const metadata = {
   title: "Contact Us | Fimac Group",
   description: "Get in touch with our team for investment opportunities and inquiries",
 }
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const user = await getCurrentUser()
   return (
     <div className="flex min-h-screen flex-col pt-24">
       <main className="flex-1">
@@ -117,9 +119,11 @@ export default function ContactPage() {
                       <a href="/dashboard/buyer" className="block text-blue-900 hover:underline">
                         → Buyer Dashboard
                       </a>
-                      <a href="/sell" className="block text-blue-900 hover:underline">
-                        → List Your Property
-                      </a>
+                      {user?.role === "seller" && (
+                        <a href="/sell" className="block text-blue-900 hover:underline">
+                          → List Your Property
+                        </a>
+                      )}
                       <a href="/search" className="block text-blue-900 hover:underline">
                         → Browse Properties
                       </a>

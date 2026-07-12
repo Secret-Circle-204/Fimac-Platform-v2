@@ -1,10 +1,11 @@
 import { local } from '@/repository'
-import type { Where } from 'payload'
-import { geocodeSearch } from '@/lib/location/geocode-search'
+import { buildPropertySearchQuery } from '@/repository/property/query-builder'
+// geocodeSearch removed to prevent rate limiting
 import { SearchHeader } from '@/components/search/search-header'
 import { SearchResultsWrapper } from '@/components/search/search-results-wrapper'
 import { NewsLetter } from '@/components/shared/newsletter'
 import { getCachedPropertyTypes } from '@/lib/cache/property-types'
+import { getCachedListingStatuses } from '@/lib/cache/listing-statuses'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { getCachedSearchFilters } from '@/lib/cache/search-filters'
 import { getCachedSearchResults, buildSearchCacheKey } from '@/lib/cache/search-results'
@@ -22,85 +23,23 @@ export default async function SearchPage({
   const user = await getCurrentUser()
   const resolvedParams = await searchParams
   const location = typeof resolvedParams.location === 'string' ? resolvedParams.location : ''
-  const lat = typeof resolvedParams.lat === 'string' ? parseFloat(resolvedParams.lat) : null
-  const lng = typeof resolvedParams.lng === 'string' ? parseFloat(resolvedParams.lng) : null
+  const lat = typeof resolvedParams.lat === 'string' ? parseFloat(resolvedParams.lat) : undefined
+  const lng = typeof resolvedParams.lng === 'string' ? parseFloat(resolvedParams.lng) : undefined
   const radius = typeof resolvedParams.radius === 'string' ? parseFloat(resolvedParams.radius) : 50
 
   const type = typeof resolvedParams.type === 'string' ? resolvedParams.type : 'all'
   const country = typeof resolvedParams.country === 'string' ? resolvedParams.country : 'all'
-  const state = typeof resolvedParams.state === 'string' ? resolvedParams.state : 'all'
   const city = typeof resolvedParams.city === 'string' ? resolvedParams.city : 'all'
   const quickPrice =
     typeof resolvedParams.quickPrice === 'string' ? resolvedParams.quickPrice : 'all'
+  const listingStatus = typeof resolvedParams.listingStatus === 'string' ? resolvedParams.listingStatus : 'all'
+  const constructionStatus = typeof resolvedParams.constructionStatus === 'string' ? resolvedParams.constructionStatus : 'all'
+  const sort = typeof resolvedParams.sort === 'string' ? resolvedParams.sort : '-createdAt'
+  const bedrooms = typeof resolvedParams.bedrooms === 'string' ? parseInt(resolvedParams.bedrooms) || 0 : 0
+  const bathrooms = typeof resolvedParams.bathrooms === 'string' ? parseInt(resolvedParams.bathrooms) || 0 : 0
 
-  // Fetch properties with server-side filtering
-  const andConditions: Where[] = [
-    {
-      listingStatus: {
-        equals: 'forsale',
-      },
-    },
-  ]
-
-  // Type Filter
-  if (type !== 'all') {
-    andConditions.push({
-      'propertyType.slug': {
-        equals: type,
-      },
-    })
-  }
-
-  // Country Filter
-  if (country !== 'all') {
-    andConditions.push({
-      or: [
-        { 'location.address.country': { contains: country } },
-        ...(country.toLowerCase() === 'egypt'
-          ? [
-              { 'location.address.country': { exists: false } },
-              { 'location.address.country': { equals: null } },
-            ]
-          : []),
-      ],
-    })
-  }
-
-  // State Filter
-  if (state !== 'all') {
-    andConditions.push({
-      'location.address.state': {
-        contains: state,
-      },
-    })
-  }
-
-  // City Filter
-  if (city !== 'all') {
-    andConditions.push({
-      'location.address.city': {
-        contains: city, // Case-insensitive exact word containment
-      },
-    })
-  }
-
-  // Quick Price Filter (Mapping to numeric ranges)
-  if (quickPrice !== 'all') {
-    if (quickPrice === '0-1m') {
-      andConditions.push({ price: { less_than: 1000000 } })
-    } else if (quickPrice === '1m-3m') {
-      andConditions.push({ price: { greater_than_equal: 1000000, less_than: 3000000 } })
-    } else if (quickPrice === '3m-5m') {
-      andConditions.push({ price: { greater_than_equal: 3000000, less_than: 5000000 } })
-    } else if (quickPrice === '5m-10m') {
-      andConditions.push({ price: { greater_than_equal: 5000000, less_than: 10000000 } })
-    } else if (quickPrice === '10m+') {
-      andConditions.push({ price: { greater_than_equal: 10000000 } })
-    }
-  }
-
-  // Parallelize independent queries: location lookup + property types + geocoding + search filters
-  const [locationIds, typesData, geoBox, searchFilters] = await Promise.all([
+  // Parallelize independent queries: location lookup + property types + listing statuses + search filters
+  const [locationIds, typesData, listingStatusesData, searchFilters] = await Promise.all([
     // Location lookup (returns empty array if no location filter)
     location
       ? local.location
@@ -121,76 +60,56 @@ export default async function SearchPage({
           .then((locs) => locs.map((l) => l.id))
       : Promise.resolve([] as (string | number)[]),
     getCachedPropertyTypes(),
-    location ? geocodeSearch(location) : Promise.resolve(null),
+    getCachedListingStatuses(),
     getCachedSearchFilters(),
   ])
 
-  const { countryOptions, stateOptions, cityOptions } = searchFilters
+  const { countryOptions, cityOptions } = searchFilters
 
-  // Location / Spatial Filter — now uses pre-resolved locationIds & geoBox
-  if (location) {
-    const orConditions: Where[] = [
-      { title: { contains: location } },
-      { 'location.address.city': { contains: location } },
-      { 'location.address.state': { contains: location } },
-      { 'location.address.zip': { contains: location } },
-      ...(locationIds.length > 0 ? [{ location_legacy: { in: locationIds } }] : []),
-    ]
+  const listingStatusOptions = listingStatusesData
+    .filter((status) => status.slug !== 'draft')
+    .map((status) => ({
+      label: status.name,
+      value: status.slug,
+    }))
 
-    // If geocoding resolved a valid bounding box, match properties within this bounding box
-    if (geoBox) {
-      orConditions.push({
-        and: [
-          { 'location.geo.lat': { greater_than_equal: geoBox.minLat } },
-          { 'location.geo.lat': { less_than_equal: geoBox.maxLat } },
-          { 'location.geo.lng': { greater_than_equal: geoBox.minLng } },
-          { 'location.geo.lng': { less_than_equal: geoBox.maxLng } },
-        ],
-      })
-    }
+  const page = typeof resolvedParams.page === 'string' ? Math.max(1, parseInt(resolvedParams.page) || 1) : 1
 
-    andConditions.push({
-      or: orConditions,
-    })
-  } else if (lat !== null && lng !== null) {
-    // Radius search using bounding box approximation
-    const kmPerDegree = 111
-    const latDelta = radius / kmPerDegree
-    const lngDelta = radius / (kmPerDegree * Math.cos((lat * Math.PI) / 180))
-
-    andConditions.push({
-      'location.geo.lat': { greater_than_equal: lat - latDelta },
-    })
-    andConditions.push({
-      'location.geo.lat': { less_than_equal: lat + latDelta },
-    })
-    andConditions.push({
-      'location.geo.lng': { greater_than_equal: lng - lngDelta },
-    })
-    andConditions.push({
-      'location.geo.lng': { less_than_equal: lng + lngDelta },
-    })
-  }
-
-  const where: Where = {
-    and: andConditions,
-  }
+  const where = buildPropertySearchQuery({
+    location,
+    lat,
+    lng,
+    radius,
+    type,
+    country,
+    city,
+    quickPrice,
+    listingStatus,
+    constructionStatus,
+    bedrooms,
+    bathrooms,
+    locationIds,
+  })
 
   // Build deterministic cache key from current search parameters
   const cacheKey = buildSearchCacheKey({
     location,
     type,
     country,
-    state,
     city,
     quickPrice,
+    listingStatus,
+    constructionStatus,
+    ...(bedrooms > 0 && { bedrooms: String(bedrooms) }),
+    ...(bathrooms > 0 && { bathrooms: String(bathrooms) }),
     ...(lat !== null && { lat: String(lat) }),
     ...(lng !== null && { lng: String(lng) }),
     ...(radius !== 50 && { radius: String(radius) }),
   })
 
-  const searchResults = await getCachedSearchResults(where, cacheKey)
+  const searchResults = await getCachedSearchResults(where, cacheKey, page, sort)
   const properties = searchResults.docs
+  const totalCount = searchResults.totalDocs
 
   const propertyTypeOptions = typesData.map((t) => ({
     label: t.name,
@@ -225,8 +144,8 @@ export default async function SearchPage({
         <div className="sticky top-[80px] z-40 lg:relative lg:top-auto lg:z-30 container mx-auto px-4 -mt-16 mb-8">
           <SearchHeader
             propertyTypeOptions={propertyTypeOptions}
+            listingStatusOptions={listingStatusOptions}
             cityOptions={cityOptions}
-            stateOptions={stateOptions}
             countryOptions={countryOptions}
           />
         </div>
@@ -235,7 +154,11 @@ export default async function SearchPage({
         <section className="flex-1 w-full bg-[#FDFCFB] py-10">
           <div className="container mx-auto px-4 h-full">
             <div className="w-full lg:rounded-3xl lg:overflow-hidden lg:border lg:border-navy-deep/5 lg:shadow-2xl lg:bg-white h-full">
-              <SearchResultsWrapper properties={properties} />
+              <SearchResultsWrapper
+                properties={properties}
+                totalCount={totalCount}
+                currentPage={page}
+              />
             </div>
           </div>
         </section>

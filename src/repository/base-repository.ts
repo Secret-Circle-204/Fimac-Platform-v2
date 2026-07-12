@@ -31,6 +31,7 @@ export type RepositoryOptions<T> = {
   select?: Partial<Record<keyof T, boolean>>
   limit?: number
   page?: number
+  sort?: string | string[]
 }
 
 export type PaginatedResult<T> = {
@@ -63,7 +64,7 @@ export abstract class BaseRepository<T, D> {
     return result
   }
   async getFirst(where: Where = {}, options?: RepositoryOptions<T>): Promise<D | null> {
-    const result = await this.getAll(where, options)
+    const result = await this.getAll(where, { ...options, limit: 1 })
     if (result.length === 0) {
       return null
     }
@@ -95,7 +96,7 @@ export abstract class BaseRepository<T, D> {
       where,
       depth: options?.depth ?? 1,
       select: options?.select,
-      ...(options?.limit !== undefined && { limit: options.limit }),
+      limit: options?.limit !== undefined ? options.limit : 1000,
     })) as PaginatedDocs<T>
 
     return result.docs ?? []
@@ -119,6 +120,7 @@ export abstract class BaseRepository<T, D> {
       select: options?.select,
       limit: options?.limit ?? 20,
       page: options?.page ?? 1,
+      sort: options?.sort,
     })) as PaginatedDocs<T>
 
     return {

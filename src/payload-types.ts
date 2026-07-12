@@ -85,6 +85,8 @@ export interface Config {
     newsletters: Newsletter;
     'seller-requests': SellerRequest;
     'property-types': PropertyType;
+    'listing-statuses': ListingStatus;
+    'construction-statuses': ConstructionStatus;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -114,6 +116,8 @@ export interface Config {
     newsletters: NewslettersSelect<false> | NewslettersSelect<true>;
     'seller-requests': SellerRequestsSelect<false> | SellerRequestsSelect<true>;
     'property-types': PropertyTypesSelect<false> | PropertyTypesSelect<true>;
+    'listing-statuses': ListingStatusesSelect<false> | ListingStatusesSelect<true>;
+    'construction-statuses': ConstructionStatusesSelect<false> | ConstructionStatusesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -490,11 +494,11 @@ export interface Property {
   price?: number | null;
   currency: 'EGP' | 'USD' | 'EUR';
   basePriceInUSD?: number | null;
-  listingStatus: 'forsale' | 'pending' | 'contract' | 'contingent' | 'sold' | 'offmarket' | 'notforsale';
+  listingStatus: number | ListingStatus;
   /**
    * The physical construction state of the property.
    */
-  constructionStatus: 'ready' | 'under_construction' | 'brand_new' | 'off_plan' | 'renovated';
+  constructionStatus: number | ConstructionStatus;
   details?: {
     bedrooms?: number | null;
     bathrooms?: number | null;
@@ -502,6 +506,10 @@ export interface Property {
     lotSize?: number | null;
     yearBuilt?: number | null;
     heatingType?: ('central' | 'electric' | 'gas' | 'oil' | 'propane') | null;
+    /**
+     * Select the features for this property.
+     */
+    features?: (number | Feature)[] | null;
   };
   photos?: (number | Media)[] | null;
   /**
@@ -537,10 +545,23 @@ export interface Property {
   };
   street?: string | null;
   location_legacy?: (number | null) | Location;
-  /**
-   * Select the features for this property.
-   */
-  features?: (number | Feature)[] | null;
+  hasProject?: boolean | null;
+  projectImage?: (number | null) | Media;
+  projectDescription?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -594,23 +615,44 @@ export interface Seller {
  */
 export interface SellerRequest {
   id: number;
-  full_name: string;
-  email: string;
-  phone: string;
   property_type: number | PropertyType;
   property_title: string;
   property_description: string;
-  /**
-   * City, State, or full address
-   */
   property_location: string;
-  asking_price?: number | null;
+  city: string;
+  state: string;
+  country: string;
+  asking_price: number;
+  currency: 'EGP' | 'USD' | 'EUR';
   property_size?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  constructionStatus: number | ConstructionStatus;
+  /**
+   * Registered name of the seller at submission time.
+   */
+  full_name: string;
+  /**
+   * Registered email address of the seller at submission time.
+   */
+  email: string;
+  /**
+   * Registered phone number of the seller at submission time.
+   */
+  phone: string;
   status: 'new' | 'reviewing' | 'approved' | 'rejected' | 'listed';
+  referenceNumber?: string | null;
   /**
    * Auto-linked seller account record
    */
   seller?: (number | null) | Seller;
+  /**
+   * The live property document created from this request
+   */
+  publishedProperty?: (string | null) | Property;
   /**
    * Internal notes (not visible to seller)
    */
@@ -632,6 +674,61 @@ export interface PropertyType {
    * URL-friendly identifier (lowercase, e.g., "villa", "elite-real-estate").
    */
   slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "construction-statuses".
+ */
+export interface ConstructionStatus {
+  id: number;
+  /**
+   * Display name for this status in English (e.g., Ready to Move In, Under Construction).
+   */
+  name: string;
+  /**
+   * URL-friendly identifier (lowercase, e.g., "ready", "under-construction").
+   */
+  slug: string;
+  /**
+   * Visual color theme for badges in search cards and property detail views.
+   */
+  colorTheme: 'emerald' | 'amber' | 'blue' | 'indigo' | 'purple' | 'gray';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "listing-statuses".
+ */
+export interface ListingStatus {
+  id: number;
+  /**
+   * Display name for this status (e.g., Open Contract, Closed Contract, Draft).
+   */
+  name: string;
+  /**
+   * URL-friendly identifier (lowercase, e.g., "forsale", "sold", "draft").
+   */
+  slug: string;
+  /**
+   * Visual color theme for badges in the dashboard and property details.
+   */
+  colorTheme: 'emerald' | 'blue' | 'gray' | 'amber' | 'rose' | 'gold';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "features".
+ */
+export interface Feature {
+  id: number;
+  /**
+   * Name of the feature (e.g., "Hardwood Floors", "Swimming Pool")
+   */
+  name: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -665,20 +762,6 @@ export interface Location {
    * Estimated population of the zip code
    */
   est_population?: number | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "features".
- */
-export interface Feature {
-  id: number;
-  /**
-   * Name of the feature (e.g., "Hardwood Floors", "Swimming Pool")
-   */
-  name: string;
-  category: 'interior' | 'exterior' | 'community' | 'other';
   updatedAt: string;
   createdAt: string;
 }
@@ -748,6 +831,10 @@ export interface VerificationCode {
    */
   verified?: boolean | null;
   verified_at?: string | null;
+  /**
+   * Number of failed verification attempts
+   */
+  attempts?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -974,6 +1061,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'property-types';
         value: number | PropertyType;
+      } | null)
+    | ({
+        relationTo: 'listing-statuses';
+        value: number | ListingStatus;
+      } | null)
+    | ({
+        relationTo: 'construction-statuses';
+        value: number | ConstructionStatus;
       } | null);
   globalSlug?: string | null;
   user:
@@ -1182,6 +1277,7 @@ export interface PropertiesSelect<T extends boolean = true> {
         lotSize?: T;
         yearBuilt?: T;
         heatingType?: T;
+        features?: T;
       };
   photos?: T;
   mapsUrlInput?: T;
@@ -1221,7 +1317,9 @@ export interface PropertiesSelect<T extends boolean = true> {
       };
   street?: T;
   location_legacy?: T;
-  features?: T;
+  hasProject?: T;
+  projectImage?: T;
+  projectDescription?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1231,7 +1329,6 @@ export interface PropertiesSelect<T extends boolean = true> {
  */
 export interface FeaturesSelect<T extends boolean = true> {
   name?: T;
-  category?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1304,6 +1401,7 @@ export interface VerificationCodesSelect<T extends boolean = true> {
   expires_at?: T;
   verified?: T;
   verified_at?: T;
+  attempts?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1442,17 +1540,29 @@ export interface NewslettersSelect<T extends boolean = true> {
  * via the `definition` "seller-requests_select".
  */
 export interface SellerRequestsSelect<T extends boolean = true> {
-  full_name?: T;
-  email?: T;
-  phone?: T;
   property_type?: T;
   property_title?: T;
   property_description?: T;
   property_location?: T;
+  city?: T;
+  state?: T;
+  country?: T;
   asking_price?: T;
+  currency?: T;
   property_size?: T;
+  latitude?: T;
+  longitude?: T;
+  google_maps_url?: T;
+  bedrooms?: T;
+  bathrooms?: T;
+  constructionStatus?: T;
+  full_name?: T;
+  email?: T;
+  phone?: T;
   status?: T;
+  referenceNumber?: T;
   seller?: T;
+  publishedProperty?: T;
   admin_notes?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1464,6 +1574,28 @@ export interface SellerRequestsSelect<T extends boolean = true> {
 export interface PropertyTypesSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "listing-statuses_select".
+ */
+export interface ListingStatusesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  colorTheme?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "construction-statuses_select".
+ */
+export interface ConstructionStatusesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  colorTheme?: T;
   updatedAt?: T;
   createdAt?: T;
 }

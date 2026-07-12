@@ -1,4 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
+
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -11,7 +12,10 @@ const dirname = path.dirname(filename)
 import { DATABASE_URL, SERVER_URL } from '@/env'
 import { collections } from './collections'
 import { seedFeatures } from './db/seedFeatures'
+import { seedPropertyCategories } from './db/seedPropertyCategories'
 import { seedPropertyTypes } from './db/seedPropertyTypes'
+import { seedListingStatuses } from './db/seedListingStatuses'
+import { seedConstructionStatuses } from './db/seedConstructionStatuses'
 import { activeProvider } from './lib/storage'
 import { CompanySettings } from './globals/CompanySettings'
 
@@ -37,7 +41,7 @@ export default buildConfig({
     pool: {
       connectionString: DATABASE_URL,
       min: 0,
-      max: 10,
+      max: 50,
       idleTimeoutMillis: 60000,
       connectionTimeoutMillis: 20000,
     },
@@ -47,7 +51,16 @@ export default buildConfig({
   sharp,
   async onInit(payload) {
     await seedFeatures(payload)
+    await seedPropertyCategories(payload)
     await seedPropertyTypes(payload)
+    await seedListingStatuses(payload)
+    await seedConstructionStatuses(payload)
+
+    if (process.env.NODE_ENV === 'production' && process.env.STORAGE_PROVIDER === 'local') {
+      payload.logger.warn(
+        '⚠️ WARNING: Using local storage provider in production. Media uploads will not scale and will be lost on container recycling!',
+      )
+    }
   },
   plugins: [...(activeProvider.getPayloadPlugin() ? [activeProvider.getPayloadPlugin()!] : [])],
 })

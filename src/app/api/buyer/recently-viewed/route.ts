@@ -33,7 +33,7 @@ export async function GET() {
       },
       sort: "-viewedAt",
       limit: 50,
-      depth: 2,
+      depth: 1,
     })
 
     // Extract unique properties with their last view date

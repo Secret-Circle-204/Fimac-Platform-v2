@@ -23,15 +23,15 @@ import {
 
 interface SearchHeaderProps {
   propertyTypeOptions?: Array<{ label: string; value: string }>
+  listingStatusOptions?: Array<{ label: string; value: string }>
   cityOptions?: Array<{ label: string; value: string }>
-  stateOptions?: Array<{ label: string; value: string }>
   countryOptions?: Array<{ label: string; value: string }>
 }
 
 export function SearchHeader({
   propertyTypeOptions = [],
+  listingStatusOptions = [],
   cityOptions = [],
-  stateOptions = [],
   countryOptions = [],
 }: SearchHeaderProps) {
   const router = useRouter()
@@ -42,10 +42,11 @@ export function SearchHeader({
   // Initialize local state from URL so it survives reloads
   const [location, setLocation] = useState(searchParams.get('location') || '')
   const [country, setCountry] = useState(searchParams.get('country') || 'all')
-  const [state, setState] = useState(searchParams.get('state') || 'all')
   const [city, setCity] = useState(searchParams.get('city') || 'all')
   const [propertyType, setPropertyType] = useState(searchParams.get('type') || 'all')
   const [quickPrice, setQuickPrice] = useState(searchParams.get('quickPrice') || 'all')
+  const [listingStatus, setListingStatus] = useState(searchParams.get('listingStatus') || 'all')
+  const [constructionStatus, setConstructionStatus] = useState(searchParams.get('constructionStatus') || 'all')
 
   const [isOpen, setIsOpen] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
@@ -63,10 +64,6 @@ export function SearchHeader({
       parts.push(country)
     }
 
-    if (state && state !== 'all') {
-      parts.push(state)
-    }
-
     if (city && city !== 'all') {
       parts.push(city)
     }
@@ -74,6 +71,22 @@ export function SearchHeader({
     if (propertyType && propertyType !== 'all') {
       const selectedOpt = propertyTypeOptions.find((o) => o.value === propertyType)
       parts.push(selectedOpt ? selectedOpt.label : propertyType)
+    }
+
+    if (listingStatus && listingStatus !== 'all') {
+      const matchedOpt = listingStatusOptions.find((o) => o.value === listingStatus)
+      parts.push(matchedOpt ? matchedOpt.label : listingStatus)
+    }
+
+    if (constructionStatus && constructionStatus !== 'all') {
+      const constructionLabels: Record<string, string> = {
+        ready: 'Ready to Move In',
+        under_construction: 'Under Construction',
+        brand_new: 'Brand New',
+        off_plan: 'Off-Plan',
+        renovated: 'Fully Renovated',
+      }
+      parts.push(constructionLabels[constructionStatus] || constructionStatus)
     }
 
     if (quickPrice && quickPrice !== 'all') {
@@ -113,12 +126,19 @@ export function SearchHeader({
         }
       }
 
+      // Always reset to page 1 on filter changes
+      params.delete('page')
+
       startTransition(() => {
         router.push(`${pathname}?${params.toString()}`, { scroll: false })
       })
     },
     [searchParams, pathname, router, startTransition],
   )
+
+  const triggerSearch = useCallback(() => {
+    updateFilters({ location })
+  }, [location, updateFilters])
 
   // Debounced update for text inputs/sliders (increased to 800ms)
   useEffect(() => {
@@ -133,16 +153,14 @@ export function SearchHeader({
   const handleReset = () => {
     setLocation('')
     setCountry('all')
-    setState('all')
     setCity('all')
     setPropertyType('all')
     setQuickPrice('all')
+    setListingStatus('all')
+    setConstructionStatus('all')
     lastPushedLocation.current = ''
 
     const params = new URLSearchParams()
-    // preserve default forsale if any
-    params.set('listingStatus', 'forsale')
-
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
 
@@ -156,10 +174,11 @@ export function SearchHeader({
       }
     }
     setCountry(searchParams.get('country') || 'all')
-    setState(searchParams.get('state') || 'all')
     setCity(searchParams.get('city') || 'all')
     setPropertyType(searchParams.get('type') || 'all')
     setQuickPrice(searchParams.get('quickPrice') || 'all')
+    setListingStatus(searchParams.get('listingStatus') || 'all')
+    setConstructionStatus(searchParams.get('constructionStatus') || 'all')
   }, [searchParams, isFocused])
 
   return (
@@ -202,6 +221,12 @@ export function SearchHeader({
                     onChange={(e) => setLocation(e.target.value)}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        updateFilters({ location })
+                        setIsOpen(false)
+                      }
+                    }}
                     className="pl-12 h-14 bg-[#05133a]/60 border border-blue-900/80 text-white placeholder:text-white/40 rounded-2xl w-full focus:border-gold-royal"
                   />
                 </div>
@@ -233,31 +258,6 @@ export function SearchHeader({
                 </Select>
               </div>
 
-              {/* State Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="mobile-state" className="text-xs font-bold text-white/80">
-                  State
-                </Label>
-                <Select
-                  value={state}
-                  onValueChange={(val) => {
-                    setState(val)
-                    updateFilters({ state: val })
-                  }}
-                >
-                  <SelectTrigger id="mobile-state" className="w-full h-14 bg-[#05133a]/60 border border-blue-900/80 text-white rounded-2xl">
-                    <SelectValue placeholder="Select State" />
-                  </SelectTrigger>
-                  <SelectContent className="select-smooth-content rounded-xl border-white/10 bg-[#09153d] text-white z-[10000]">
-                    <SelectItem value="all">All States</SelectItem>
-                    {stateOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-white hover:text-gold-royal">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
               {/* City Selection */}
               <div className="space-y-2">
@@ -337,6 +337,58 @@ export function SearchHeader({
                 </Select>
               </div>
 
+              {/* Listing Status */}
+              <div className="space-y-2">
+                <Label htmlFor="mobile-listing-status" className="text-xs font-bold text-white/80">
+                  Listing Status
+                </Label>
+                <Select
+                  value={listingStatus}
+                  onValueChange={(val) => {
+                    setListingStatus(val)
+                    updateFilters({ listingStatus: val })
+                  }}
+                >
+                  <SelectTrigger id="mobile-listing-status" className="w-full h-14 bg-[#05133a]/60 border border-blue-900/80 text-white rounded-2xl">
+                    <SelectValue placeholder="Select Listing Status" />
+                  </SelectTrigger>
+                  <SelectContent className="select-smooth-content rounded-xl border-white/10 bg-[#09153d] text-white z-[10000]">
+                    <SelectItem value="all">All Active Statuses</SelectItem>
+                    {listingStatusOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Construction Status */}
+              <div className="space-y-2">
+                <Label htmlFor="mobile-construction-status" className="text-xs font-bold text-white/80">
+                  Construction Status
+                </Label>
+                <Select
+                  value={constructionStatus}
+                  onValueChange={(val) => {
+                    setConstructionStatus(val)
+                    updateFilters({ constructionStatus: val })
+                  }}
+                >
+                  <SelectTrigger id="mobile-construction-status" className="w-full h-14 bg-[#05133a]/60 border border-blue-900/80 text-white rounded-2xl">
+                    <SelectValue placeholder="Select Construction Status" />
+                  </SelectTrigger>
+                  <SelectContent className="select-smooth-content rounded-xl border-white/10 bg-[#09153d] text-white z-[10000]">
+                    <SelectItem value="all">All Construction States</SelectItem>
+                    <SelectItem value="ready">Ready to Move In</SelectItem>
+                    <SelectItem value="under_construction">Under Construction</SelectItem>
+                    <SelectItem value="brand_new">Brand New</SelectItem>
+                    <SelectItem value="off_plan">Off-Plan</SelectItem>
+                    <SelectItem value="renovated">Fully Renovated</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-4 pt-4">
                 <Button
@@ -350,7 +402,10 @@ export function SearchHeader({
                   Reset
                 </Button>
                 <Button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    updateFilters({ location })
+                    setIsOpen(false)
+                  }}
                   className="flex-1 h-14 bg-gold-royal hover:bg-gold-royal/90 text-white font-bold uppercase tracking-widest rounded-2xl border border-gold-royal"
                 >
                   Explore
@@ -382,13 +437,21 @@ export function SearchHeader({
                   onChange={(e) => setLocation(e.target.value)}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      triggerSearch()
+                    }
+                  }}
                   className="pl-12 h-14 bg-[#05133a]/60 border border-blue-900/80 text-white placeholder:text-white/40 hover:border-blue-700/60 focus:border-gold-royal focus:ring-1 focus:ring-gold-royal/50 rounded-2xl transition-all"
                 />
               </div>
             </div>
 
             <div className="col-span-3 xl:col-span-2">
-              <Button className="w-full h-14 bg-gold-royal hover:bg-gold-royal/90 text-white font-bold uppercase tracking-widest rounded-2xl shadow-gold transition-all duration-500 hover:shadow-[0_0_25px_rgba(191,155,88,0.35)] active:scale-95 border border-gold-royal/50 hover:border-gold-royal">
+              <Button 
+                onClick={triggerSearch}
+                className="w-full h-14 bg-gold-royal hover:bg-gold-royal/90 text-white font-bold uppercase tracking-widest rounded-2xl shadow-gold transition-all duration-500 hover:shadow-[0_0_25px_rgba(191,155,88,0.35)] active:scale-95 border border-gold-royal/50 hover:border-gold-royal"
+              >
                 <Search className="mr-2 h-5 w-5" />
                 Explore
               </Button>
@@ -398,8 +461,8 @@ export function SearchHeader({
           {/* Divider */}
           <div className="h-[1px] bg-white/10 w-full" />
 
-          {/* Row 2: 5-Column Filters Grid */}
-          <div className="grid grid-cols-5 gap-4">
+          {/* Row 2: Filters Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
             {/* Country Selection */}
             <div>
               <Label
@@ -433,38 +496,6 @@ export function SearchHeader({
               </Select>
             </div>
 
-            {/* State Selection */}
-            <div>
-              <Label
-                htmlFor="state"
-                className="mb-2 block text-xs font-bold text-white/80"
-              >
-                State
-              </Label>
-              <Select
-                value={state}
-                onValueChange={(val) => {
-                  setState(val)
-                  updateFilters({ state: val })
-                }}
-              >
-                <SelectTrigger
-                  id="state"
-                  className="w-full h-12 bg-[#05133a]/60 border border-blue-900/80 text-white hover:border-blue-700/60 hover:bg-[#05133a]/80 focus:border-gold-royal focus:ring-1 focus:ring-gold-royal/50 rounded-xl transition-all flex items-center gap-2 px-3"
-                >
-                  <Map className="h-4 w-4 text-gold-royal/80 shrink-0" />
-                  <SelectValue placeholder="Select State" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-gold-royal/20">
-                  <SelectItem value="all">All States</SelectItem>
-                  {stateOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             {/* City Selection */}
             <div>
@@ -564,12 +595,78 @@ export function SearchHeader({
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Listing Status */}
+            <div>
+              <Label
+                htmlFor="listing-status"
+                className="mb-2 block text-xs font-bold text-white/80"
+              >
+                Listing Status
+              </Label>
+              <Select
+                value={listingStatus}
+                onValueChange={(val) => {
+                  setListingStatus(val)
+                  updateFilters({ listingStatus: val })
+                }}
+              >
+                <SelectTrigger
+                  id="listing-status"
+                  className="w-full h-12 bg-[#05133a]/60 border border-blue-900/80 text-white hover:border-blue-700/60 hover:bg-[#05133a]/80 focus:border-gold-royal focus:ring-1 focus:ring-gold-royal/50 rounded-xl transition-all flex items-center gap-2 px-3"
+                >
+                  <Building2 className="h-4 w-4 text-gold-royal/80 shrink-0" />
+                  <SelectValue placeholder="Select Listing Status" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-gold-royal/20">
+                  <SelectItem value="all">All Active Statuses</SelectItem>
+                  {listingStatusOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="rounded-lg">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Construction Status */}
+            <div>
+              <Label
+                htmlFor="construction-status"
+                className="mb-2 block text-xs font-bold text-white/80"
+              >
+                Construction State
+              </Label>
+              <Select
+                value={constructionStatus}
+                onValueChange={(val) => {
+                  setConstructionStatus(val)
+                  updateFilters({ constructionStatus: val })
+                }}
+              >
+                <SelectTrigger
+                  id="construction-status"
+                  className="w-full h-12 bg-[#05133a]/60 border border-blue-900/80 text-white hover:border-blue-700/60 hover:bg-[#05133a]/80 focus:border-gold-royal focus:ring-1 focus:ring-gold-royal/50 rounded-xl transition-all flex items-center gap-2 px-3"
+                >
+                  <SlidersHorizontal className="h-4 w-4 text-gold-royal/80 shrink-0" />
+                  <SelectValue placeholder="Select State" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-gold-royal/20">
+                  <SelectItem value="all">All States</SelectItem>
+                  <SelectItem value="ready">Ready to Move In</SelectItem>
+                  <SelectItem value="under_construction">Under Construction</SelectItem>
+                  <SelectItem value="brand_new">Brand New</SelectItem>
+                  <SelectItem value="off_plan">Off-Plan</SelectItem>
+                  <SelectItem value="renovated">Fully Renovated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Active Filters Display */}
-      {(location || country !== 'all' || state !== 'all' || city !== 'all' || propertyType !== 'all' || searchParams.get('lat')) && (
+      {(location || country !== 'all' || city !== 'all' || propertyType !== 'all' || searchParams.get('lat')) && (
         <div className="mt-4 lg:mt-6 w-full flex flex-wrap items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-500 bg-[#061849]/90 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-full px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
           <span className="text-xs font-bold text-gold-royal shrink-0 mr-1">
             Curating:
@@ -625,21 +722,6 @@ export function SearchHeader({
               </div>
             )}
 
-            {state !== 'all' && (
-              <div className="flex items-center bg-[#bf9b58] text-white px-3.5 py-1.5 rounded-full border border-gold-royal/30 text-xs font-bold transition-all hover:bg-navy-deep cursor-default shadow-gold animate-in fade-in zoom-in duration-300">
-                <span className="mr-1.5 text-white opacity-70">📍</span>
-                {state}
-                <button
-                  onClick={() => {
-                    setState('all')
-                    updateFilters({ state: 'all' })
-                  }}
-                  className="ml-2 hover:text-white/60 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            )}
 
             {city !== 'all' && (
               <div className="flex items-center bg-[#bf9b58] text-white px-3.5 py-1.5 rounded-full border border-gold-royal/30 text-xs font-bold transition-all hover:bg-navy-deep cursor-default shadow-gold">

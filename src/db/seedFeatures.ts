@@ -1,47 +1,41 @@
 import type { Payload } from 'payload'
 
 export const defaultFeatures = [
-  // Interior Features
-  { name: '24-Hour Room Service', category: 'interior' },
-  { name: 'High-Speed Fiber WiFi', category: 'interior' },
-  { name: 'Smart Home Automation', category: 'interior' },
-  { name: 'Private Home Cinema', category: 'interior' },
-  { name: 'Internal Private Elevator', category: 'interior' },
-  { name: 'Underfloor Heating System', category: 'interior' },
-  { name: 'Central Air Conditioning', category: 'interior' },
-  { name: 'Walk-in Custom Closets', category: 'interior' },
-  { name: 'Panic Room / Vault', category: 'interior' },
-  { name: 'Luxury Marble Bathrooms', category: 'interior' },
-  { name: 'Soundproof Rooms', category: 'interior' },
-
-  // Exterior Features
-  { name: 'Infinity Edge Pool', category: 'exterior' },
-  { name: 'Private Beachfront Access', category: 'exterior' },
-  { name: 'Extensive Landscaped Garden', category: 'exterior' },
-  { name: 'BBQ & Outdoor Dining Area', category: 'exterior' },
-  { name: 'Underground Parking Garage', category: 'exterior' },
-  { name: 'Helipad Access', category: 'exterior' },
-  { name: 'Rooftop Terrace / Sky Lounge', category: 'exterior' },
-  { name: 'Fenced & Gated Perimeter', category: 'exterior' },
-  { name: 'Private Boat Dock', category: 'exterior' },
-
-  // Community Features
-  { name: '24/7 Gated Community Security', category: 'community' },
-  { name: 'Concierge & Reception', category: 'community' },
-  { name: 'Elite Gym & Fitness Center', category: 'community' },
-  { name: 'Spa & Wellness Retreat', category: 'community' },
-  { name: 'Kids Adventure Playgrounds', category: 'community' },
-  { name: 'Championship Golf Course Access', category: 'community' },
-  { name: 'Retail & Commercial Outlets', category: 'community' },
-  { name: 'Tennis & Basketball Courts', category: 'community' },
-  { name: 'Paved Asphalt Roads', category: 'community' },
-
-  // Other Features
-  { name: 'Commercial Building Permit', category: 'other' },
-  { name: 'Solar Power Grid & Backup', category: 'other' },
-  { name: 'Water & Electricity Ready', category: 'other' },
-  { name: 'Fiber Optic Connectivity', category: 'other' },
-] as const
+  // Features
+  { name: '24-Hour Room Service' },
+  { name: 'High-Speed Fiber WiFi' },
+  { name: 'Smart Home Automation' },
+  { name: 'Private Home Cinema' },
+  { name: 'Internal Private Elevator' },
+  { name: 'Underfloor Heating System' },
+  { name: 'Central Air Conditioning' },
+  { name: 'Walk-in Custom Closets' },
+  { name: 'Panic Room / Vault' },
+  { name: 'Luxury Marble Bathrooms' },
+  { name: 'Soundproof Rooms' },
+  { name: 'Infinity Edge Pool' },
+  { name: 'Private Beachfront Access' },
+  { name: 'Extensive Landscaped Garden' },
+  { name: 'BBQ & Outdoor Dining Area' },
+  { name: 'Underground Parking Garage' },
+  { name: 'Helipad Access' },
+  { name: 'Rooftop Terrace / Sky Lounge' },
+  { name: 'Fenced & Gated Perimeter' },
+  { name: 'Private Boat Dock' },
+  { name: '24/7 Gated Community Security' },
+  { name: 'Concierge & Reception' },
+  { name: 'Elite Gym & Fitness Center' },
+  { name: 'Spa & Wellness Retreat' },
+  { name: 'Kids Adventure Playgrounds' },
+  { name: 'Championship Golf Course Access' },
+  { name: 'Retail & Commercial Outlets' },
+  { name: 'Tennis & Basketball Courts' },
+  { name: 'Paved Asphalt Roads' },
+  { name: 'Commercial Building Permit' },
+  { name: 'Solar Power Grid & Backup' },
+  { name: 'Water & Electricity Ready' },
+  { name: 'Fiber Optic Connectivity' },
+]
 
 /**
  * Seeds the features collection if it is empty.

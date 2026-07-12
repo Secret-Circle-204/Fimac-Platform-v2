@@ -13,9 +13,9 @@ import { getCachedPropertyDetail } from '@/lib/cache/property-detail'
 import { Skeleton } from '@/components/ui/skeleton'
 import { buildPropertySlug } from '@/repository/property/generate-url'
 import { getCachedCompanySettings } from '@/lib/cache/company-settings'
-import { PartnerBadge } from '@/components/property/partner/partner-badge'
 import { VisualizeButton } from '@/components/property/partner/visualize-button'
 import { PartnerDesignTab } from '@/components/property/partner/partner-design-tab'
+import { PropertyProjectSection } from '@/components/property/project-section'
 
 type Params = Promise<{ id: string; slug: string }>
 
@@ -37,8 +37,14 @@ const getProperty = cache(async (id: string) => {
 export async function generateMetadata({ params }: { params: Params }) {
   const { id } = await params
   const property = await getProperty(id)
-  
-  if (!property) {
+  const statusSlug =
+    property && typeof property.original.listingStatus === 'object' && property.original.listingStatus
+      ? property.original.listingStatus.slug
+      : property && typeof property.original.listingStatus === 'string'
+        ? property.original.listingStatus
+        : 'draft'
+
+  if (!property || statusSlug === 'draft') {
     return {
       title: 'Property Not Found',
       description: 'The requested property could not be found.',
@@ -83,7 +89,14 @@ export default async function PropertyDetailPage({
   // The cache layer returns null for missing properties, so we guard explicitly.
   const property = await getProperty(id)
 
-  if (!property) {
+  const statusSlug =
+    property && typeof property.original.listingStatus === 'object' && property.original.listingStatus
+      ? property.original.listingStatus.slug
+      : property && typeof property.original.listingStatus === 'string'
+        ? property.original.listingStatus
+        : 'draft'
+
+  if (!property || statusSlug === 'draft') {
     notFound()
   }
 
@@ -119,8 +132,10 @@ export default async function PropertyDetailPage({
 
   // Map listing status to Schema.org ItemAvailability
   // Only 'forsale' maps to InStock; all other statuses (pending, sold, offmarket, etc.) are OutOfStock
+
+
   const schemaAvailability =
-    property.original.listingStatus === 'forsale'
+    statusSlug === 'forsale'
       ? 'https://schema.org/InStock'
       : 'https://schema.org/OutOfStock'
 
@@ -164,6 +179,7 @@ export default async function PropertyDetailPage({
         <div className="w-full flex flex-col pt-32 pb-16 bg-slate-50/30">
           <div className="max-w-7xl w-full mx-auto px-4 flex flex-col gap-8">
             <div className="relative">
+              <PropertyProjectSection />
               <PropertyGallery />
               <VisualizeButton partner={partner} constructionStatus={property.original.constructionStatus} />
             </div>

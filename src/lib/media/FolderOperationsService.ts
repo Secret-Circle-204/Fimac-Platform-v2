@@ -16,6 +16,7 @@
  */
 
 import type { Payload } from 'payload'
+import { sql } from 'drizzle-orm'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -234,15 +235,11 @@ export class FolderOperationsService {
       })
 
       if (mediaInFolder.totalDocs > 0) {
-        // Reassign all media to the target parent folder
-        for (const mediaItem of mediaInFolder.docs) {
-          await payload.update({
-            collection: 'media',
-            id: mediaItem.id,
-            data: { folder: reassignTargetId },
-            depth: 0,
-          })
-        }
+        // Reassign all media to the target parent folder efficiently using Drizzle bulk update
+        const db = payload.db.drizzle
+        await db.execute(
+          sql`UPDATE media SET folder_id = ${reassignTargetId} WHERE folder_id = ${folderToProcess.id}`
+        )
 
         reassignments.push({
           count: mediaInFolder.totalDocs,
@@ -299,17 +296,22 @@ export class FolderOperationsService {
       unfiled: unfiledCount.totalDocs,
     }
 
-    // For each folder, count media items
-    // We batch this as parallel queries for efficiency
-    const countPromises = allFolders.docs.map(async (folder) => {
-      const result = await payload.count({
-        collection: 'media',
-        where: { folder: { equals: folder.id } },
-      })
-      counts[String(folder.id)] = result.totalDocs
-    })
+    // Initialize all folders with 0
+    for (const folder of allFolders.docs) {
+      counts[String(folder.id)] = 0
+    }
 
-    await Promise.all(countPromises)
+    // Use a single group by query via Drizzle
+    const db = payload.db.drizzle
+    const result = await db.execute(
+      sql`SELECT folder_id, COUNT(*) as count FROM media WHERE folder_id IS NOT NULL GROUP BY folder_id`
+    )
+
+    for (const row of result.rows) {
+      if (row.folder_id) {
+        counts[String(row.folder_id)] = Number(row.count)
+      }
+    }
 
     return counts
   }

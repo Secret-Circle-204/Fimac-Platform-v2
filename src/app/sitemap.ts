@@ -14,7 +14,7 @@ import { buildPropertyUrl } from '@/repository/property/generate-url'
  * - All URLs are built via the canonical buildPropertyUrl to guarantee consistency
  *   with the routing layer — no hardcoded strings.
  * - No draft mode exists on Properties collection, so all returned docs are publishable.
- *   The only non-indexable properties are those with 'offmarket' or 'notforsale' status,
+ *   The only non-indexable properties are those with 'offmarket' or 'draft' status,
  *   which are still valid URLs but lower SEO priority. We include all to avoid 404s on
  *   already-indexed pages.
  */
@@ -25,6 +25,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Payload's `select` reduces serialization overhead significantly for large collections.
   const result = await payload.find({
     collection: 'properties',
+    where: {
+      'listingStatus.slug': {
+        not_equals: 'draft',
+      },
+    },
     limit: 5000, // Safe upper bound; increase or split to sitemapIndex if collection grows past this
     depth: 0,    // Depth 0 prevents loading any relations — id, updatedAt, and scalar fields only
     select: {

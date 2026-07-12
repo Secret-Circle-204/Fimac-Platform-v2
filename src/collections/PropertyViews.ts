@@ -98,6 +98,7 @@ export const PropertyViews: CollectionConfig = {
     {
       name: "ipAddress",
       type: "text",
+      index: true,
       admin: {
         readOnly: true,
         description: "Visitor IP address (hashed for privacy)",

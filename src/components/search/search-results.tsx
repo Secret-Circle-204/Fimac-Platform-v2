@@ -1,28 +1,35 @@
+"use client"
+
 import { PropertySearchCard } from "./property-search-card"
 import { PropertySearchCardSkeleton } from "./property-search-card-skeleton"
 import { Property } from "@/payload-types"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, SearchX } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 interface SearchResultsProps {
   properties: Property[]
-  totalCount?: number
+  totalCount: number
+  currentPage: number
   isLoading?: boolean
 }
 
-export function SearchResults({ properties, totalCount, isLoading = false }: SearchResultsProps) {
-  const [currentPage, setCurrentPage] = useState(1)
-  const resultsPerPage = 25
-  const totalPages = Math.ceil((totalCount || properties.length) / resultsPerPage)
+export function SearchResults({ properties, totalCount, currentPage, isLoading = false }: SearchResultsProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
-  const startIndex = (currentPage - 1) * resultsPerPage
-  const endIndex = startIndex + resultsPerPage
-  const currentResults = properties.slice(startIndex, endIndex)
+  const resultsPerPage = 24
+  const totalPages = Math.ceil(totalCount / resultsPerPage)
+
+  const currentResults = properties
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("page", page.toString())
+    router.push(`${pathname}?${params.toString()}`)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 

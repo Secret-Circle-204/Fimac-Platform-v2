@@ -20,7 +20,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         <main>
           <SiteHeader userNav={<UserNav />} user={user} />
           {children}
-          <Footer />
+          <Footer user={user} />
         </main>
         <Toaster />
       </body>

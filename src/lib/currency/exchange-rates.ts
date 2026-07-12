@@ -1,11 +1,3 @@
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const CACHE_FILE = path.join(__dirname, '.rates-cache.json')
-
 const CACHE_DURATION_MS = 12 * 60 * 60 * 1000 // 12 hours
 
 export interface ExchangeRatesData {
@@ -19,22 +11,17 @@ export const FALLBACK_RATES: Record<string, number> = {
   EUR: 52.0,
 }
 
+let cachedRates: Record<string, number> | null = null
+let lastFetched = 0
+
 /**
  * Fetches and resolves exchange rates relative to USD.
- * Caches results locally for 12 hours to prevent slow hook executions.
+ * Caches results locally for 12 hours in-memory to prevent slow hook executions.
  */
 export async function getExchangeRates(): Promise<Record<string, number>> {
-  // Check if cache file exists and is fresh
-  if (fs.existsSync(CACHE_FILE)) {
-    try {
-      const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8')) as ExchangeRatesData
-      const now = Date.now()
-      if (now - cached.timestamp < CACHE_DURATION_MS) {
-        return cached.rates
-      }
-    } catch (err) {
-      console.warn('[ExchangeRates] Failed to read currency cache:', err)
-    }
+  const now = Date.now()
+  if (cachedRates && (now - lastFetched < CACHE_DURATION_MS)) {
+    return cachedRates
   }
 
   // Fetch fresh rates
@@ -57,19 +44,9 @@ export async function getExchangeRates(): Promise<Record<string, number>> {
           EUR: Number(data.rates.EUR) || FALLBACK_RATES.EUR,
         }
 
-        // Save to cache
-        try {
-          fs.writeFileSync(
-            CACHE_FILE,
-            JSON.stringify({
-              rates,
-              timestamp: Date.now(),
-            }),
-            'utf8',
-          )
-        } catch (writeErr) {
-          console.warn('[ExchangeRates] Failed to write currency cache:', writeErr)
-        }
+        // Save to in-memory cache
+        cachedRates = rates
+        lastFetched = Date.now()
 
         return rates
       }
@@ -79,14 +56,9 @@ export async function getExchangeRates(): Promise<Record<string, number>> {
   }
 
   // Fallback to stale cache if it exists, or fallback rates
-  if (fs.existsSync(CACHE_FILE)) {
-    try {
-      const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8')) as ExchangeRatesData
-      console.warn('[ExchangeRates] Using stale exchange rates cache.')
-      return cached.rates
-    } catch (_err) {
-      // ignore
-    }
+  if (cachedRates) {
+    console.warn('[ExchangeRates] Using stale exchange rates cache.')
+    return cachedRates
   }
 
   console.warn('[ExchangeRates] Using default fallback exchange rates.')

@@ -1,20 +1,17 @@
 import React from 'react'
 import type { CompanySettingsData } from '@/lib/cache/company-settings'
+import type { ConstructionStatus } from '@/payload-types'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ExternalLink } from 'lucide-react'
 
 interface PartnerDesignTabProps {
   partner?: CompanySettingsData['partner']
-  constructionStatus?: string | null
+  constructionStatus?: string | number | ConstructionStatus | null
 }
 
-export function PartnerDesignTab({ partner, constructionStatus }: PartnerDesignTabProps) {
+export function PartnerDesignTab({ partner, constructionStatus: _constructionStatus }: PartnerDesignTabProps) {
   if (!partner || !partner.isActive || !partner.name) return null
-  
-  if (constructionStatus !== 'ready' && constructionStatus !== 'brand_new') {
-    return null
-  }
 
   const logoUrl =
     typeof partner.logo === 'object' && partner.logo && 'url' in partner.logo
@@ -50,14 +47,14 @@ export function PartnerDesignTab({ partner, constructionStatus }: PartnerDesignT
           Interior Design by {partner.name}
         </h3>
         <p className="text-slate-500 leading-relaxed text-sm mt-1">
-          Unleash your imagination. This property is designed to be the perfect canvas for {partner.name}'s smart and premium furnishing solutions. Whether you seek classic elegance or modern practicality, you will find the perfect fit here.
+          Unleash your imagination. This property is designed to be the perfect canvas for {partner.name}&apos;s smart and premium furnishing solutions. Whether you seek classic elegance or modern practicality, you will find the perfect fit here.
         </p>
         
         {formattedUrl && (
           <div className="mt-4 w-full">
             <Button asChild variant="outline" className="w-full gap-2 h-auto py-3.5 px-4 rounded-xl border-slate-200 hover:bg-slate-50 text-sm shadow-sm hover:shadow transition-all whitespace-normal text-center">
               <a href={formattedUrl} target="_blank" rel="noopener noreferrer" className="flex flex-row items-center justify-center gap-2">
-                <span>Browse {partner.name}'s ideas and collections</span>
+                <span>Browse {partner.name}&apos;s ideas and collections</span>
                 <ExternalLink className="w-4 h-4 text-slate-400 shrink-0" />
               </a>
             </Button>

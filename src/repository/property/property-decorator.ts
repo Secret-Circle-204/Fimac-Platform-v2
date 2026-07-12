@@ -29,10 +29,10 @@ export class PropertyDecorator extends BaseDecorator<Property> {
   }
 
   get features(): Feature[] {
-    if (!this.original.features) {
+    if (!this.original.details?.features) {
       return []
     }
-    const features = this.original.features as Feature[]
+    const features = this.original.details.features as Feature[]
     return features
   }
 
@@ -83,10 +83,17 @@ export class PropertyDecorator extends BaseDecorator<Property> {
   }
 
   get listingStatus(): ListingStatus {
-    return this.original.listingStatus
+    const rawStatus = typeof this.original.listingStatus === 'object' && this.original.listingStatus
+      ? (this.original.listingStatus.slug as string)
+      : typeof this.original.listingStatus === 'string'
+        ? (this.original.listingStatus as string)
+        : 'draft'
+
+    const normalized = rawStatus === 'for-sale' ? 'forsale' : rawStatus
+    return normalized as ListingStatus
   }
 
-  get constructionStatus(): string | null | undefined {
+  get constructionStatus(): Property['constructionStatus'] {
     return this.original.constructionStatus
   }
 
@@ -98,5 +105,16 @@ export class PropertyDecorator extends BaseDecorator<Property> {
     return this.original.views ?? 0
   }
 
+  get hasProject(): boolean {
+    return !!this.original.hasProject
+  }
 
+  get projectImage(): Media | null {
+    if (!this.original.projectImage) return null
+    return this.original.projectImage as Media
+  }
+
+  get projectDescription(): Property['projectDescription'] {
+    return this.original.projectDescription
+  }
 }
