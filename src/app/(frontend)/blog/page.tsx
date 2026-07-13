@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Calendar, Clock, User, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { formatDistanceToNow } from "date-fns"
 import { unstable_cache } from "next/cache"
 import type { Where } from "payload"
 
@@ -49,7 +48,6 @@ const getCachedBlogData = async (page: number, categoryId: string) => {
             featuredImage: true,
             category: true,
             publishedDate: true,
-            readTime: true,
             author: true,
             featured: true,
           },
@@ -158,15 +156,13 @@ export default async function BlogPage(props: {
                         <Calendar className="h-4 w-4" />
                         <span>
                           {featuredPost.publishedDate
-                            ? formatDistanceToNow(new Date(featuredPost.publishedDate), {
-                                addSuffix: true,
+                            ? new Date(featuredPost.publishedDate).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
                               })
                             : "Recently"}
                         </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{featuredPost.readTime || 5} min read</span>
                       </div>
                     </div>
 
@@ -262,7 +258,7 @@ export default async function BlogPage(props: {
                         <p className="text-gray-600 text-sm mb-4 line-clamp-3">{post.excerpt}</p>
 
                         {/* Meta Info */}
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-4 pb-4 border-b">
+                        <div className="flex items-center text-xs text-gray-500 mb-4 pb-4 border-b">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             <span>
@@ -274,10 +270,6 @@ export default async function BlogPage(props: {
                                   })
                                 : "Recent"}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            <span>{post.readTime || 5} min</span>
                           </div>
                         </div>
 
@@ -334,25 +326,7 @@ export default async function BlogPage(props: {
           </div>
         </section>
 
-        {/* Newsletter Section */}
-        <section className="py-16 bg-blue-900 text-white">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">Subscribe to Our Newsletter</h2>
-            <p className="max-w-2xl mx-auto mb-8 text-blue-100">
-              Get the latest articles and market insights delivered directly to your inbox
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg text-gray-900"
-              />
-              <Button variant="secondary" size="lg">
-                Subscribe
-              </Button>
-            </div>
-          </div>
-        </section>
+
       </main>
     </div>
   )

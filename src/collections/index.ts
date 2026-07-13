@@ -11,7 +11,6 @@ import { PropertyViews } from './PropertyViews'
 import { BlogCategories } from './BlogCategories'
 import { BlogPosts } from './BlogPosts'
 import { ContactMessages } from './ContactMessages'
-import { Newsletters } from './Newsletters'
 import { SellerRequests } from './SellerRequests'
 import { PropertyTypes } from './PropertyTypes'
 import { ListingStatuses } from './ListingStatuses'
@@ -32,7 +31,6 @@ export const collections = [
   BlogCategories,
   BlogPosts,
   ContactMessages,
-  Newsletters,
   SellerRequests,
   PropertyTypes,
   ListingStatuses,

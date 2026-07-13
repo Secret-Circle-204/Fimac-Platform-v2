@@ -13,6 +13,7 @@ export const PropertyCategories: CollectionConfig = {
     listSearchableFields: ['name', 'slug'],
     defaultColumns: ['name', 'slug', 'createdAt'],
     group: 'Real Estate',
+    hidden: true,
   },
   hooks: {
     afterChange: [

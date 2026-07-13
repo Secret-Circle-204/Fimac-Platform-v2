@@ -3,7 +3,6 @@ import { buildPropertySearchQuery } from '@/repository/property/query-builder'
 // geocodeSearch removed to prevent rate limiting
 import { SearchHeader } from '@/components/search/search-header'
 import { SearchResultsWrapper } from '@/components/search/search-results-wrapper'
-import { NewsLetter } from '@/components/shared/newsletter'
 import { getCachedPropertyTypes } from '@/lib/cache/property-types'
 import { getCachedListingStatuses } from '@/lib/cache/listing-statuses'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
@@ -162,7 +161,6 @@ export default async function SearchPage({
             </div>
           </div>
         </section>
-        <NewsLetter user={user} />
       </main>
     </div>
   )

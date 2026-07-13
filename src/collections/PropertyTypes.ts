@@ -13,6 +13,7 @@ export const PropertyTypes: CollectionConfig = {
     listSearchableFields: ['name', 'slug'],
     defaultColumns: ['name', 'slug', 'createdAt'],
     group: 'Real Estate',
+    hidden: true,
   },
   hooks: {
     afterChange: [
@@ -52,6 +53,33 @@ export const PropertyTypes: CollectionConfig = {
       admin: {
         description: 'Select the main category for this property type.',
       },
+    },
+    {
+      name: 'specificationProfile',
+      type: 'select',
+      required: true,
+      defaultValue: 'none',
+      label: 'Specification Profile',
+      admin: {
+        description: 'Select the specifications profile that applies to this property type.',
+      },
+      options: [
+        { label: 'Villa', value: 'villa' },
+        { label: 'Apartment', value: 'apartment' },
+        { label: 'Chalet', value: 'chalet' },
+        { label: 'Office', value: 'office' },
+        { label: 'Restaurant', value: 'restaurant' },
+        { label: 'Warehouse', value: 'warehouse' },
+        { label: 'Factory', value: 'factory' },
+        { label: 'Retail', value: 'retail' },
+        { label: 'Medical', value: 'medical' },
+        { label: 'Hotel', value: 'hotel' },
+        { label: 'Motel', value: 'motel' },
+        { label: 'Resort', value: 'resort' },
+        { label: 'Camp', value: 'camp' },
+        { label: 'Land', value: 'land' },
+        { label: 'None', value: 'none' },
+      ],
     },
     {
       name: 'slug',

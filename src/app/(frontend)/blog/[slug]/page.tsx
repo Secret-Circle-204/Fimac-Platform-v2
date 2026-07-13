@@ -2,16 +2,15 @@ import { getPayloadClient } from "@/db/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Calendar, Clock, User, ArrowLeft, ArrowRight, Share2 } from "lucide-react"
+import { Calendar, User, ArrowLeft, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { formatDistanceToNow } from "date-fns"
+import { RichText } from '@/components/shared/rich-text'
+import { ShareButton } from '@/components/shared/share-button'
 
 import { unstable_cache } from "next/cache"
 import { cache } from "react"
-import { after } from "next/server"
-import { sql } from "@payloadcms/db-postgres"
 
 // Deduplicated and cached single post lookup (Server Caching Layer)
 const getPost = cache(async (slug: string) => {
@@ -91,17 +90,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     notFound()
   }
 
-  // Schedule DB write in background thread without triggering Payload hooks (Cache Invalidation Storm)
-  after(async () => {
-    try {
-      const payload = await getPayloadClient()
-      const db = payload.db.drizzle
-      await db.execute(sql`UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = ${Number(post.id)}`)
-    } catch (err) {
-      console.error("Background task error incrementing blog view count:", err)
-    }
-  })
-
   // Resolve related category ID safely
   const categoryId = typeof post.category === "object" && post.category ? post.category.id : post.category
   
@@ -151,7 +139,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 max-w-4xl">
                 {post.title}
               </h1>
-              <div className="flex flex-wrap gap-4 text-white/90">
+              <div className="flex flex-wrap items-center gap-6 text-sm text-blue-100">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
                   <span>{post.author}</span>
@@ -160,13 +148,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   <Calendar className="h-4 w-4" />
                   <span>
                     {post.publishedDate
-                      ? formatDistanceToNow(new Date(post.publishedDate), { addSuffix: true })
+                      ? new Date(post.publishedDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
                       : "Recently"}
                   </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  <span>{post.readTime || 5} min read</span>
                 </div>
               </div>
             </div>
@@ -185,26 +173,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               {/* Share Buttons */}
               <div className="flex items-center gap-4 mb-8 pb-8 border-b">
                 <span className="text-sm font-medium text-gray-600">Share:</span>
-                <Button variant="outline" size="sm">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
+                <ShareButton title={post.title} excerpt={post.excerpt} />
               </div>
 
               {/* Main Content */}
               <div className="prose prose-lg max-w-none">
-                {/* Rich text content would be rendered here */}
-                {post.content && (
-                  <div
-                    className="text-gray-800 leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        typeof post.content === "string"
-                          ? post.content
-                          : JSON.stringify(post.content),
-                    }}
-                  />
-                )}
+                <RichText content={post.content} />
               </div>
 
               {/* Tags */}
@@ -275,25 +249,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </section>
         )}
 
-        {/* Newsletter CTA */}
-        <section className="py-16 bg-blue-900 text-white">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">Enjoyed this article?</h2>
-            <p className="max-w-2xl mx-auto mb-8 text-blue-100">
-              Subscribe to our newsletter for more insights on hospitality investments
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg text-gray-900"
-              />
-              <Button variant="secondary" size="lg">
-                Subscribe
-              </Button>
-            </div>
-          </div>
-        </section>
+
       </main>
     </div>
   )

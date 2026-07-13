@@ -25,9 +25,11 @@ export const SpecItem: React.FC<SpecItemProps> = ({ label, value, icon: IconComp
 
       {/* Text Details */}
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-navy-deep/40 mb-1">
-          {label}
-        </p>
+        {label && (
+          <p className="text-[10px] font-bold uppercase tracking-widest text-navy-deep/40 mb-1">
+            {label}
+          </p>
+        )}
         <p className="font-bold text-navy-deep text-lg">
           {value}
         </p>

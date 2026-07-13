@@ -106,6 +106,16 @@ async function main() {
           name,
           slug: name.toLowerCase(),
           category: typeCategoryId,
+          specificationProfile:
+            name === 'Office'
+              ? 'office'
+              : name === 'Apartment' || name === 'Studio'
+              ? 'apartment'
+              : name === 'Villa'
+              ? 'villa'
+              : name === 'Chalet'
+              ? 'chalet'
+              : 'none',
         },
       })
       typeMap[name] = Number(newType.id)

@@ -15,6 +15,7 @@ export const Locations: CollectionConfig = {
     group: 'Real Estate',
     useAsTitle: "formattedLocation",
     listSearchableFields: ["city", "state_abbr", "state_name", "zip", "county"],
+    hidden: true,
   },
   access: {
     read: () => true,

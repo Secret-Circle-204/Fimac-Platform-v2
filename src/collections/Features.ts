@@ -7,6 +7,7 @@ export const Features: CollectionConfig = {
     group: 'Real Estate',
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'featureGroup'],
+    hidden: true,
   },
   access: {
     read: () => true,

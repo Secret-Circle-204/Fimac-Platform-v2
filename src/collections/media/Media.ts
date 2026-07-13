@@ -21,13 +21,13 @@ import {
   IMAGE_SIZES,
   PAYLOAD_MIME_TYPES_GLOB,
 } from '@/lib/media/config'
-import { 
-  mediaBeforeChange, 
-  mediaBeforeValidate, 
-  mediaBeforeOperation, 
+import {
+  mediaBeforeChange,
+  mediaBeforeValidate,
+  mediaBeforeOperation,
   mediaBeforeDelete,
   mediaAfterChange,
-  mediaAfterDelete
+  mediaAfterDelete,
 } from './hooks'
 import { MediaBulkDeletionService } from '@/lib/media/MediaBulkDeletionService'
 import { MediaHealthService } from '@/lib/media/MediaHealthService'
@@ -41,7 +41,7 @@ export const Media: CollectionConfig = {
   admin: {
     useAsTitle: 'displayName',
     defaultColumns: ['filename', 'displayName', 'folder', 'mimeType', 'filesize', 'updatedAt'],
-    group: 'Media',
+    // group: 'Media',
     components: {
       views: {
         list: {
@@ -62,14 +62,14 @@ export const Media: CollectionConfig = {
         if (user?.collection !== 'users') {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
-        
+
         let body
         try {
-          body = await req.json?.() ?? req.data ?? req.body
+          body = (await req.json?.()) ?? req.data ?? req.body
         } catch {
           return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
         }
-        
+
         const ids = body?.ids
         if (!Array.isArray(ids)) {
           return Response.json({ error: 'Missing or invalid ids array' }, { status: 400 })
@@ -87,14 +87,14 @@ export const Media: CollectionConfig = {
         if (user?.collection !== 'users') {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
-        
+
         let body
         try {
-          body = await req.json?.() ?? req.data ?? req.body
+          body = (await req.json?.()) ?? req.data ?? req.body
         } catch {
           return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
         }
-        
+
         const ids = body?.ids
         if (!Array.isArray(ids)) {
           return Response.json({ error: 'Missing or invalid ids array' }, { status: 400 })

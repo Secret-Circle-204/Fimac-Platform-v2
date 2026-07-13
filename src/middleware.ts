@@ -26,8 +26,8 @@ export function middleware(request: NextRequest) {
   let limitPreset = RATE_LIMIT_PRESETS.API // الافتراضي للـ API
 
   if (pathname.startsWith('/api/')) {
-    if (pathname.startsWith('/api/contact') || pathname.startsWith('/api/newsletter')) {
-      limitPreset = RATE_LIMIT_PRESETS.CONTACT // حد صارم لرسائل التواصل والنشرة البريدية
+    if (pathname.startsWith('/api/contact')) {
+      limitPreset = RATE_LIMIT_PRESETS.CONTACT // حد صارم لرسائل التواصل
     } else if (pathname.startsWith('/api/upload-photo')) {
       limitPreset = RATE_LIMIT_PRESETS.UPLOAD // حد لرفع الصور
     } else if (pathname.includes('search') || pathname.includes('track-view')) {

@@ -13,6 +13,14 @@ export interface CompanySettingsData {
     logo?: string | Media | null
     badgeText?: string | null
   }
+  contactEmail?: string | null
+  contactPhone?: string | null
+  contactOffice?: string | null
+  businessHours?: {
+    mondayFriday?: string | null
+    saturday?: string | null
+    sunday?: string | null
+  } | null
   updatedAt?: string | null
   createdAt?: string | null
 }

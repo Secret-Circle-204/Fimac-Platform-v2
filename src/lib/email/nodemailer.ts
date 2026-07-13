@@ -70,19 +70,6 @@ type ContactReceiptArgs = {
   subject: string
 }
 
-type NewsletterConfirmationArgs = {
-  email: string
-  confirmationUrl: string
-  firstName?: string
-}
-
-type NewsletterAdminArgs = {
-  email: string
-  firstName?: string | null
-  lastName?: string | null
-  source?: string | null
-  confirmed: boolean
-}
 
 const emailShell = ({
   title,
@@ -332,77 +319,6 @@ export const emailTemplates = {
       `User Agent: ${userAgent}`,
     ]),
   }),
-  newsletterConfirmation: ({
-    email: _email,
-    confirmationUrl,
-    firstName,
-  }: NewsletterConfirmationArgs) => ({
-    subject: 'Confirm your subscription',
-    html: emailShell({
-      title: 'One more step to join our insights',
-      body: `
-        <p>${firstName ? `Hi ${firstName},` : 'Hello,'}</p>
-        <p>Thanks for subscribing to our newsletter. Please confirm your email address to start receiving curated investment news and property opportunities.</p>
-        <p style="margin-top: 24px; color: #6b7280; font-size: 14px;">This confirmation link will expire in 24 hours.</p>
-      `,
-      cta: { label: 'Confirm subscription', url: confirmationUrl },
-    }),
-    text: plainText([
-      firstName ? `Hi ${firstName},` : 'Hello,',
-      'Please confirm your subscription.',
-      `Link: ${confirmationUrl}`,
-      'This link expires in 24 hours.',
-    ]),
-  }),
-  newsletterWelcome: ({ email, firstName }: { email: string; firstName?: string | null }) => ({
-    subject: 'Welcome to the FIMAC insights list',
-    html: emailShell({
-      title: `${firstName ? `Welcome aboard, ${firstName}!` : 'Welcome to FIMAC'}`,
-      body: `
-        <p>Your subscription (${email}) is now confirmed.</p>
-        <p>You will start receiving market trends, premium listings, and buyer-only opportunities soon.</p>
-      `,
-      cta: { label: 'Visit our platform', url: SERVER_URL },
-    }),
-    text: plainText([
-      `Subscription confirmed for ${email}.`,
-      'Stay tuned for premium content.',
-      `Visit: ${SERVER_URL}`,
-    ]),
-  }),
-  newsletterAdminNotification: ({
-    email,
-    firstName,
-    lastName,
-    source,
-    confirmed,
-  }: NewsletterAdminArgs) => {
-    const statusLabel = confirmed ? 'confirmed' : 'pending confirmation'
-    const statusDetail = confirmed
-      ? 'Confirmed via double opt-in.'
-      : 'Awaiting subscriber confirmation.'
-
-    return {
-      subject: `${confirmed ? 'New confirmed subscriber' : 'Pending subscriber'}: ${email}`,
-      html: emailShell({
-        title: confirmed ? 'A subscriber just confirmed' : 'Subscriber awaiting confirmation',
-        body: `
-          <p><strong>Email:</strong> ${email}</p>
-          ${firstName || lastName ? `<p><strong>Name:</strong> ${[firstName, lastName].filter(Boolean).join(' ')}</p>` : ''}
-          ${source ? `<p><strong>Source:</strong> ${source}</p>` : ''}
-          <p>Status: ${statusDetail}</p>
-        `,
-      }),
-      text: plainText(
-        [
-          `Subscriber: ${email}`,
-          firstName || lastName ? `Name: ${[firstName, lastName].filter(Boolean).join(' ')}` : '',
-          source ? `Source: ${source}` : '',
-          `Status: ${statusLabel}`,
-        ].filter(Boolean as unknown as (value: string) => value is string),
-      ),
-    }
-  },
   sellerRequestReceipt: ({
     fullName,
     propertyTitle,

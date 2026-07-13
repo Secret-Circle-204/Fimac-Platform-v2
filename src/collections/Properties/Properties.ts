@@ -1,10 +1,4 @@
-import type { CollectionConfig } from 'payload'
-import {
-  residentialSchema,
-  commercialSchema,
-  hospitalitySchema,
-  landSchema,
-} from './schemas'
+import type { CollectionConfig, Field } from 'payload'
 import {
   formatAddress,
   syncLocationHook,
@@ -18,6 +12,93 @@ import {
   measureAfterChange,
 } from '@/lib/diagnostics'
 import { validateLatField, validateLngField } from '@/lib/geo/is-valid-coordinate'
+import { ALL_SPEC_FIELDS, PROFILE_MAP } from './specs-registry'
+import type { SpecFieldDefinition } from './specs-registry'
+
+function buildSpecField(spec: SpecFieldDefinition): Field {
+  const baseConfig = {
+    name: spec.name,
+    label: spec.label.en,
+    index: false,
+  }
+
+  const admin: any = {}
+  if (spec.unit) {
+    admin.description = `Unit: ${spec.unit}`
+  }
+  if (spec.adminCondition) {
+    admin.condition = spec.adminCondition
+  }
+
+  const hasAdmin = Object.keys(admin).length > 0
+
+  if (spec.type === 'select') {
+    return {
+      ...baseConfig,
+      type: 'select',
+      options: spec.selectOptions || [],
+      admin: hasAdmin ? admin : undefined,
+    }
+  }
+
+  if (spec.type === 'checkbox') {
+    return {
+      ...baseConfig,
+      type: 'checkbox',
+      admin: hasAdmin ? admin : undefined,
+    }
+  }
+
+  if (spec.type === 'number') {
+    return {
+      ...baseConfig,
+      type: 'number',
+      admin: hasAdmin ? admin : undefined,
+    }
+  }
+
+  return {
+    ...baseConfig,
+    type: 'text',
+    admin: hasAdmin ? admin : undefined,
+  }
+}
+
+function buildCategoryFields(category: 'residential' | 'commercial' | 'hospitality' | 'land'): Field[] {
+  const categorySpecs = Object.values(ALL_SPEC_FIELDS).filter((spec) => spec.category === category)
+
+  // 1. Get flat common specs (where subGroup is 'common')
+  const commonFields = categorySpecs
+    .filter((spec) => spec.subGroup === 'common')
+    .map(buildSpecField)
+
+  // 2. Get unique sub-groups (excluding 'common')
+  const subGroupNames = Array.from(
+    new Set(
+      categorySpecs.filter((spec) => spec.subGroup !== 'common').map((spec) => spec.subGroup),
+    ),
+  )
+
+  // 3. For each sub-group, build a Payload group field
+  const subGroupFields = subGroupNames.map((subGroupName) => {
+    const subGroupSpecs = categorySpecs.filter((spec) => spec.subGroup === subGroupName)
+    const childFields = subGroupSpecs.map(buildSpecField)
+
+    return {
+      name: subGroupName,
+      type: 'group',
+      label: `${subGroupName.charAt(0).toUpperCase() + subGroupName.slice(1)} Specifications`,
+      admin: {
+        condition: (data: any) => {
+          return data?.propertyTypeSlug && PROFILE_MAP[data.propertyTypeSlug] === subGroupName
+        },
+      },
+      fields: childFields,
+    } as Field
+  })
+
+  return [...commonFields, ...subGroupFields]
+}
 
 export const Properties: CollectionConfig = {
   slug: 'properties',
@@ -106,162 +187,256 @@ export const Properties: CollectionConfig = {
           label: 'General',
           fields: [
             {
-              name: 'title',
-              type: 'text',
-              required: true,
-              index: true,
-            },
-            {
-              name: 'description',
-              type: 'textarea',
-              required: true,
-            },
-            {
-              name: 'propertyType',
-              type: 'relationship',
-              relationTo: 'property-types',
-              index: true,
+              type: 'collapsible',
+              label: 'Basic Information',
               admin: {
-                description: 'Select or add the type of this property.',
+                initCollapsed: false,
               },
-            },
-            {
-              name: 'area',
-              type: 'number',
-              index: true,
-              admin: {
-                description: 'Total area in square meters (m²)',
-              },
-            },
-            {
-              type: 'row',
               fields: [
                 {
-                  name: 'price',
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'title',
+                      type: 'text',
+                      required: true,
+                      index: true,
+                      admin: {
+                        width: '50%',
+                      },
+                    },
+                    {
+                      name: 'category',
+                      type: 'select',
+                      required: true,
+                      index: true,
+                      options: [
+                        { label: 'Residential', value: 'residential' },
+                        { label: 'Commercial', value: 'commercial' },
+                        { label: 'Hospitality', value: 'hospitality' },
+                        { label: 'Land', value: 'land' },
+                      ],
+                      admin: {
+                        width: '25%',
+                        description: 'Select the main category.',
+                      },
+                    },
+                    {
+                      name: 'propertyType',
+                      type: 'relationship',
+                      relationTo: 'property-types',
+                      index: true,
+                      filterOptions: ({ data }) => {
+                        if (data?.category) {
+                          return {
+                            'category.slug': {
+                              equals: data.category,
+                            },
+                          }
+                        }
+                        return false
+                      },
+                      admin: {
+                        width: '25%',
+                        description: 'Select property type.',
+                      },
+                    },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'listingStatus',
+                      type: 'relationship',
+                      relationTo: 'listing-statuses',
+                      required: true,
+                      index: true,
+                      admin: {
+                        width: '50%',
+                      },
+                    },
+                    {
+                      name: 'constructionStatus',
+                      type: 'relationship',
+                      relationTo: 'construction-statuses',
+                      required: false,
+                      index: true,
+                      admin: {
+                        width: '50%',
+                        description: 'Physical construction state.',
+                      },
+                    },
+                  ],
+                },
+                {
+                  name: 'description',
+                  type: 'textarea',
+                  required: true,
+                },
+              ],
+            },
+            {
+              type: 'collapsible',
+              label: 'Pricing & Area Size',
+              admin: {
+                initCollapsed: false,
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'price',
+                      type: 'number',
+                      index: true,
+                      admin: {
+                        width: '40%',
+                      },
+                    },
+                    {
+                      name: 'currency',
+                      type: 'select',
+                      required: true,
+                      defaultValue: 'EGP',
+                      index: true,
+                      options: [
+                        { label: 'EGP (Egyptian Pound)', value: 'EGP' },
+                        { label: 'USD (US Dollar)', value: 'USD' },
+                        { label: 'EUR (Euro)', value: 'EUR' },
+                      ],
+                      admin: {
+                        width: '20%',
+                      },
+                    },
+                    {
+                      name: 'area',
+                      type: 'number',
+                      index: true,
+                      admin: {
+                        width: '40%',
+                        description: 'Total area in square meters (m²)',
+                      },
+                    },
+                  ],
+                },
+                {
+                  name: 'basePriceInUSD',
                   type: 'number',
                   index: true,
                   admin: {
-                    width: '70%',
-                  },
-                },
-                {
-                  name: 'currency',
-                  type: 'select',
-                  required: true,
-                  defaultValue: 'EGP',
-                  index: true,
-                  options: [
-                    { label: 'EGP (Egyptian Pound)', value: 'EGP' },
-                    { label: 'USD (US Dollar)', value: 'USD' },
-                    { label: 'EUR (Euro)', value: 'EUR' },
-                  ],
-                  admin: {
-                    width: '30%',
+                    hidden: true,
                   },
                 },
               ],
             },
             {
-              name: 'basePriceInUSD',
-              type: 'number',
-              index: true,
+              type: 'collapsible',
+              label: 'Specifications & Performance Metrics',
               admin: {
-                hidden: true,
-              },
-            },
-            {
-              name: 'listingStatus',
-              type: 'relationship',
-              relationTo: 'listing-statuses',
-              required: true,
-              index: true,
-            },
-            {
-              name: 'constructionStatus',
-              type: 'relationship',
-              relationTo: 'construction-statuses',
-              required: false,
-              index: true,
-              admin: {
-                description: 'The physical construction state of the property.',
-              },
-            },
-            {
-              name: 'category',
-              type: 'select',
-              required: true,
-              index: true,
-              options: [
-                { label: 'Residential', value: 'residential' },
-                { label: 'Commercial', value: 'commercial' },
-                { label: 'Hospitality', value: 'hospitality' },
-                { label: 'Land', value: 'land' },
-              ],
-              admin: {
-                description: 'Select the main category for this property.',
-              },
-            },
-            residentialSchema,
-            commercialSchema,
-            hospitalitySchema,
-            landSchema,
-            {
-              name: 'features',
-              type: 'relationship',
-              relationTo: 'features',
-              hasMany: true,
-              index: true,
-              admin: {
-                description: 'Select the features for this property.',
-              },
-            },
-            {
-              name: 'operationalData',
-              type: 'group',
-              label: 'Operational Metrics',
-              admin: {
-                condition: (data) => data?.category === 'hospitality',
-                description: 'Business metrics — updated regularly. Separate from property specifications.',
+                initCollapsed: false,
               },
               fields: [
-                { name: 'avgDailyRate', type: 'number', label: 'ADR (Average Daily Rate)' },
-                { name: 'occupancyRate', type: 'number', label: 'Occupancy Rate (%)' },
-                { name: 'revPAR', type: 'number', label: 'RevPAR' },
-                { name: 'lastReportDate', type: 'date', label: 'Last Report Date' },
+                {
+                  name: 'residential',
+                  type: 'group',
+                  admin: {
+                    condition: (data) => data?.category === 'residential',
+                  },
+                  fields: buildCategoryFields('residential'),
+                },
+                {
+                  name: 'commercial',
+                  type: 'group',
+                  admin: {
+                    condition: (data) => data?.category === 'commercial',
+                  },
+                  fields: buildCategoryFields('commercial'),
+                },
+                {
+                  name: 'hospitality',
+                  type: 'group',
+                  admin: {
+                    condition: (data) => data?.category === 'hospitality',
+                  },
+                  fields: buildCategoryFields('hospitality'),
+                },
+                {
+                  name: 'land',
+                  type: 'group',
+                  admin: {
+                    condition: (data) => data?.category === 'land',
+                  },
+                  fields: buildCategoryFields('land'),
+                },
+                {
+                  name: 'operationalData',
+                  type: 'group',
+                  label: 'Operational Metrics',
+                  admin: {
+                    condition: (data) => data?.category === 'hospitality',
+                    description: 'Business metrics — updated regularly. Separate from property specifications.',
+                  },
+                  fields: [
+                    { name: 'avgDailyRate', type: 'number', label: 'ADR (Average Daily Rate)' },
+                    { name: 'occupancyRate', type: 'number', label: 'Occupancy Rate (%)' },
+                    { name: 'revPAR', type: 'number', label: 'RevPAR' },
+                    { name: 'lastReportDate', type: 'date', label: 'Last Report Date' },
+                  ],
+                },
               ],
             },
             {
-              name: 'customSpecifications',
-              label: 'Custom Specifications',
-              type: 'array',
+              type: 'collapsible',
+              label: 'Features & Custom Specifications',
               admin: {
                 initCollapsed: true,
-                description: 'Additional specifications for rare/special cases. Not searchable.',
               },
               fields: [
-                { name: 'label', type: 'text', required: true },
                 {
-                  name: 'icon',
-                  type: 'text',
-                  label: 'Lucide Icon Name',
+                  name: 'features',
+                  type: 'relationship',
+                  relationTo: 'features',
+                  hasMany: true,
+                  index: true,
                   admin: {
-                    description: 'Optional Lucide icon name (e.g. Wind, Sun, Battery, Wifi)',
+                    description: 'Select the features for this property.',
                   },
                 },
                 {
-                  name: 'valueType',
-                  type: 'select',
-                  required: true,
-                  defaultValue: 'text',
-                  options: [
-                    { label: 'Text', value: 'text' },
-                    { label: 'Number', value: 'number' },
-                    { label: 'Date', value: 'date' },
-                    { label: 'Yes/No', value: 'boolean' },
-                    { label: 'URL', value: 'url' },
+                  name: 'customSpecifications',
+                  label: 'Custom Specifications',
+                  type: 'array',
+                  admin: {
+                    initCollapsed: true,
+                    description: 'Additional specifications for rare/special cases. Not searchable.',
+                  },
+                  fields: [
+                    { name: 'label', type: 'text', required: true },
+                    {
+                      name: 'icon',
+                      type: 'text',
+                      label: 'Lucide Icon Name',
+                      admin: {
+                        description: 'Optional Lucide icon name (e.g. Wind, Sun, Battery, Wifi)',
+                      },
+                    },
+                    {
+                      name: 'valueType',
+                      type: 'select',
+                      required: true,
+                      defaultValue: 'text',
+                      options: [
+                        { label: 'Text', value: 'text' },
+                        { label: 'Number', value: 'number' },
+                        { label: 'Date', value: 'date' },
+                        { label: 'Yes/No', value: 'boolean' },
+                        { label: 'URL', value: 'url' },
+                      ],
+                    },
+                    { name: 'value', type: 'text', required: true },
                   ],
                 },
-                { name: 'value', type: 'text', required: true },
               ],
             },
           ],

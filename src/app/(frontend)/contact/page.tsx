@@ -2,6 +2,7 @@ import { ContactForm } from "@/components/contact/contact-form"
 import { Card, CardContent } from "@/components/ui/card"
 import { Mail, Phone, MapPin, Clock } from "lucide-react"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
+import { getCachedCompanySettings } from "@/lib/cache/company-settings"
 
 export const metadata = {
   title: "Contact Us | Fimac Group",
@@ -10,6 +11,15 @@ export const metadata = {
 
 export default async function ContactPage() {
   const user = await getCurrentUser()
+  const settings = await getCachedCompanySettings()
+
+  const contactEmail = settings.contactEmail || 'info@fimacgroup.com'
+  const contactPhone = settings.contactPhone || '+1 (234) 567-8900'
+  const contactOffice = settings.contactOffice || '123 Investment Plaza\nKnoxville, TN 37902'
+  const mondayFriday = settings.businessHours?.mondayFriday || '9:00 AM - 6:00 PM'
+  const saturday = settings.businessHours?.saturday || '10:00 AM - 4:00 PM'
+  const sunday = settings.businessHours?.sunday || 'Closed'
+
   return (
     <div className="flex min-h-screen flex-col pt-24">
       <main className="flex-1">
@@ -55,10 +65,10 @@ export default async function ContactPage() {
                         <div>
                           <p className="font-medium">Email</p>
                           <a
-                            href="mailto:info@fimacgroup.com"
+                            href={`mailto:${contactEmail}`}
                             className="text-blue-900 hover:underline"
                           >
-                            info@fimacgroup.com
+                            {contactEmail}
                           </a>
                         </div>
                       </div>
@@ -70,8 +80,8 @@ export default async function ContactPage() {
                         </div>
                         <div>
                           <p className="font-medium">Phone</p>
-                          <a href="tel:+1234567890" className="text-blue-900 hover:underline">
-                            +1 (234) 567-8900
+                          <a href={`tel:${contactPhone.replace(/\s+/g, '')}`} className="text-blue-900 hover:underline">
+                            {contactPhone}
                           </a>
                         </div>
                       </div>
@@ -83,10 +93,8 @@ export default async function ContactPage() {
                         </div>
                         <div>
                           <p className="font-medium">Office</p>
-                          <p className="text-gray-600">
-                            123 Investment Plaza
-                            <br />
-                            Knoxville, TN 37902
+                          <p className="text-gray-600 whitespace-pre-line">
+                            {contactOffice}
                           </p>
                         </div>
                       </div>
@@ -99,11 +107,11 @@ export default async function ContactPage() {
                         <div>
                           <p className="font-medium">Business Hours</p>
                           <p className="text-gray-600">
-                            Monday - Friday: 9:00 AM - 6:00 PM
+                            Monday - Friday: {mondayFriday}
                             <br />
-                            Saturday: 10:00 AM - 4:00 PM
+                            Saturday: {saturday}
                             <br />
-                            Sunday: Closed
+                            Sunday: {sunday}
                           </p>
                         </div>
                       </div>

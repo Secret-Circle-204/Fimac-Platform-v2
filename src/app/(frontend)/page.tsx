@@ -4,7 +4,6 @@ import { Card, CardContent } from '@/components/ui/card'
 
 import Hero from '@/components/home/hero'
 
-import { NewsLetter } from '@/components/shared/newsletter'
 // import { Input } from "@/components/ui/input"
 import { FeaturedProperties } from '@/featured-properties'
 import { FounderMessage } from '@/components/home/founder-message'
@@ -13,6 +12,7 @@ import { FadeIn } from '@/components/animations/fade-in'
 // import { SearchFilters } from "@/components/home/search-filters"
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
+import { getCachedLatestBlogPosts } from '@/lib/cache/blog-posts'
 
 
 const propertyTypes = [
@@ -49,47 +49,9 @@ const propertyTypes = [
   },
 ]
 
-const blogPosts = [
-  {
-    title: 'Guide to Downtown Knoxville: Market Square and Beyond',
-    description:
-      'Discover the charm of Market Square, local eateries, and the vibrant culture that makes downtown Knoxville a perfect place to call home.',
-    date: 'April 6, 2025',
-    image:
-      'https://images.unsplash.com/photo-1596134474939-f248eb9ed3fe?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    alt: 'Downtown Knoxville Market Square',
-  },
-  {
-    title: "Living in Gatlinburg: A Local's Perspective",
-    description:
-      'Experience the magic of living in the Gateway to the Smokies - from year-round tourism to peaceful mountain living.',
-    date: 'March 28, 2025',
-    image:
-      'https://images.unsplash.com/photo-1625663033411-61031d9ac19e?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    alt: 'Gatlinburg Scenic View',
-  },
-  {
-    title: "Johnson City's Growing Communities",
-    description:
-      "Explore the newest developments and family-friendly neighborhoods in Johnson City's thriving community.",
-    date: 'March 15, 2025',
-    image:
-      'https://images.unsplash.com/photo-1657312145619-8fdad5e7b663?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    alt: 'Johnson City Downtown',
-  },
-  {
-    title: 'Best Neighborhoods for Mountain Views',
-    description:
-      'Find your perfect mountain vista - top communities in Sevier County with spectacular Smoky Mountain views.',
-    date: 'March 5, 2025',
-    image:
-      'https://images.unsplash.com/photo-1509838174235-432f709c7bfd?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    alt: 'Fall colors in the Smokies',
-  },
-]
-
 export default async function HomePage() {
   const user = await getCurrentUser()
+  const latestPosts = await getCachedLatestBlogPosts(4)
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
@@ -200,50 +162,80 @@ export default async function HomePage() {
 
 
         {/* Blog Section */}
-        <section className="py-16 bg-accent text-accent-foreground">
-          <div className="container mx-auto px-4">
-            <FadeIn>
-              <h2 className="text-3xl font-bold mb-12">
-                the world Real Estate Tips, Trends, And Updates
-              </h2>
-            </FadeIn>
+        {latestPosts.length > 0 && (
+          <section className="py-16 bg-accent text-accent-foreground">
+            <div className="container mx-auto px-4">
+              <FadeIn>
+                <h2 className="text-3xl font-bold mb-12">
+                  the world Real Estate Tips, Trends, And Updates
+                </h2>
+              </FadeIn>
 
-            <div className="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4 gap-6">
-              {blogPosts.map((post, index) => (
-                <FadeIn key={post.title} delay={index * 80}>
-                  <Card className="overflow-hidden border border-white/20 bg-background/90 shadow-md hover:shadow-2xl transition-shadow">
-                    <div className="relative">
-                      <Image
-                        src={post.image}
-                        alt={post.alt}
-                        width={500}
-                        height={300}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                        loading="lazy"
-                        className="object-cover h-56 w-full"
-                      />
-                    </div>
-                    <CardContent className="p-4 space-y-3">
-                      <h3 className="font-bold text-lg">{post.title}</h3>
-                      <p className="text-muted-foreground text-sm line-clamp-3">
-                        {post.description}
-                      </p>
-                      <div className="flex justify-between items-center text-xs text-muted-foreground">
-                        <span>{post.date}</span>
-                        <Button variant="link" className="text-primary p-0 h-auto font-medium">
-                          Continue Reading
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </FadeIn>
-              ))}
+              <div className="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4 gap-6">
+                {latestPosts.map((post, index) => {
+                  const postImageUrl =
+                    post.featuredImage && typeof post.featuredImage === 'object' && 'url' in post.featuredImage && post.featuredImage.url
+                      ? post.featuredImage.url
+                      : '/scene-with-business-.jpg'
+
+                  const postDate = post.publishedDate
+                    ? new Date(post.publishedDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : 'Recently'
+
+                  return (
+                    <FadeIn key={post.title} delay={index * 80}>
+                      <Card className="overflow-hidden border border-white/20 bg-background/90 shadow-md hover:shadow-2xl transition-shadow h-full flex flex-col justify-between">
+                        <div>
+                          <div className="relative">
+                            {postImageUrl && (
+                              <Image
+                                src={postImageUrl}
+                                alt={post.title}
+                                width={500}
+                                height={300}
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                                loading="lazy"
+                                className="object-cover h-56 w-full"
+                              />
+                            )}
+                          </div>
+                          <CardContent className="p-4 space-y-3">
+                            <h3 className="font-bold text-lg">{post.title}</h3>
+                            <p className="text-muted-foreground text-sm line-clamp-3">
+                              {post.excerpt}
+                            </p>
+                            <div className="flex justify-between items-center text-xs text-muted-foreground">
+                              <span>{postDate}</span>
+                              <Button asChild variant="link" className="text-primary p-0 h-auto font-medium">
+                                <Link href={`/blog/${post.slug}`}>
+                                  Continue Reading
+                                </Link>
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </div>
+                      </Card>
+                    </FadeIn>
+                  )
+                })}
+              </div>
+
+              <div className="mt-12 flex justify-center">
+                <Button asChild className="bg-blue-900 hover:bg-blue-800 text-white rounded-md px-8 py-3">
+                  <Link href="/blog">
+                    View All Posts
+                  </Link>
+                </Button>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* Newsletter */}
-        <NewsLetter user={user} />
+
       </main>
     </div>
   )

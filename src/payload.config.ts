@@ -18,6 +18,7 @@ import { seedListingStatuses } from './db/seedListingStatuses'
 import { seedConstructionStatuses } from './db/seedConstructionStatuses'
 import { activeProvider } from './lib/storage'
 import { CompanySettings } from './globals/CompanySettings'
+import { AboutPage } from './globals/AboutPage'
 
 export default buildConfig({
   serverURL: SERVER_URL,
@@ -31,7 +32,7 @@ export default buildConfig({
   },
 
   collections,
-  globals: [CompanySettings],
+  globals: [CompanySettings, AboutPage],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -45,7 +46,7 @@ export default buildConfig({
       idleTimeoutMillis: 60000,
       connectionTimeoutMillis: 20000,
     },
-    push: false,
+    push: true,
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,

@@ -82,7 +82,6 @@ export interface Config {
     'blog-categories': BlogCategory;
     'blog-posts': BlogPost;
     'contact-messages': ContactMessage;
-    newsletters: Newsletter;
     'seller-requests': SellerRequest;
     'property-types': PropertyType;
     'listing-statuses': ListingStatus;
@@ -114,7 +113,6 @@ export interface Config {
     'blog-categories': BlogCategoriesSelect<false> | BlogCategoriesSelect<true>;
     'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>;
     'contact-messages': ContactMessagesSelect<false> | ContactMessagesSelect<true>;
-    newsletters: NewslettersSelect<false> | NewslettersSelect<true>;
     'seller-requests': SellerRequestsSelect<false> | SellerRequestsSelect<true>;
     'property-types': PropertyTypesSelect<false> | PropertyTypesSelect<true>;
     'listing-statuses': ListingStatusesSelect<false> | ListingStatusesSelect<true>;
@@ -131,9 +129,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'company-settings': CompanySetting;
+    'about-page': AboutPage;
   };
   globalsSelect: {
     'company-settings': CompanySettingsSelect<false> | CompanySettingsSelect<true>;
+    'about-page': AboutPageSelect<false> | AboutPageSelect<true>;
   };
   locale: null;
   widgets: {
@@ -375,9 +375,6 @@ export interface MediaFolder {
 export interface BlogPost {
   id: number;
   title: string;
-  /**
-   * URL-friendly version of the title
-   */
   slug: string;
   /**
    * Brief summary (150-200 characters recommended)
@@ -436,14 +433,6 @@ export interface BlogPost {
      */
     metaKeywords?: string | null;
   };
-  /**
-   * Estimated time to read this post
-   */
-  readTime?: number | null;
-  /**
-   * Number of times this post has been viewed
-   */
-  views?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -454,9 +443,6 @@ export interface BlogPost {
 export interface BlogCategory {
   id: number;
   name: string;
-  /**
-   * URL-friendly version of the category name
-   */
   slug: string;
   /**
    * Brief description of this category
@@ -489,55 +475,34 @@ export interface Property {
   views?: number | null;
   propertyTypeSlug?: string | null;
   title: string;
-  description: string;
   /**
-   * Select or add the type of this property.
+   * Select the main category.
+   */
+  category: 'residential' | 'commercial' | 'hospitality' | 'land';
+  /**
+   * Select property type.
    */
   propertyType?: (number | null) | PropertyType;
+  listingStatus: number | ListingStatus;
+  /**
+   * Physical construction state.
+   */
+  constructionStatus?: (number | null) | ConstructionStatus;
+  description: string;
+  price?: number | null;
+  currency: 'EGP' | 'USD' | 'EUR';
   /**
    * Total area in square meters (m²)
    */
   area?: number | null;
-  price?: number | null;
-  currency: 'EGP' | 'USD' | 'EUR';
   basePriceInUSD?: number | null;
-  listingStatus: number | ListingStatus;
-  /**
-   * The physical construction state of the property.
-   */
-  constructionStatus?: (number | null) | ConstructionStatus;
-  /**
-   * Select the main category for this property.
-   */
-  category: 'residential' | 'commercial' | 'hospitality' | 'land';
   residential?: {
-    /**
-     * Number of bedrooms
-     */
     bedrooms?: number | null;
-    /**
-     * Number of bathrooms
-     */
     bathrooms?: number | null;
-    /**
-     * Floor number (e.g. for apartments)
-     */
     floor?: number | null;
-    /**
-     * Total number of floors/stories (e.g. for villas)
-     */
     floors?: number | null;
-    /**
-     * The year the property was built
-     */
     yearBuilt?: number | null;
-    /**
-     * Type of heating system
-     */
     heatingType?: ('central' | 'electric' | 'gas' | 'oil' | 'propane') | null;
-    /**
-     * Details specific to villas, penthouses, and townhouses
-     */
     villa?: {
       pools?: number | null;
       hasGarden?: boolean | null;
@@ -546,16 +511,10 @@ export interface Property {
       hasDriverRoom?: boolean | null;
       hasMaidRoom?: boolean | null;
     };
-    /**
-     * Details specific to apartments, studios, and duplexes
-     */
     apartment?: {
       hasBalcony?: boolean | null;
       hasMaidRoom?: boolean | null;
     };
-    /**
-     * Details specific to chalets and holiday homes
-     */
     chalet?: {
       hasPool?: boolean | null;
       hasGarden?: boolean | null;
@@ -563,17 +522,8 @@ export interface Property {
     };
   };
   commercial?: {
-    /**
-     * Floor number where the property is located
-     */
     floor?: number | null;
-    /**
-     * Number of dedicated parking spaces
-     */
     parkingSpaces?: number | null;
-    /**
-     * Type of license required/available (e.g. Commercial, Administrative, Medical)
-     */
     licenseType?: string | null;
     office?: {
       meetingRooms?: number | null;
@@ -591,7 +541,7 @@ export interface Property {
     warehouse?: {
       loadingDocks?: number | null;
       /**
-       * Ceiling height in meters
+       * Unit: m
        */
       ceilingHeight?: number | null;
       hasTruckAccess?: boolean | null;
@@ -599,7 +549,7 @@ export interface Property {
     };
     factory?: {
       /**
-       * Power capacity in Kilowatts (KW)
+       * Unit: kW
        */
       powerCapacityKW?: number | null;
       hazardZone?: ('none' | 'low' | 'medium' | 'high') | null;
@@ -607,10 +557,13 @@ export interface Property {
     };
     retail?: {
       /**
-       * Frontage width in meters
+       * Unit: m
        */
       frontageWidth?: number | null;
       hasStorageRoom?: boolean | null;
+      /**
+       * Unit: m
+       */
       ceilingHeight?: number | null;
     };
     medical?: {
@@ -620,22 +573,10 @@ export interface Property {
     };
   };
   hospitality?: {
-    /**
-     * Total number of rooms / keys available
-     */
     totalRooms?: number | null;
-    /**
-     * Total number of floors/stories
-     */
     floors?: number | null;
     starRating?: ('1' | '2' | '3' | '4' | '5') | null;
-    /**
-     * The operating brand or management brand (e.g. Hilton, Marriott, Wyndham, Independent)
-     */
     brand?: string | null;
-    /**
-     * The year of last major renovation
-     */
     lastRenovationYear?: number | null;
     hasBeachAccess?: boolean | null;
     hotel?: {
@@ -644,22 +585,17 @@ export interface Property {
       conferenceRooms?: number | null;
     };
     motel?: {
-      /**
-       * Number of dedicated parking spaces for guests
-       */
       parkingSpaces?: number | null;
-      /**
-       * Has rooms with direct exterior drive-up access from parking
-       */
       driveUpRooms?: boolean | null;
-      /**
-       * Has direct visibility or access to/from a highway
-       */
       isHighwayAccess?: boolean | null;
     };
     resort?: {
       suites?: number | null;
       hasPrivateBeach?: boolean | null;
+      /**
+       * Unit: m²
+       */
+      privateBeachArea?: number | null;
       hasGolfCourse?: boolean | null;
     };
     camp?: {
@@ -669,47 +605,25 @@ export interface Property {
     };
   };
   land?: {
-    /**
-     * Approved zoning classification for the land
-     */
     zoning?: ('residential' | 'commercial' | 'industrial' | 'agricultural' | 'mixed') | null;
     /**
-     * Width of the main road facing the land (in meters)
+     * Unit: m
      */
     roadWidth?: number | null;
     /**
-     * Length of the property line bordering the street (in meters)
+     * Unit: m
      */
     frontageWidth?: number | null;
-    /**
-     * Electricity, water, and sewage connections available
-     */
     hasUtilities?: boolean | null;
-    /**
-     * Maximum number of building floors allowed by permit
-     */
     allowedFloors?: number | null;
     /**
-     * Maximum footprint percentage allowed to build on (e.g. 60 for 60%)
+     * Unit: %
      */
     buildingRatio?: number | null;
-    /**
-     * Is the plot located on a corner (faces two streets)
-     */
     isCorner?: boolean | null;
-    /**
-     * The physical gradient/slope of the land
-     */
     slope?: ('flat' | 'gentle' | 'moderate' | 'steep') | null;
-    /**
-     * Type of soil or ground structure (e.g. Sandy, Rocky, Clay)
-     */
     soilType?: string | null;
   };
-  /**
-   * Select the features for this property.
-   */
-  features?: (number | Feature)[] | null;
   /**
    * Business metrics — updated regularly. Separate from property specifications.
    */
@@ -719,6 +633,10 @@ export interface Property {
     revPAR?: number | null;
     lastReportDate?: string | null;
   };
+  /**
+   * Select the features for this property.
+   */
+  features?: (number | Feature)[] | null;
   /**
    * Additional specifications for rare/special cases. Not searchable.
    */
@@ -897,6 +815,25 @@ export interface PropertyType {
    * Select the main category for this property type.
    */
   category: number | PropertyCategory;
+  /**
+   * Select the specifications profile that applies to this property type.
+   */
+  specificationProfile:
+    | 'villa'
+    | 'apartment'
+    | 'chalet'
+    | 'office'
+    | 'restaurant'
+    | 'warehouse'
+    | 'factory'
+    | 'retail'
+    | 'medical'
+    | 'hotel'
+    | 'motel'
+    | 'resort'
+    | 'camp'
+    | 'land'
+    | 'none';
   /**
    * URL-friendly identifier (lowercase, e.g., "villa", "elite-real-estate").
    */
@@ -1214,41 +1151,6 @@ export interface ContactMessage {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "newsletters".
- */
-export interface Newsletter {
-  id: number;
-  email: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  status: 'subscribed' | 'unsubscribed' | 'bounced' | 'complained';
-  subscribeDate: string;
-  unsubscribeDate?: string | null;
-  source?: ('homepage' | 'blog' | 'contact' | 'footer' | 'popup' | 'manual' | 'other') | null;
-  /**
-   * Types of content the subscriber is interested in
-   */
-  interests?: ('investment' | 'market-news' | 'listings' | 'blog' | 'trends' | 'events')[] | null;
-  preferences?: {
-    frequency?: ('daily' | 'weekly' | 'monthly') | null;
-    htmlEmails?: boolean | null;
-  };
-  ipAddress?: string | null;
-  userAgent?: string | null;
-  /**
-   * Whether subscriber confirmed their email address
-   */
-  doubleOptIn?: boolean | null;
-  confirmationDate?: string | null;
-  /**
-   * Internal notes about this subscriber
-   */
-  notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -1318,10 +1220,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'contact-messages';
         value: number | ContactMessage;
-      } | null)
-    | ({
-        relationTo: 'newsletters';
-        value: number | Newsletter;
       } | null)
     | ({
         relationTo: 'seller-requests';
@@ -1535,15 +1433,15 @@ export interface PropertiesSelect<T extends boolean = true> {
   views?: T;
   propertyTypeSlug?: T;
   title?: T;
-  description?: T;
+  category?: T;
   propertyType?: T;
-  area?: T;
-  price?: T;
-  currency?: T;
-  basePriceInUSD?: T;
   listingStatus?: T;
   constructionStatus?: T;
-  category?: T;
+  description?: T;
+  price?: T;
+  currency?: T;
+  area?: T;
+  basePriceInUSD?: T;
   residential?:
     | T
     | {
@@ -1658,6 +1556,7 @@ export interface PropertiesSelect<T extends boolean = true> {
           | {
               suites?: T;
               hasPrivateBeach?: T;
+              privateBeachArea?: T;
               hasGolfCourse?: T;
             };
         camp?:
@@ -1681,7 +1580,6 @@ export interface PropertiesSelect<T extends boolean = true> {
         slope?: T;
         soilType?: T;
       };
-  features?: T;
   operationalData?:
     | T
     | {
@@ -1690,6 +1588,7 @@ export interface PropertiesSelect<T extends boolean = true> {
         revPAR?: T;
         lastReportDate?: T;
       };
+  features?: T;
   customSpecifications?:
     | T
     | {
@@ -1895,8 +1794,6 @@ export interface BlogPostsSelect<T extends boolean = true> {
         metaDescription?: T;
         metaKeywords?: T;
       };
-  readTime?: T;
-  views?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1930,33 +1827,6 @@ export interface ContactMessagesSelect<T extends boolean = true> {
   confirmedAt?: T;
   confirmationToken?: T;
   confirmationExpiresAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "newsletters_select".
- */
-export interface NewslettersSelect<T extends boolean = true> {
-  email?: T;
-  firstName?: T;
-  lastName?: T;
-  status?: T;
-  subscribeDate?: T;
-  unsubscribeDate?: T;
-  source?: T;
-  interests?: T;
-  preferences?:
-    | T
-    | {
-        frequency?: T;
-        htmlEmails?: T;
-      };
-  ipAddress?: T;
-  userAgent?: T;
-  doubleOptIn?: T;
-  confirmationDate?: T;
-  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1999,6 +1869,7 @@ export interface SellerRequestsSelect<T extends boolean = true> {
 export interface PropertyTypesSelect<T extends boolean = true> {
   name?: T;
   category?: T;
+  specificationProfile?: T;
   slug?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2104,6 +1975,44 @@ export interface CompanySetting {
      */
     badgeText?: string | null;
   };
+  contactEmail: string;
+  contactPhone: string;
+  contactOffice: string;
+  businessHours: {
+    mondayFriday: string;
+    saturday: string;
+    sunday: string;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "about-page".
+ */
+export interface AboutPage {
+  id: number;
+  heroTitle: string;
+  heroDescription: string;
+  visionTitle: string;
+  visionText: string;
+  missionText: string;
+  visionImage?: (number | null) | Media;
+  values: {
+    title: string;
+    description: string;
+    id?: string | null;
+  }[];
+  strengthsTitle: string;
+  strengths: {
+    strength: string;
+    id?: string | null;
+  }[];
+  keysOfSuccess: {
+    key: string;
+    id?: string | null;
+  }[];
+  strengthsImage?: (number | null) | Media;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2123,6 +2032,52 @@ export interface CompanySettingsSelect<T extends boolean = true> {
         logo?: T;
         badgeText?: T;
       };
+  contactEmail?: T;
+  contactPhone?: T;
+  contactOffice?: T;
+  businessHours?:
+    | T
+    | {
+        mondayFriday?: T;
+        saturday?: T;
+        sunday?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "about-page_select".
+ */
+export interface AboutPageSelect<T extends boolean = true> {
+  heroTitle?: T;
+  heroDescription?: T;
+  visionTitle?: T;
+  visionText?: T;
+  missionText?: T;
+  visionImage?: T;
+  values?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  strengthsTitle?: T;
+  strengths?:
+    | T
+    | {
+        strength?: T;
+        id?: T;
+      };
+  keysOfSuccess?:
+    | T
+    | {
+        key?: T;
+        id?: T;
+      };
+  strengthsImage?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

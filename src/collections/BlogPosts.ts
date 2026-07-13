@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload"
-import slugify from "slugify"
+import { triggerRevalidate } from '@/lib/cache/revalidate'
+import { getUniqueSlugHook } from "@/lib/slug"
 
 export const BlogPosts: CollectionConfig = {
   slug: "blog-posts",
@@ -8,12 +9,26 @@ export const BlogPosts: CollectionConfig = {
     plural: "Blog Posts",
   },
   admin: {
-    group: 'Content & Marketing',
+    group: 'Website Pages',
     useAsTitle: "title",
     defaultColumns: ["title", "author", "category", "publishedDate", "status"],
     preview: (doc) => {
       return `/blog/${doc.slug}`
     },
+  },
+  hooks: {
+    afterChange: [
+      () => {
+        triggerRevalidate('blog-posts')
+        triggerRevalidate('blog')
+      }
+    ],
+    afterDelete: [
+      () => {
+        triggerRevalidate('blog-posts')
+        triggerRevalidate('blog')
+      }
+    ]
   },
   access: {
     // Only published posts are visible to public
@@ -51,17 +66,10 @@ export const BlogPosts: CollectionConfig = {
               unique: true,
               label: "URL Slug",
               admin: {
-                description: "URL-friendly version of the title",
+                hidden: true,
               },
               hooks: {
-                beforeValidate: [
-                  ({ data, value }) => {
-                    if (!value && data?.title) {
-                      return slugify(data.title, { lower: true, strict: true })
-                    }
-                    return value
-                  },
-                ],
+                beforeValidate: [getUniqueSlugHook("title")],
               },
             },
             {
@@ -202,27 +210,6 @@ export const BlogPosts: CollectionConfig = {
           ],
         },
       ],
-    },
-    {
-      name: "readTime",
-      type: "number",
-      label: "Estimated Read Time (minutes)",
-      admin: {
-        position: "sidebar",
-        description: "Estimated time to read this post",
-      },
-      defaultValue: 5,
-    },
-    {
-      name: "views",
-      type: "number",
-      label: "View Count",
-      defaultValue: 0,
-      admin: {
-        position: "sidebar",
-        readOnly: true,
-        description: "Number of times this post has been viewed",
-      },
     },
   ],
 }

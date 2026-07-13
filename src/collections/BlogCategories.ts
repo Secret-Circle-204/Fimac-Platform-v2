@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload"
-import slugify from "slugify"
+import { getUniqueSlugHook } from "@/lib/slug"
 
 export const BlogCategories: CollectionConfig = {
   slug: "blog-categories",
@@ -8,7 +8,7 @@ export const BlogCategories: CollectionConfig = {
     plural: "Blog Categories",
   },
   admin: {
-    group: 'Content & Marketing',
+    group: 'Website Pages',
     useAsTitle: "name",
     defaultColumns: ["name", "slug", "description"],
   },
@@ -33,17 +33,10 @@ export const BlogCategories: CollectionConfig = {
       unique: true,
       label: "URL Slug",
       admin: {
-        description: "URL-friendly version of the category name",
+        hidden: true,
       },
       hooks: {
-        beforeValidate: [
-          ({ data, value }) => {
-            if (!value && data?.name) {
-              return slugify(data.name, { lower: true, strict: true })
-            }
-            return value
-          },
-        ],
+        beforeValidate: [getUniqueSlugHook("name")],
       },
     },
     {

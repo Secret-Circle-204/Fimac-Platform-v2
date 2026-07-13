@@ -13,6 +13,7 @@ export const ListingStatuses: CollectionConfig = {
     listSearchableFields: ['name', 'slug'],
     defaultColumns: ['name', 'slug', 'colorTheme', 'createdAt'],
     group: 'Real Estate',
+    hidden: true,
   },
   hooks: {
     afterChange: [
