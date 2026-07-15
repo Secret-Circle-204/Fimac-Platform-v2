@@ -87,6 +87,7 @@ export interface Config {
     'listing-statuses': ListingStatus;
     'construction-statuses': ConstructionStatus;
     'property-categories': PropertyCategory;
+    'ip-locations': IpLocation;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -118,6 +119,7 @@ export interface Config {
     'listing-statuses': ListingStatusesSelect<false> | ListingStatusesSelect<true>;
     'construction-statuses': ConstructionStatusesSelect<false> | ConstructionStatusesSelect<true>;
     'property-categories': PropertyCategoriesSelect<false> | PropertyCategoriesSelect<true>;
+    'ip-locations': IpLocationsSelect<false> | IpLocationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -756,6 +758,11 @@ export interface Seller {
  */
 export interface SellerRequest {
   id: number;
+  propertyTypeSlug?: string | null;
+  /**
+   * Automatically derived from property type.
+   */
+  category?: ('residential' | 'commercial' | 'hospitality' | 'land') | null;
   property_type: number | PropertyType;
   property_title: string;
   property_description: string;
@@ -769,9 +776,139 @@ export interface SellerRequest {
   latitude?: number | null;
   longitude?: number | null;
   google_maps_url?: string | null;
-  bedrooms?: number | null;
-  bathrooms?: number | null;
   constructionStatus: number | ConstructionStatus;
+  residential?: {
+    bedrooms?: number | null;
+    bathrooms?: number | null;
+    floor?: number | null;
+    floors?: number | null;
+    yearBuilt?: number | null;
+    heatingType?: ('central' | 'electric' | 'gas' | 'oil' | 'propane') | null;
+    villa?: {
+      pools?: number | null;
+      hasGarden?: boolean | null;
+      hasGarage?: boolean | null;
+      hasMajlis?: boolean | null;
+      hasDriverRoom?: boolean | null;
+      hasMaidRoom?: boolean | null;
+    };
+    apartment?: {
+      hasBalcony?: boolean | null;
+      hasMaidRoom?: boolean | null;
+    };
+    chalet?: {
+      hasPool?: boolean | null;
+      hasGarden?: boolean | null;
+      isBeachfront?: boolean | null;
+    };
+  };
+  commercial?: {
+    floor?: number | null;
+    parkingSpaces?: number | null;
+    licenseType?: string | null;
+    office?: {
+      meetingRooms?: number | null;
+      hasReception?: boolean | null;
+      internetType?: ('fiber' | 'adsl' | 'none') | null;
+      securityLevel?: ('24_7' | 'business_hours' | 'none') | null;
+      elevators?: number | null;
+    };
+    restaurant?: {
+      kitchenCount?: number | null;
+      hasExhaust?: boolean | null;
+      hasGasConnection?: boolean | null;
+      outdoorSeatingCapacity?: number | null;
+    };
+    warehouse?: {
+      loadingDocks?: number | null;
+      /**
+       * Unit: m
+       */
+      ceilingHeight?: number | null;
+      hasTruckAccess?: boolean | null;
+      fireSystem?: ('sprinkler' | 'extinguisher' | 'full' | 'none') | null;
+    };
+    factory?: {
+      /**
+       * Unit: kW
+       */
+      powerCapacityKW?: number | null;
+      hazardZone?: ('none' | 'low' | 'medium' | 'high') | null;
+      industrialLicense?: string | null;
+    };
+    retail?: {
+      /**
+       * Unit: m
+       */
+      frontageWidth?: number | null;
+      hasStorageRoom?: boolean | null;
+      /**
+       * Unit: m
+       */
+      ceilingHeight?: number | null;
+    };
+    medical?: {
+      hasWaitingRoom?: boolean | null;
+      medicalLicense?: string | null;
+      numberOfExamRooms?: number | null;
+    };
+  };
+  hospitality?: {
+    totalRooms?: number | null;
+    floors?: number | null;
+    starRating?: ('1' | '2' | '3' | '4' | '5') | null;
+    brand?: string | null;
+    lastRenovationYear?: number | null;
+    hasBeachAccess?: boolean | null;
+    hotel?: {
+      suites?: number | null;
+      restaurants?: number | null;
+      conferenceRooms?: number | null;
+    };
+    motel?: {
+      parkingSpaces?: number | null;
+      driveUpRooms?: boolean | null;
+      isHighwayAccess?: boolean | null;
+    };
+    resort?: {
+      suites?: number | null;
+      hasPrivateBeach?: boolean | null;
+      /**
+       * Unit: m²
+       */
+      privateBeachArea?: number | null;
+      hasGolfCourse?: boolean | null;
+    };
+    camp?: {
+      tentCapacity?: number | null;
+      hasShowers?: boolean | null;
+      hasElectricity?: boolean | null;
+    };
+  };
+  land?: {
+    zoning?: ('residential' | 'commercial' | 'industrial' | 'agricultural' | 'mixed') | null;
+    /**
+     * Unit: m
+     */
+    roadWidth?: number | null;
+    /**
+     * Unit: m
+     */
+    frontageWidth?: number | null;
+    hasUtilities?: boolean | null;
+    allowedFloors?: number | null;
+    /**
+     * Unit: %
+     */
+    buildingRatio?: number | null;
+    isCorner?: boolean | null;
+    slope?: ('flat' | 'gentle' | 'moderate' | 'steep') | null;
+    soilType?: string | null;
+  };
+  /**
+   * Select the features for this property request.
+   */
+  features?: (number | Feature)[] | null;
   /**
    * Registered name of the seller at submission time.
    */
@@ -886,27 +1023,6 @@ export interface ConstructionStatus {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "listing-statuses".
- */
-export interface ListingStatus {
-  id: number;
-  /**
-   * Display name for this status (e.g., Open Contract, Closed Contract, Draft).
-   */
-  name: string;
-  /**
-   * URL-friendly identifier (lowercase, e.g., "forsale", "sold", "draft").
-   */
-  slug: string;
-  /**
-   * Visual color theme for badges in the dashboard and property details.
-   */
-  colorTheme: 'emerald' | 'blue' | 'gray' | 'amber' | 'rose' | 'gold';
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "features".
  */
 export interface Feature {
@@ -935,6 +1051,27 @@ export interface Feature {
    * Categorization grouping for display in front-end.
    */
   featureGroup?: ('lifestyle' | 'security' | 'utilities' | 'amenities') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "listing-statuses".
+ */
+export interface ListingStatus {
+  id: number;
+  /**
+   * Display name for this status (e.g., Open Contract, Closed Contract, Draft).
+   */
+  name: string;
+  /**
+   * URL-friendly identifier (lowercase, e.g., "forsale", "sold", "draft").
+   */
+  slug: string;
+  /**
+   * Visual color theme for badges in the dashboard and property details.
+   */
+  colorTheme: 'emerald' | 'blue' | 'gray' | 'amber' | 'rose' | 'gold';
   updatedAt: string;
   createdAt: string;
 }
@@ -1150,6 +1287,23 @@ export interface ContactMessage {
   createdAt: string;
 }
 /**
+ * Cached GeoIP locations for privacy-hashed IP addresses.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ip-locations".
+ */
+export interface IpLocation {
+  id: number;
+  hashedIp: string;
+  country?: string | null;
+  region?: string | null;
+  city?: string | null;
+  source?: string | null;
+  lastUsed?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1240,6 +1394,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'property-categories';
         value: number | PropertyCategory;
+      } | null)
+    | ({
+        relationTo: 'ip-locations';
+        value: number | IpLocation;
       } | null);
   globalSlug?: string | null;
   user:
@@ -1835,6 +1993,8 @@ export interface ContactMessagesSelect<T extends boolean = true> {
  * via the `definition` "seller-requests_select".
  */
 export interface SellerRequestsSelect<T extends boolean = true> {
+  propertyTypeSlug?: T;
+  category?: T;
   property_type?: T;
   property_title?: T;
   property_description?: T;
@@ -1848,9 +2008,146 @@ export interface SellerRequestsSelect<T extends boolean = true> {
   latitude?: T;
   longitude?: T;
   google_maps_url?: T;
-  bedrooms?: T;
-  bathrooms?: T;
   constructionStatus?: T;
+  residential?:
+    | T
+    | {
+        bedrooms?: T;
+        bathrooms?: T;
+        floor?: T;
+        floors?: T;
+        yearBuilt?: T;
+        heatingType?: T;
+        villa?:
+          | T
+          | {
+              pools?: T;
+              hasGarden?: T;
+              hasGarage?: T;
+              hasMajlis?: T;
+              hasDriverRoom?: T;
+              hasMaidRoom?: T;
+            };
+        apartment?:
+          | T
+          | {
+              hasBalcony?: T;
+              hasMaidRoom?: T;
+            };
+        chalet?:
+          | T
+          | {
+              hasPool?: T;
+              hasGarden?: T;
+              isBeachfront?: T;
+            };
+      };
+  commercial?:
+    | T
+    | {
+        floor?: T;
+        parkingSpaces?: T;
+        licenseType?: T;
+        office?:
+          | T
+          | {
+              meetingRooms?: T;
+              hasReception?: T;
+              internetType?: T;
+              securityLevel?: T;
+              elevators?: T;
+            };
+        restaurant?:
+          | T
+          | {
+              kitchenCount?: T;
+              hasExhaust?: T;
+              hasGasConnection?: T;
+              outdoorSeatingCapacity?: T;
+            };
+        warehouse?:
+          | T
+          | {
+              loadingDocks?: T;
+              ceilingHeight?: T;
+              hasTruckAccess?: T;
+              fireSystem?: T;
+            };
+        factory?:
+          | T
+          | {
+              powerCapacityKW?: T;
+              hazardZone?: T;
+              industrialLicense?: T;
+            };
+        retail?:
+          | T
+          | {
+              frontageWidth?: T;
+              hasStorageRoom?: T;
+              ceilingHeight?: T;
+            };
+        medical?:
+          | T
+          | {
+              hasWaitingRoom?: T;
+              medicalLicense?: T;
+              numberOfExamRooms?: T;
+            };
+      };
+  hospitality?:
+    | T
+    | {
+        totalRooms?: T;
+        floors?: T;
+        starRating?: T;
+        brand?: T;
+        lastRenovationYear?: T;
+        hasBeachAccess?: T;
+        hotel?:
+          | T
+          | {
+              suites?: T;
+              restaurants?: T;
+              conferenceRooms?: T;
+            };
+        motel?:
+          | T
+          | {
+              parkingSpaces?: T;
+              driveUpRooms?: T;
+              isHighwayAccess?: T;
+            };
+        resort?:
+          | T
+          | {
+              suites?: T;
+              hasPrivateBeach?: T;
+              privateBeachArea?: T;
+              hasGolfCourse?: T;
+            };
+        camp?:
+          | T
+          | {
+              tentCapacity?: T;
+              hasShowers?: T;
+              hasElectricity?: T;
+            };
+      };
+  land?:
+    | T
+    | {
+        zoning?: T;
+        roadWidth?: T;
+        frontageWidth?: T;
+        hasUtilities?: T;
+        allowedFloors?: T;
+        buildingRatio?: T;
+        isCorner?: T;
+        slope?: T;
+        soilType?: T;
+      };
+  features?: T;
   full_name?: T;
   email?: T;
   phone?: T;
@@ -1905,6 +2202,20 @@ export interface PropertyCategoriesSelect<T extends boolean = true> {
   slug?: T;
   icon?: T;
   sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ip-locations_select".
+ */
+export interface IpLocationsSelect<T extends boolean = true> {
+  hashedIp?: T;
+  country?: T;
+  region?: T;
+  city?: T;
+  source?: T;
+  lastUsed?: T;
   updatedAt?: T;
   createdAt?: T;
 }

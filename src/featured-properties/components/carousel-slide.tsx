@@ -11,6 +11,11 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  Compass,
+  Key,
+  Award,
+  ParkingCircle,
+  Layers,
 } from 'lucide-react'
 import { ViewsBadge } from '@/components/property/views-badge'
 
@@ -26,6 +31,12 @@ export type CarouselProperty = {
   details: { bedrooms: number; bathrooms: number; sqM: string }
   propertyType?: string | null
   views?: number
+  category?: string | null
+  area?: number | null
+  land?: { zoning?: string | null; isCorner?: boolean | null } | null
+  commercial?: { floor?: number | null; parkingSpaces?: number | null } | null
+  hospitality?: { totalRooms?: number | null; starRating?: string | number | null } | null
+  residential?: { bedrooms?: number | null; bathrooms?: number | null } | null
 }
 
 export function CarouselSlide({
@@ -162,15 +173,99 @@ export function CarouselSlide({
         </div>
 
         <div className="carousel3d-stats">
-          <span>
-            <BedDoubleIcon size={16} /> {property.details.bedrooms} Beds
-          </span>
-          <span>
-            <BathIcon size={16} /> {property.details.bathrooms} Baths
-          </span>
-          <span>
-            <RulerIcon size={16} /> {property.details.sqM} Sq M
-          </span>
+          {(() => {
+            const statsList: React.ReactNode[] = []
+
+            if (property.category === 'land' && property.land) {
+              if (property.land.zoning) {
+                statsList.push(
+                  <span key="zoning">
+                    <Compass size={16} /> {property.land.zoning.charAt(0).toUpperCase() + property.land.zoning.slice(1)}
+                  </span>
+                )
+              }
+              if (property.area !== undefined && property.area !== null && property.area > 0) {
+                statsList.push(
+                  <span key="area">
+                    <RulerIcon size={16} /> {property.area.toLocaleString()} Sq M
+                  </span>
+                )
+              }
+              if (property.land.isCorner === true) {
+                statsList.push(
+                  <span key="corner">
+                    <Compass size={16} /> Corner
+                  </span>
+                )
+              }
+            } else if (property.category === 'commercial' && property.commercial) {
+              if (property.commercial.floor !== undefined && property.commercial.floor !== null) {
+                statsList.push(
+                  <span key="floor">
+                    <Layers size={16} /> Floor {property.commercial.floor}
+                  </span>
+                )
+              }
+              if (property.area !== undefined && property.area !== null && property.area > 0) {
+                statsList.push(
+                  <span key="area">
+                    <RulerIcon size={16} /> {property.area.toLocaleString()} Sq M
+                  </span>
+                )
+              }
+              if (property.commercial.parkingSpaces !== undefined && property.commercial.parkingSpaces !== null && property.commercial.parkingSpaces > 0) {
+                statsList.push(
+                  <span key="parking">
+                    <ParkingCircle size={16} /> {property.commercial.parkingSpaces} Park
+                  </span>
+                )
+              }
+            } else if (property.category === 'hospitality' && property.hospitality) {
+              if (property.hospitality.totalRooms !== undefined && property.hospitality.totalRooms !== null && property.hospitality.totalRooms > 0) {
+                statsList.push(
+                  <span key="rooms">
+                    <Key size={16} /> {property.hospitality.totalRooms} Rooms
+                  </span>
+                )
+              }
+              if (property.area !== undefined && property.area !== null && property.area > 0) {
+                statsList.push(
+                  <span key="area">
+                    <RulerIcon size={16} /> {property.area.toLocaleString()} Sq M
+                  </span>
+                )
+              }
+              const starRating = property.hospitality.starRating
+              if (starRating) {
+                statsList.push(
+                  <span key="stars">
+                    <Award size={16} /> {starRating} Stars
+                  </span>
+                )
+              }
+            } else {
+              // Default / Residential
+              const beds = property.residential?.bedrooms ?? property.details.bedrooms
+              const baths = property.residential?.bathrooms ?? property.details.bathrooms
+              statsList.push(
+                <span key="beds">
+                  <BedDoubleIcon size={16} /> {beds} Beds
+                </span>
+              )
+              statsList.push(
+                <span key="baths">
+                  <BathIcon size={16} /> {baths} Baths
+                </span>
+              )
+              statsList.push(
+                <span key="area">
+                  <RulerIcon size={16} /> {property.details.sqM} Sq M
+                </span>
+              )
+            }
+
+            return statsList
+          })()}
         </div>
 
         <div className="carousel3d-actions">
@@ -187,7 +282,7 @@ export function CarouselSlide({
           </Link>
 
           <div className="flex items-center gap-2 z-20">
-            <ViewsBadge views={property.views || 0} minimal />
+            <ViewsBadge views={property.views || 0} propertyId={property.id} minimal />
           </div>
         </div>
       </div>

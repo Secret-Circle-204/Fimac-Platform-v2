@@ -13,8 +13,10 @@ export const AboutPage: GlobalConfig = {
   },
   hooks: {
     afterChange: [
-      ({ doc }) => {
-        triggerRevalidate('about-page')
+      ({ doc, context }) => {
+        if (!context?.skipCacheInvalidation) {
+          triggerRevalidate('about-page')
+        }
         return doc
       },
     ],

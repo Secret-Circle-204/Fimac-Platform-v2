@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Building2, Eye, ShieldCheck, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { getPayloadClient } from '@/db/client'
+import { sql } from '@payloadcms/db-postgres'
 import { RecentlyViewedProperties } from '@/components/buyer/recently-viewed'
 import { RecommendedProperties } from '@/components/buyer/recommended-properties'
 export const dynamic = 'force-dynamic'
@@ -17,8 +18,7 @@ export default async function BuyerDashboard() {
     redirect('/auth/login')
   }
 
-  // Fetch stats directly from Payload instead of API call
-  // (server-side fetch to localhost doesn't work reliably)
+  // Fetch stats directly from database via Drizzle instead of overfetching in Node.js
   let stats = {
     totalViews: 0,
     uniquePropertiesViewed: 0,
@@ -26,60 +26,25 @@ export default async function BuyerDashboard() {
 
   try {
     const payload = await getPayloadClient()
+    const db = payload.db.drizzle
 
-    // Get views count
-    const views = await payload.find({
-      collection: 'property-views',
-      where: {
-        and: [
-          {
-            'user.value': {
-              equals: Number(user.id),
-            },
-          },
-          {
-            'user.relationTo': {
-              equals: 'buyers',
-            },
-          },
-        ],
-      },
-      limit: 1,
-    })
+    const statsQuery = await db.execute(
+      sql`
+        SELECT 
+          COUNT(*)::int as total_views,
+          COUNT(DISTINCT pv.property_id)::int as unique_views
+        FROM property_views pv
+        JOIN property_views_rels pvr ON pvr.parent_id = pv.id AND pvr.path = 'user'
+        WHERE pvr.buyers_id = ${Number(user.id)}
+      `
+    )
 
-    // Get unique properties
-    const allViews = await payload.find({
-      collection: 'property-views',
-      where: {
-        and: [
-          {
-            'user.value': {
-              equals: Number(user.id),
-            },
-          },
-          {
-            'user.relationTo': {
-              equals: 'buyers',
-            },
-          },
-        ],
-      },
-      limit: 1000,
-      depth: 0,
-    })
-
-    const uniqueProperties = new Set()
-    allViews.docs.forEach((view) => {
-      const propId =
-        typeof view.property === 'object' && view.property !== null
-          ? view.property.id
-          : view.property
-      uniqueProperties.add(propId)
-    })
+    const rows = Array.isArray(statsQuery) ? statsQuery : (statsQuery.rows || [])
+    const row = rows[0] as { total_views?: number; unique_views?: number } | undefined
 
     stats = {
-      totalViews: views.totalDocs,
-      uniquePropertiesViewed: uniqueProperties.size,
+      totalViews: row?.total_views || 0,
+      uniquePropertiesViewed: row?.unique_views || 0,
     }
 
     console.log('✅ Stats fetched:', stats)

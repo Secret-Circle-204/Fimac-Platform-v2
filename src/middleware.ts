@@ -2,7 +2,44 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCORSHeaders, getSecurityHeaders } from './lib/security/cors'
 import { checkRateLimit, RATE_LIMIT_PRESETS } from './lib/security/rate-limit'
 
-export function middleware(request: NextRequest) {
+// التحقق من أن عنوان الـ IP محلي أو خاص
+function isPrivateIP(ip: string): boolean {
+  const cleanIp = ip.trim()
+  if (
+    cleanIp === '::1' ||
+    cleanIp === '127.0.0.1' ||
+    cleanIp === '::ffff:127.0.0.1' ||
+    cleanIp === 'localhost' ||
+    cleanIp === 'unknown'
+  ) {
+    return true
+  }
+
+  // 192.168.x.x
+  if (cleanIp.startsWith('192.168.')) return true
+
+  // 10.x.x.x
+  if (cleanIp.startsWith('10.')) return true
+
+  // 172.16.x.x - 172.31.x.x (فئة B الخاصة)
+  const parts = cleanIp.split('.')
+  if (parts.length === 4 && parts[0] === '172') {
+    const secondOctet = parseInt(parts[1], 10)
+    if (secondOctet >= 16 && secondOctet <= 31) {
+      return true
+    }
+  }
+
+  // معالجة عناوين IPv6 الماب للـ IPv4 المحلية (مثال: ::ffff:192.168.1.5)
+  if (cleanIp.startsWith('::ffff:')) {
+    const ipv4 = cleanIp.substring(7)
+    return isPrivateIP(ipv4)
+  }
+
+  return false
+}
+
+export async function middleware(request: NextRequest) {
   // سجل أي طلب فوراً قبل أي شرط
   console.log(`[DEBUG] Incoming Request: ${request.method} ${request.nextUrl.pathname}`);
 
@@ -17,35 +54,58 @@ export function middleware(request: NextRequest) {
   }
 
   // الحصول على معرف العميل (IP أو User ID)
-  const clientId =
+  const rawIp =
     request.headers.get('x-forwarded-for') ||
     request.headers.get('x-real-ip') ||
     'unknown'
 
-  // تحديد الحد المناسب حسب المسار
-  let limitPreset = RATE_LIMIT_PRESETS.API // الافتراضي للـ API
+  const clientId = rawIp.includes(',') ? rawIp.split(',')[0].trim() : rawIp.trim()
+
+  // تحديد الحد المناسب والمفتاح الخاص به حسب المسار
+  let limitPreset = RATE_LIMIT_PRESETS.API
+  let limitKey = 'api'
 
   if (pathname.startsWith('/api/')) {
     if (pathname.startsWith('/api/contact')) {
-      limitPreset = RATE_LIMIT_PRESETS.CONTACT // حد صارم لرسائل التواصل
+      limitPreset = RATE_LIMIT_PRESETS.CONTACT
+      limitKey = 'contact'
     } else if (pathname.startsWith('/api/upload-photo')) {
-      limitPreset = RATE_LIMIT_PRESETS.UPLOAD // حد لرفع الصور
-    } else if (pathname.includes('search') || pathname.includes('track-view')) {
-      limitPreset = RATE_LIMIT_PRESETS.SEARCH // حد للبحث والأنشطة المتكررة
+      limitPreset = RATE_LIMIT_PRESETS.UPLOAD
+      limitKey = 'upload'
+    } else if (pathname.startsWith('/api/track-view')) {
+      limitPreset = RATE_LIMIT_PRESETS.TRACK_VIEW
+      limitKey = 'track_view'
+      
+      // استخلاص معرف العقار من الجسم بدون التأثير على قراءة الطلب الأساسية (Request cloning)
+      if (request.method === 'POST') {
+        try {
+          const clone = request.clone()
+          const body = await clone.json()
+          if (body && body.propertyId) {
+            limitKey = `track_view:${body.propertyId}`
+          }
+        } catch (e) {
+          console.warn('⚠️ Middleware: failed to extract propertyId from body:', e)
+        }
+      }
     }
+  } else if (pathname.startsWith('/search')) {
+    limitPreset = RATE_LIMIT_PRESETS.SEARCH
+    limitKey = 'search'
   } else {
     // لصفحات العرض العادية (HTML)، نضع حداً مرتفعاً جداً لمنع حظر المستخدمين الحقيقيين أثناء التصفح
     limitPreset = {
       windowMs: 15 * 60 * 1000, // 15 دقيقة
       maxRequests: 1500, // 1500 طلب
     }
+    limitKey = 'page'
   }
 
   // التحقق من Rate Limiting (يتم تخطيه في التطوير المحلي لتجنب حظر المطور أثناء العمل)
   const isDev = process.env.NODE_ENV === 'development'
-  const isLocal = clientId === '::1' || clientId === '127.0.0.1' || clientId === 'unknown'
+  const isLocal = isPrivateIP(clientId)
 
-  if (!isDev && !isLocal && !checkRateLimit(clientId, limitPreset)) {
+  if (!isDev && !isLocal && !checkRateLimit(`${clientId}:${limitKey}`, limitPreset)) {
     const acceptHeader = request.headers.get('accept') || ''
     if (acceptHeader.includes('application/json') || request.nextUrl.pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Too Many Requests' }, {

@@ -18,15 +18,19 @@ export const BlogPosts: CollectionConfig = {
   },
   hooks: {
     afterChange: [
-      () => {
-        triggerRevalidate('blog-posts')
-        triggerRevalidate('blog')
+      ({ context }) => {
+        if (!context?.skipCacheInvalidation) {
+          triggerRevalidate('blog-posts')
+          triggerRevalidate('blog')
+        }
       }
     ],
     afterDelete: [
-      () => {
-        triggerRevalidate('blog-posts')
-        triggerRevalidate('blog')
+      ({ context }) => {
+        if (!context?.skipCacheInvalidation) {
+          triggerRevalidate('blog-posts')
+          triggerRevalidate('blog')
+        }
       }
     ]
   },

@@ -17,13 +17,17 @@ export const ListingStatuses: CollectionConfig = {
   },
   hooks: {
     afterChange: [
-      () => {
-        triggerRevalidate('listing-statuses')
+      ({ context }) => {
+        if (!context?.skipCacheInvalidation) {
+          triggerRevalidate('listing-statuses')
+        }
       }
     ],
     afterDelete: [
-      () => {
-        triggerRevalidate('listing-statuses')
+      ({ context }) => {
+        if (!context?.skipCacheInvalidation) {
+          triggerRevalidate('listing-statuses')
+        }
       }
     ]
   },

@@ -1,7 +1,12 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Eye } from "lucide-react"
+import { viewsBatcher } from "@/lib/views-batcher"
 
 interface ViewsBadgeProps {
   views: number
+  propertyId?: string | number
   className?: string
   minimal?: boolean
 }
@@ -16,9 +21,37 @@ const formatViews = (count: number) => {
   return count.toString()
 }
 
-export const ViewsBadge = ({ views, className = "", minimal = false }: ViewsBadgeProps) => {
-  const displayViews = views || 0
-  
+export const ViewsBadge = ({ views, propertyId, className = "", minimal = false }: ViewsBadgeProps) => {
+  const [displayViews, setDisplayViews] = useState(views)
+
+  useEffect(() => {
+    setDisplayViews(views)
+  }, [views])
+
+  useEffect(() => {
+    if (!propertyId) return
+
+    const idStr = propertyId.toString()
+
+    // Register with batcher for client-side fetching
+    viewsBatcher?.register(idStr, (latestViews) => {
+      setDisplayViews(latestViews)
+    })
+
+    // Listen for active view tracking updates
+    const handleTracked = (e: Event) => {
+      const customEvent = e as CustomEvent<{ propertyId: string; views: number }>
+      if (customEvent.detail && customEvent.detail.propertyId === idStr) {
+        setDisplayViews(customEvent.detail.views)
+      }
+    }
+
+    window.addEventListener("property-view-tracked", handleTracked)
+    return () => {
+      window.removeEventListener("property-view-tracked", handleTracked)
+    }
+  }, [propertyId])
+
   if (minimal) {
     return (
       <div 

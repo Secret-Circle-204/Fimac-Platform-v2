@@ -1,3 +1,6 @@
+import type { Field } from 'payload'
+import type { Property } from '@/payload-types'
+
 export type SpecIconKey =
   | 'bed'
   | 'bath'
@@ -44,7 +47,7 @@ export interface SpecFieldDefinition {
   selectOptions?: { label: string; value: string }[]
   unit?: string | null
   // Optional condition to restrict visibility in Admin UI
-  adminCondition?: (data: any, siblingData: any) => boolean
+  adminCondition?: (data: Record<string, unknown>, siblingData: Record<string, unknown>) => boolean
 }
 
 export const ALL_SPEC_FIELDS: Record<string, SpecFieldDefinition> = {
@@ -537,7 +540,7 @@ export const ALL_SPEC_FIELDS: Record<string, SpecFieldDefinition> = {
   'hospitality.hasBeachAccess': {
     name: 'hasBeachAccess',
     path: 'hospitality.hasBeachAccess',
-    label: { en: 'Beach Access', ar: 'دخول الشاطئ' },
+    label: { en: 'Has a beach', ar: 'دخول الشاطئ' },
     iconKey: 'pool',
     type: 'checkbox',
     category: 'hospitality',
@@ -631,7 +634,7 @@ export const ALL_SPEC_FIELDS: Record<string, SpecFieldDefinition> = {
     subGroup: 'resort',
     unit: 'm²',
     adminCondition: (data, siblingData) => {
-      return !!siblingData?.hasPrivateBeach
+      return typeof siblingData === 'object' && siblingData !== null && 'hasPrivateBeach' in siblingData && !!siblingData.hasPrivateBeach
     },
   },
   'hospitality.resort.hasGolfCourse': {
@@ -921,3 +924,93 @@ export const PROFILE_MAP: Record<string, string> = {
   'development-site': 'land',
   'building-plot': 'land',
 }
+
+export function buildSpecField(spec: SpecFieldDefinition): Field {
+  const baseConfig = {
+    name: spec.name,
+    label: spec.label.en,
+    index: false,
+  }
+
+  const admin: {
+    description?: string
+    condition?: (data: Record<string, unknown>, siblingData: Record<string, unknown>) => boolean
+  } = {}
+  if (spec.unit) {
+    admin.description = `Unit: ${spec.unit}`
+  }
+  if (spec.adminCondition) {
+    admin.condition = spec.adminCondition
+  }
+
+  const hasAdmin = Object.keys(admin).length > 0
+
+  if (spec.type === 'select') {
+    return {
+      ...baseConfig,
+      type: 'select',
+      options: spec.selectOptions || [],
+      admin: hasAdmin ? admin : undefined,
+    }
+  }
+
+  if (spec.type === 'checkbox') {
+    return {
+      ...baseConfig,
+      type: 'checkbox',
+      admin: hasAdmin ? admin : undefined,
+    }
+  }
+
+  if (spec.type === 'number') {
+    return {
+      ...baseConfig,
+      type: 'number',
+      admin: hasAdmin ? admin : undefined,
+    }
+  }
+
+  return {
+    ...baseConfig,
+    type: 'text',
+    admin: hasAdmin ? admin : undefined,
+  }
+}
+
+export function buildCategoryFields(category: 'residential' | 'commercial' | 'hospitality' | 'land'): Field[] {
+  const categorySpecs = Object.values(ALL_SPEC_FIELDS).filter((spec) => spec.category === category)
+
+  // 1. Get flat common specs (where subGroup is 'common')
+  const commonFields = categorySpecs
+    .filter((spec) => spec.subGroup === 'common')
+    .map(buildSpecField)
+
+  // 2. Get unique sub-groups (excluding 'common')
+  const subGroupNames = Array.from(
+    new Set(
+      categorySpecs.filter((spec) => spec.subGroup !== 'common').map((spec) => spec.subGroup),
+    ),
+  )
+
+  // 3. For each sub-group, build a Payload group field
+  const subGroupFields = subGroupNames.map((subGroupName) => {
+    const subGroupSpecs = categorySpecs.filter((spec) => spec.subGroup === subGroupName)
+    const childFields = subGroupSpecs.map(buildSpecField)
+
+    return {
+      name: subGroupName,
+      type: 'group',
+      label: `${subGroupName.charAt(0).toUpperCase() + subGroupName.slice(1)} Specifications`,
+      admin: {
+        condition: (data: Partial<Property> | undefined) => {
+          const slug = data?.propertyTypeSlug
+          return !!(slug && PROFILE_MAP[slug] === subGroupName)
+        },
+      },
+      fields: childFields,
+    } as Field
+  })
+
+  return [...commonFields, ...subGroupFields]
+}
+

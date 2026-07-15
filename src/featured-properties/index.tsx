@@ -25,6 +25,12 @@ export async function FeaturedProperties() {
       },
       propertyType: p.details.Property,
       views: p.views,
+      category: p.category,
+      area: p.area,
+      land: p.land,
+      commercial: p.commercial,
+      hospitality: p.hospitality,
+      residential: p.residential,
     }))
 
     return <FeaturedPropertiesClient properties={carouselProperties} />

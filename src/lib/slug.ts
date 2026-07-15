@@ -32,7 +32,7 @@ export const getUniqueSlugHook = (titleField: string): FieldHook => {
 
     while (exists) {
       const result = await payload.find({
-        collection: collectionSlug as any,
+        collection: collectionSlug as Parameters<typeof payload.find>[0]['collection'],
         where: {
           slug: {
             equals: uniqueSlug,

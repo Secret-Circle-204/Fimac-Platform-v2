@@ -40,6 +40,7 @@ export async function seedConstructionStatuses(payload: Payload): Promise<void> 
       if (existing.docs.length === 0) {
         await payload.create({
           collection: 'construction-statuses',
+          context: { skipCacheInvalidation: true },
           data: item,
         })
         payload.logger.info(`✅ [Seeder]: Seeded missing construction status: ${item.name}`)

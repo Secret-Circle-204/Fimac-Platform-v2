@@ -15,7 +15,7 @@ export const getCachedPropertyTypes = async () => {
   const rawData = await unstable_cache(
     async () => {
       console.log(`⚡ [CACHE MISS]: property-types-all (Querying PostgreSQL Remote DB...)`)
-      const data = await local.propertyType._getRawInternal({}, { depth: 0 })
+      const data = await local.propertyType._getRawInternal({}, { depth: 1 })
       return data
     },
     [cacheKey],

@@ -101,6 +101,7 @@ export async function seedPropertyTypes(payload: Payload): Promise<void> {
         payload.logger.info(`⚡ [Seeder]: Creating property type '${item.name}'`)
         await payload.create({
           collection: 'property-types',
+          context: { skipCacheInvalidation: true },
           data: {
             name: item.name,
             slug: item.slug,
@@ -114,6 +115,7 @@ export async function seedPropertyTypes(payload: Payload): Promise<void> {
         await payload.update({
           collection: 'property-types',
           id: existingDoc.id,
+          context: { skipCacheInvalidation: true },
           data: {
             category: categoryId,
             specificationProfile: item.specificationProfile,

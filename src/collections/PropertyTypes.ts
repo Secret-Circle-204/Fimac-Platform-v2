@@ -17,13 +17,17 @@ export const PropertyTypes: CollectionConfig = {
   },
   hooks: {
     afterChange: [
-      () => {
-        triggerRevalidate('property-types')
+      ({ context }) => {
+        if (!context?.skipCacheInvalidation) {
+          triggerRevalidate('property-types')
+        }
       }
     ],
     afterDelete: [
-      () => {
-        triggerRevalidate('property-types')
+      ({ context }) => {
+        if (!context?.skipCacheInvalidation) {
+          triggerRevalidate('property-types')
+        }
       }
     ]
   },

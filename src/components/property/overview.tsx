@@ -5,7 +5,7 @@ import { PropertyDescription } from './description'
 import { useProperty } from '../providers/property'
 import { SpecItem } from './specs/SpecItem'
 import { PropertySpecs } from './specs/PropertySpecs'
-import { Info, Home, Maximize } from 'lucide-react'
+import { Info, Maximize } from 'lucide-react'
 import * as Icons from 'lucide-react'
 
 // Helper to dynamically resolve Lucide icons by name safely
@@ -101,7 +101,7 @@ export const PropertyOverview = () => {
           )}
 
           {/* Dynamic Specifications */}
-          <PropertySpecs property={property} />
+          <PropertySpecs property={property.original} />
 
           {/* Custom Specifications */}
           {property.customSpecifications?.map((spec) => {

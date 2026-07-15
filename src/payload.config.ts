@@ -1,4 +1,4 @@
-import { postgresAdapter } from '@payloadcms/db-postgres'
+import { postgresAdapter, sql } from '@payloadcms/db-postgres'
 
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
@@ -51,6 +51,19 @@ export default buildConfig({
   }),
   sharp,
   async onInit(payload) {
+    // ⚡ Database Performance Tuning: Setup pg_trgm and GIN indexes for fast ILIKE/contains substring searches
+    try {
+      const db = payload.db.drizzle
+      await db.execute(sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`)
+      await db.execute(sql`CREATE INDEX IF NOT EXISTS properties_title_trgm_idx ON properties USING gin (title gin_trgm_ops)`)
+      await db.execute(sql`CREATE INDEX IF NOT EXISTS properties_city_trgm_idx ON properties USING gin (location_address_city gin_trgm_ops)`)
+      await db.execute(sql`CREATE INDEX IF NOT EXISTS properties_state_trgm_idx ON properties USING gin (location_address_state gin_trgm_ops)`)
+      await db.execute(sql`CREATE INDEX IF NOT EXISTS properties_zip_trgm_idx ON properties USING gin (location_address_zip gin_trgm_ops)`)
+      payload.logger.info('✅ Database search performance indexes initialized successfully!')
+    } catch (err) {
+      payload.logger.error(`❌ Failed to initialize pg_trgm search indexes: ${err instanceof Error ? err.message : 'Unknown'}`)
+    }
+
     await seedFeatures(payload)
     await seedPropertyCategories(payload)
     await seedPropertyTypes(payload)

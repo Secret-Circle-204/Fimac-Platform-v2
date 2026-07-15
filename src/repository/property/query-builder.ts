@@ -1,5 +1,6 @@
 import type { Where } from 'payload'
 import { SearchOrchestrator } from './search/search-orchestrator'
+import { resolveSearchIntent } from './search/search-intent-resolver'
 
 export interface PropertySearchFilters {
   location?: string
@@ -31,5 +32,7 @@ const orchestrator = new SearchOrchestrator()
  * Filters are applied at the database query level to ensure SQL-level efficiency.
  */
 export function buildPropertySearchQuery(filters: PropertySearchFilters): Where {
-  return orchestrator.buildQuery(filters)
+  const resolvedFilters = resolveSearchIntent(filters)
+  return orchestrator.buildQuery(resolvedFilters)
 }
+

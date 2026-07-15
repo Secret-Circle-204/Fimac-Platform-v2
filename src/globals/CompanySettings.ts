@@ -16,8 +16,10 @@ export const CompanySettings: GlobalConfig = {
   },
   hooks: {
     afterChange: [
-      ({ doc }) => {
-        revalidateTag('company-settings')
+      ({ doc, context }) => {
+        if (!context?.skipCacheInvalidation) {
+          revalidateTag('company-settings')
+        }
         return doc
       },
     ],

@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, X, SlidersHorizontal, Globe, Map, MapPin, Building2, DollarSign } from 'lucide-react'
+import { Search, X, SlidersHorizontal, Globe, MapPin, Building2, DollarSign } from 'lucide-react'
 import { useState, useTransition, useEffect, useCallback, useRef } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Label } from '@/components/ui/label'
@@ -44,6 +44,7 @@ export function SearchHeader({
   const [country, setCountry] = useState(searchParams.get('country') || 'all')
   const [city, setCity] = useState(searchParams.get('city') || 'all')
   const [propertyType, setPropertyType] = useState(searchParams.get('type') || 'all')
+  const [category, setCategory] = useState(searchParams.get('category') || 'all')
   const [quickPrice, setQuickPrice] = useState(searchParams.get('quickPrice') || 'all')
   const [listingStatus, setListingStatus] = useState(searchParams.get('listingStatus') || 'all')
   const [constructionStatus, setConstructionStatus] = useState(searchParams.get('constructionStatus') || 'all')
@@ -71,6 +72,10 @@ export function SearchHeader({
     if (propertyType && propertyType !== 'all') {
       const selectedOpt = propertyTypeOptions.find((o) => o.value === propertyType)
       parts.push(selectedOpt ? selectedOpt.label : propertyType)
+    }
+
+    if (category && category !== 'all') {
+      parts.push(category)
     }
 
     if (listingStatus && listingStatus !== 'all') {
@@ -155,6 +160,7 @@ export function SearchHeader({
     setCountry('all')
     setCity('all')
     setPropertyType('all')
+    setCategory('all')
     setQuickPrice('all')
     setListingStatus('all')
     setConstructionStatus('all')
@@ -176,6 +182,7 @@ export function SearchHeader({
     setCountry(searchParams.get('country') || 'all')
     setCity(searchParams.get('city') || 'all')
     setPropertyType(searchParams.get('type') || 'all')
+    setCategory(searchParams.get('category') || 'all')
     setQuickPrice(searchParams.get('quickPrice') || 'all')
     setListingStatus(searchParams.get('listingStatus') || 'all')
     setConstructionStatus(searchParams.get('constructionStatus') || 'all')
@@ -207,16 +214,16 @@ export function SearchHeader({
                 </SheetTitle>
               </SheetHeader>
 
-              {/* Destination */}
+              {/* Keyword & Location */}
               <div className="space-y-2">
                 <Label htmlFor="mobile-location" className="text-xs font-bold text-white/80">
-                  Destination
+                  Keyword & Location
                 </Label>
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/40" />
                   <Input
                     id="mobile-location"
-                    placeholder="Where are you investing?"
+                    placeholder="Search by title, location or keyword..."
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     onFocus={() => setIsFocused(true)}
@@ -426,13 +433,13 @@ export function SearchHeader({
                 htmlFor="location"
                 className="mb-2 block text-xs font-bold text-white/80"
               >
-                Destination
+                Keyword & Location
               </Label>
               <div className="relative group">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/40 transition-colors group-focus-within:text-gold-royal" />
                 <Input
                   id="location"
-                  placeholder="Where are you investing? (e.g. City, Hotel, State...)"
+                  placeholder="Search by title, country, city, or keyword..."
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   onFocus={() => setIsFocused(true)}
@@ -666,7 +673,7 @@ export function SearchHeader({
       </div>
 
       {/* Active Filters Display */}
-      {(location || country !== 'all' || city !== 'all' || propertyType !== 'all' || searchParams.get('lat')) && (
+      {(location || country !== 'all' || city !== 'all' || propertyType !== 'all' || category !== 'all' || searchParams.get('lat')) && (
         <div className="mt-4 lg:mt-6 w-full flex flex-wrap items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-500 bg-[#061849]/90 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-full px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
           <span className="text-xs font-bold text-gold-royal shrink-0 mr-1">
             Curating:
@@ -747,6 +754,22 @@ export function SearchHeader({
                   onClick={() => {
                     setPropertyType('all')
                     updateFilters({ type: 'all' })
+                  }}
+                  className="ml-2 hover:text-gold-royal transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+
+            {category !== 'all' && (
+              <div className="flex items-center bg-white/10 text-white px-3.5 py-1.5 rounded-full border border-white/10 text-xs font-bold transition-all hover:bg-gold-royal hover:border-gold-royal/30 cursor-default">
+                <span className="mr-1.5 text-gold-royal">@</span>
+                {category}
+                <button
+                  onClick={() => {
+                    setCategory('all')
+                    updateFilters({ category: 'all' })
                   }}
                   className="ml-2 hover:text-gold-royal transition-colors"
                 >

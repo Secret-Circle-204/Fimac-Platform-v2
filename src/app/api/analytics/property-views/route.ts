@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     if (forceRefresh) {
       analyticsCache.clear()
     } else {
-      const cached = analyticsCache.get(30000) // 30s TTL
+      const cached = analyticsCache.get(900000) // 15 mins TTL
       if (cached) {
         return NextResponse.json(cached)
       }
@@ -72,11 +72,12 @@ export async function GET(request: NextRequest) {
         sql`
           SELECT 
             location_city as city,
+            location_region as region,
             location_country as country,
             COUNT(*) as count
           FROM property_views
-          WHERE location_city IS NOT NULL OR location_country IS NOT NULL
-          GROUP BY location_city, location_country
+          WHERE location_city IS NOT NULL OR location_region IS NOT NULL OR location_country IS NOT NULL
+          GROUP BY location_city, location_region, location_country
           ORDER BY count DESC
           LIMIT 25
         `
@@ -89,6 +90,7 @@ export async function GET(request: NextRequest) {
             pv.device,
             pv.source,
             pv.location_city,
+            pv.location_region,
             pv.location_country,
             p.title as property_title,
             pvr.path as relation_path,
@@ -159,14 +161,25 @@ export async function GET(request: NextRequest) {
     }))
 
     // Parse Location Breakdown
-    const locationRows = parseRows<{ city: string | null; country: string | null; count: string | number }>(locationResRaw)
+    const locationRows = parseRows<{ city: string | null; region: string | null; country: string | null; count: string | number }>(locationResRaw)
     const totalViewsWithLocation = locationRows.reduce((sum, item) => sum + Number(item.count), 0)
-    const locationData = locationRows.map((item) => ({
-      city: item.city || "Unknown City",
-      country: item.country || "Unknown Country",
-      count: Number(item.count),
-      percentage: totalViewsWithLocation > 0 ? Math.round((Number(item.count) / totalViewsWithLocation) * 100) : 0,
-    }))
+    const locationData = locationRows.map((item) => {
+      let locationLabel = ""
+      const parts = [item.city, item.region].filter(Boolean)
+      if (item.city && item.region && item.city.toLowerCase() === item.region.toLowerCase()) {
+        locationLabel = item.city
+      } else {
+        locationLabel = parts.join(", ")
+      }
+      if (!locationLabel) locationLabel = "Unknown City"
+
+      return {
+        city: locationLabel,
+        country: item.country || "Unknown Country",
+        count: Number(item.count),
+        percentage: totalViewsWithLocation > 0 ? Math.round((Number(item.count) / totalViewsWithLocation) * 100) : 0,
+      }
+    })
 
     // Top Properties by Engagement (stay/dwell time tracking disabled)
     const engagementData: PropertyEngagement[] = []
@@ -178,6 +191,7 @@ export async function GET(request: NextRequest) {
       device: string | null
       source: string | null
       location_city: string | null
+      location_region: string | null
       location_country: string | null
       property_title: string | null
       relation_path: string | null
@@ -194,10 +208,11 @@ export async function GET(request: NextRequest) {
       }
       
       let locationLabel = ""
-      if (row.location_city && row.location_country) {
-        locationLabel = `${row.location_city}, ${row.location_country}`
-      } else if (row.location_country) {
-        locationLabel = row.location_country
+      const parts = [row.location_city, row.location_region, row.location_country].filter(Boolean)
+      if (row.location_city && row.location_region && row.location_city.toLowerCase() === row.location_region.toLowerCase()) {
+        locationLabel = [row.location_city, row.location_country].filter(Boolean).join(", ")
+      } else {
+        locationLabel = parts.join(", ")
       }
 
       return {

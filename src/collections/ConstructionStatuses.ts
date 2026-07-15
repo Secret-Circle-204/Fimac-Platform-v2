@@ -17,13 +17,17 @@ export const ConstructionStatuses: CollectionConfig = {
   },
   hooks: {
     afterChange: [
-      () => {
-        triggerRevalidate('construction-statuses')
+      ({ context }) => {
+        if (!context?.skipCacheInvalidation) {
+          triggerRevalidate('construction-statuses')
+        }
       }
     ],
     afterDelete: [
-      () => {
-        triggerRevalidate('construction-statuses')
+      ({ context }) => {
+        if (!context?.skipCacheInvalidation) {
+          triggerRevalidate('construction-statuses')
+        }
       }
     ]
   },

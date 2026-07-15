@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 
-function getCountryName(code: string): string {
+function _getCountryName(code: string): string {
   const countries: Record<string, string> = {
     EG: "Egypt",
     US: "United States",
@@ -124,28 +124,9 @@ export function ViewTracker({ propertyId, ownerId }: ViewTrackerProps) {
     }
 
     const trackAndLocate = async () => {
-      // Try fetching client-side location with low timeout to avoid blocking analytics logging
-      let clientLocation = null
-      try {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 1200) // 1.2s timeout
-        const res = await fetch("https://ipinfo.io/json", { signal: controller.signal })
-        clearTimeout(timeoutId)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.ip) {
-            clientLocation = {
-              ip: data.ip,
-              city: data.city || "",
-              country: getCountryName(data.country || ""),
-              region: data.region || "",
-            }
-            console.log("🌍 Client Geolocation resolved via ipinfo.io:", clientLocation)
-          }
-        }
-      } catch (e) {
-        console.warn("⚠️ Client-side geo-lookup skipped/failed:", e)
-      }
+      // ⚡ Performance: Client-side third-party IP geocoding is removed to prevent browser blocks & rate limits.
+      // Geolocation is resolved securely on the server via CDN geolocation headers / background fallback.
+      const clientLocation = null
 
       console.log("📊 Tracking view with data:", {
         propertyId: propertyId.toString(),
@@ -172,6 +153,13 @@ export function ViewTracker({ propertyId, ownerId }: ViewTrackerProps) {
         }
         const data = await response.json()
         console.log("✅ View tracked successfully:", data)
+        if (data.success && typeof data.views === "number") {
+          window.dispatchEvent(
+            new CustomEvent("property-view-tracked", {
+              detail: { propertyId: propertyId.toString(), views: data.views },
+            })
+          )
+        }
       } catch (err) {
         console.error("❌ Failed to track view:", err)
       }

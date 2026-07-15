@@ -1,37 +1,37 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { CheckCircle2, Send } from 'lucide-react'
+import { CheckCircle2, Send, ArrowRight, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 
-// Dynamically load Leaflet Location Picker to bypass Server-Side Rendering (SSR) issues
-const LocationPicker = dynamic(
-  () => import('@/components/sell/location-picker').then((mod) => mod.LocationPicker),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-[320px] md:h-[400px] w-full bg-slate-50 animate-pulse rounded-2xl flex items-center justify-center text-gray-400 font-bold border border-dashed border-gray-200">
-        Loading Interactive Location Map...
-      </div>
-    ),
-  }
-)
+import { StepProgressBar } from '@/components/sell/StepProgressBar'
+import { ClassificationStep } from '@/components/sell/ClassificationStep'
+import { PricingStep } from '@/components/sell/PricingStep'
+import { LocationStep } from '@/components/sell/LocationStep'
+import { SpecsStep } from '@/components/sell/SpecsStep'
+import { ReviewStep } from '@/components/sell/ReviewStep'
+import { ALL_SPEC_FIELDS, PROFILES, PROFILE_MAP } from '@/collections/Properties/specs-registry'
+
+interface PropertyTypeOption {
+  label: string
+  value: number
+  slug: string
+  specificationProfile: string
+  categorySlug: string
+}
+
+interface FeatureOption {
+  label: string
+  value: number | string
+  slug: string
+}
 
 interface SellFormProps {
-  propertyTypeOptions?: Array<{ label: string; value: number }>
+  categoryOptions?: Array<{ label: string; value: string }>
+  propertyTypeOptions?: PropertyTypeOption[]
+  featureOptions?: FeatureOption[]
   currentUser?: {
     full_name: string
     email: string
@@ -39,13 +39,50 @@ interface SellFormProps {
   } | null
 }
 
-export function SellForm({ propertyTypeOptions = [], currentUser: _currentUser = null }: SellFormProps) {
+function inflateNestedObject(flatObj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(flatObj)) {
+    const parts = key.split('.')
+    let current = result
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i]
+      if (i === parts.length - 1) {
+        current[part] = value
+      } else {
+        if (!current[part] || typeof current[part] !== 'object' || current[part] === null) {
+          current[part] = {}
+        }
+        current = current[part] as Record<string, unknown>
+      }
+    }
+  }
+  return result
+}
+
+export function SellForm({
+  categoryOptions = [],
+  propertyTypeOptions = [],
+  featureOptions = [],
+  currentUser: _currentUser = null,
+}: SellFormProps) {
+  const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState('')
   const submitLock = useRef(false)
 
-  // Map Picker State - centered on Sharm El Sheikh by default
+  // Step 1: Classification State
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [selectedPropertyTypeId, setSelectedPropertyTypeId] = useState<string>('')
+  const [propertyTitle, setPropertyTitle] = useState<string>('')
+  const [constructionStatus, setConstructionStatus] = useState<string>('ready')
+
+  // Step 2: Pricing & Size State
+  const [askingPrice, setAskingPrice] = useState<string>('')
+  const [currency, setCurrency] = useState<string>('USD')
+  const [propertySize, setPropertySize] = useState<string>('')
+
+  // Step 3: Location State
   const [coords, setCoords] = useState({ lat: 27.9158, lng: 34.3300 })
   const [addressDetails, setAddressDetails] = useState({
     address: '',
@@ -53,6 +90,67 @@ export function SellForm({ propertyTypeOptions = [], currentUser: _currentUser =
     state: '',
     country: 'Egypt',
   })
+
+  // Step 4: Description & Dynamic Specs State
+  const [description, setDescription] = useState<string>('')
+  const [specValues, setSpecValues] = useState<Record<string, unknown>>({})
+  const [selectedFeatures, setSelectedFeatures] = useState<Array<number | string>>([])
+  const [customFeatures, setCustomFeatures] = useState<string[]>([])
+
+  const selectedCategoryName = categoryOptions.find((o) => o.value === selectedCategory)?.label || ''
+  const selectedPropertyTypeName = propertyTypeOptions.find(
+    (opt) => opt.value.toString() === selectedPropertyTypeId
+  )?.label || ''
+
+  const selectedType = propertyTypeOptions.find(
+    (opt) => opt.value.toString() === selectedPropertyTypeId
+  )
+
+  const activeSpecs = (() => {
+    if (!selectedType) return []
+    const category = selectedType.categorySlug as 'residential' | 'commercial' | 'hospitality' | 'land'
+    
+    // Resolve profile using static mapping to ensure absolute consistency with Payload schema
+    const profile = PROFILE_MAP[selectedType.slug] || 'none'
+
+    // 1. Common specs for the category
+    const commonSpecs = Object.values(ALL_SPEC_FIELDS).filter(
+      (spec) => spec.category === category && spec.subGroup === 'common'
+    )
+
+    // 2. Profile-specific specs
+    const profilePaths = PROFILES[profile] || []
+    const profileSpecs = Object.values(ALL_SPEC_FIELDS).filter(
+      (spec) => profilePaths.includes(spec.path)
+    )
+
+    // Deduplicate by path
+    const uniqueSpecsMap = new Map<string, typeof ALL_SPEC_FIELDS[keyof typeof ALL_SPEC_FIELDS]>()
+    commonSpecs.forEach((spec) => uniqueSpecsMap.set(spec.path, spec))
+    profileSpecs.forEach((spec) => uniqueSpecsMap.set(spec.path, spec))
+
+    const specs = Array.from(uniqueSpecsMap.values())
+    return specs
+  })()
+
+  useEffect(() => {
+    console.log("🔍 [SellForm Client State]:", {
+      selectedPropertyTypeId,
+      selectedType,
+      activeSpecs: activeSpecs.map((s) => s.path),
+    })
+  }, [selectedPropertyTypeId, selectedType, activeSpecs])
+
+  const handleCategoryChange = (val: string) => {
+    setSelectedCategory(val)
+    setSelectedPropertyTypeId('')
+    setSpecValues({})
+  }
+
+  const handlePropertyTypeChange = (val: string) => {
+    setSelectedPropertyTypeId(val)
+    setSpecValues({})
+  }
 
   const handleLocationChange = (data: {
     lat: number
@@ -71,32 +169,104 @@ export function SellForm({ propertyTypeOptions = [], currentUser: _currentUser =
     })
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
+  const handleSpecValueChange = (path: string, val: unknown) => {
+    setSpecValues((prev) => ({
+      ...prev,
+      [path]: val,
+    }))
+  }
+
+  const stepsList = [
+    { label: 'Classification', desc: 'Asset Type & Title' },
+    { label: 'Pricing', desc: 'Price & Size' },
+    { label: 'Location', desc: 'Coordinates & Address' },
+    { label: 'Specifications', desc: 'Details & Description' },
+    { label: 'Review', desc: 'Review & Submit' },
+  ]
+
+  const isStepValid = (step: number) => {
+    switch (step) {
+      case 1:
+        return !!selectedCategory && !!selectedPropertyTypeId && !!propertyTitle.trim() && !!constructionStatus
+      case 2:
+        return (
+          !!askingPrice &&
+          !isNaN(Number(askingPrice)) &&
+          Number(askingPrice) > 0 &&
+          !!propertySize &&
+          !isNaN(Number(propertySize)) &&
+          Number(propertySize) > 0
+        )
+      case 3:
+        return (
+          !!addressDetails.address.trim() &&
+          !!addressDetails.city.trim() &&
+          !!addressDetails.state.trim() &&
+          !!addressDetails.country.trim()
+        )
+      case 4:
+        return !!description.trim()
+      default:
+        return true
+    }
+  }
+
+  const handleNext = () => {
+    if (isStepValid(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, 5))
+      setError('')
+    } else {
+      setError('Please fill in all required fields marked with * correctly before proceeding.')
+    }
+  }
+
+  const handleBack = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1))
+    setError('')
+  }
+
+  async function handleSubmit() {
     if (submitLock.current) return
     submitLock.current = true
     setIsSubmitting(true)
     setError('')
 
-    const formData = new FormData(e.currentTarget)
     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}`
+
+    // Construct final specifications object by filtering active keys
+    const finalSpecsFlat: Record<string, unknown> = {}
+    activeSpecs.forEach((spec) => {
+      const val = specValues[spec.path]
+      if (spec.type === 'checkbox') {
+        finalSpecsFlat[spec.path] = !!val
+      } else if (spec.type === 'number') {
+        finalSpecsFlat[spec.path] = val !== undefined && val !== '' ? Number(val) : undefined
+      } else {
+        finalSpecsFlat[spec.path] = val || undefined
+      }
+    })
+
+    const inflatedSpecs = inflateNestedObject(finalSpecsFlat)
+
     const data = {
-      property_type: formData.get('property_type'),
-      property_title: formData.get('property_title'),
-      property_description: formData.get('property_description'),
-      property_location: formData.get('property_location'),
-      city: formData.get('city'),
-      state: formData.get('state'),
-      country: formData.get('country'),
-      asking_price: formData.get('asking_price'),
-      currency: formData.get('currency'),
-      property_size: formData.get('property_size'),
-      bedrooms: formData.get('bedrooms'),
-      bathrooms: formData.get('bathrooms'),
-      constructionStatus: formData.get('constructionStatus'),
-      latitude: formData.get('latitude'),
-      longitude: formData.get('longitude'),
+      property_type: selectedPropertyTypeId,
+      category: selectedCategory,
+      property_title: propertyTitle,
+      property_description: description,
+      property_location: addressDetails.address,
+      city: addressDetails.city,
+      state: addressDetails.state,
+      country: addressDetails.country,
+      asking_price: askingPrice,
+      currency: currency,
+      property_size: propertySize,
+      constructionStatus: constructionStatus,
+      latitude: coords.lat,
+      longitude: coords.lng,
       google_maps_url: googleMapsUrl,
+      features: selectedFeatures,
+      customFeatures: customFeatures,
+      ...inflatedSpecs,
     }
 
     try {
@@ -138,7 +308,15 @@ export function SellForm({ propertyTypeOptions = [], currentUser: _currentUser =
               onClick={() => {
                 setIsSuccess(false)
                 setError('')
+                setCurrentStep(1)
                 submitLock.current = false
+                setSelectedCategory('')
+                setSelectedPropertyTypeId('')
+                setPropertyTitle('')
+                setAskingPrice('')
+                setPropertySize('')
+                setDescription('')
+                setSpecValues({})
                 setCoords({ lat: 27.9158, lng: 34.3300 })
                 setAddressDetails({
                   address: '',
@@ -165,240 +343,144 @@ export function SellForm({ propertyTypeOptions = [], currentUser: _currentUser =
   }
 
   return (
-    <Card className="border-none shadow-2xl-soft rounded-[40px] overflow-hidden">
-      <div className="bg-navy-deep p-8 text-white">
-        <h2 className="text-3xl font-bold mb-3">Property Listing Request</h2>
-        <p className="text-white/70 leading-relaxed">
-          Please provide comprehensive details about your asset. Note that all listings must adhere
-          to our
-          <span className="text-gold-royal font-bold"> Elite Standards</span>, including mandatory
-          international valuation files and HD photography.
-        </p>
-      </div>
-      <CardContent className="p-8 md:p-12">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
+    <div className="space-y-6 max-w-5xl mx-auto">
+      {/* ProgressBar Card */}
+      <Card className="border-none shadow-sm rounded-3xl bg-white p-6">
+        <StepProgressBar currentStep={currentStep} steps={stepsList} />
+      </Card>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Property Details */}
-          <div>
-            <h3 className="text-lg font-semibold mb-6 text-blue-900 border-b pb-2">
-              Property Location & Details
-            </h3>
-
-            {/* Interactive Location Map Picker */}
-            <div className="mb-8 space-y-3">
-              <Label className="text-base font-bold text-navy-deep">Pinpoint Property Location *</Label>
-              <p className="text-xs text-gray-500">
-                Type your address to jump, then drag and drop the pin directly onto your property to automatically lock accurate coordinates and address details.
-              </p>
-              <LocationPicker value={coords} onChange={handleLocationChange} />
+      {/* Main Wizard Form Card */}
+      <Card className="border-none shadow-2xl-soft rounded-[40px] overflow-hidden bg-white">
+        <div className="bg-navy-deep p-8 text-white">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Property Listing Request</h2>
+          <p className="text-white/70 text-xs md:text-sm leading-relaxed max-w-2xl">
+            Submit your asset to our team for appraisal. Please complete all fields step-by-step
+            to meet our premium international standards.
+          </p>
+        </div>
+        <CardContent className="p-8 md:p-12 space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm transition-all duration-300">
+              {error}
             </div>
+          )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="property_type">Property Type *</Label>
-                <Select name="property_type" required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {propertyTypeOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value.toString()}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="property_title">Property Title *</Label>
-                <Input
-                  id="property_title"
-                  name="property_title"
-                  required
-                  placeholder="e.g. Grand Hotel Downtown"
-                />
-              </div>
+          {/* Wizard step views */}
+          {currentStep === 1 && (
+            <ClassificationStep
+              categoryOptions={categoryOptions}
+              propertyTypeOptions={propertyTypeOptions}
+              selectedCategory={selectedCategory}
+              selectedPropertyTypeId={selectedPropertyTypeId}
+              propertyTitle={propertyTitle}
+              constructionStatus={constructionStatus}
+              onCategoryChange={handleCategoryChange}
+              onPropertyTypeChange={handlePropertyTypeChange}
+              onTitleChange={setPropertyTitle}
+              onConstructionStatusChange={setConstructionStatus}
+            />
+          )}
 
-              {/* Location Snapshot */}
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="property_location">Address / Street *</Label>
-                <Input
-                  id="property_location"
-                  name="property_location"
-                  required
-                  placeholder="e.g. 14 El-Salam St."
-                  value={addressDetails.address}
-                  onChange={(e) => setAddressDetails({ ...addressDetails, address: e.target.value })}
-                />
-              </div>
+          {currentStep === 2 && (
+            <PricingStep
+              askingPrice={askingPrice}
+              currency={currency}
+              propertySize={propertySize}
+              onAskingPriceChange={setAskingPrice}
+              onCurrencyChange={setCurrency}
+              onPropertySizeChange={setPropertySize}
+            />
+          )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City *</Label>
-                  <Input
-                    id="city"
-                    name="city"
-                    required
-                    placeholder="e.g. Sharm El Sheikh"
-                    value={addressDetails.city}
-                    onChange={(e) => setAddressDetails({ ...addressDetails, city: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">State / Region *</Label>
-                  <Input
-                    id="state"
-                    name="state"
-                    required
-                    placeholder="e.g. South Sinai"
-                    value={addressDetails.state}
-                    onChange={(e) => setAddressDetails({ ...addressDetails, state: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country *</Label>
-                  <Input
-                    id="country"
-                    name="country"
-                    required
-                    placeholder="e.g. Egypt"
-                    value={addressDetails.country}
-                    onChange={(e) => setAddressDetails({ ...addressDetails, country: e.target.value })}
-                  />
-                </div>
-              </div>
+          {currentStep === 3 && (
+            <LocationStep
+              coords={coords}
+              addressDetails={addressDetails}
+              onLocationChange={handleLocationChange}
+              onAddressDetailsChange={setAddressDetails}
+            />
+          )}
 
-              {/* Satellite Coordinates lock */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
-                <div className="space-y-2">
-                  <Label htmlFor="latitude">Latitude (Satellite Lock) *</Label>
-                  <Input
-                    id="latitude"
-                    name="latitude"
-                    readOnly
-                    className="bg-gray-50 border-gray-200 text-gray-500 cursor-not-allowed font-medium"
-                    value={coords.lat}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="longitude">Longitude (Satellite Lock) *</Label>
-                  <Input
-                    id="longitude"
-                    name="longitude"
-                    readOnly
-                    className="bg-gray-50 border-gray-200 text-gray-500 cursor-not-allowed font-medium"
-                    value={coords.lng}
-                  />
-                </div>
-              </div>
+          {currentStep === 4 && (
+            <SpecsStep
+              activeSpecs={activeSpecs}
+              description={description}
+              specValues={specValues}
+              featureOptions={featureOptions}
+              selectedFeatures={selectedFeatures}
+              onSelectedFeaturesChange={setSelectedFeatures}
+              customFeatures={customFeatures}
+              onCustomFeaturesChange={setCustomFeatures}
+              onDescriptionChange={setDescription}
+              onSpecValueChange={handleSpecValueChange}
+            />
+          )}
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="property_description">Description *</Label>
-                <Textarea
-                  id="property_description"
-                  name="property_description"
-                  required
-                  rows={5}
-                  placeholder="Describe your property including key features, current condition, and any relevant details..."
-                />
-              </div>
+          {currentStep === 5 && (
+            <ReviewStep
+              selectedCategoryName={selectedCategoryName}
+              selectedPropertyTypeName={selectedPropertyTypeName}
+              propertyTitle={propertyTitle}
+              constructionStatus={constructionStatus}
+              askingPrice={askingPrice}
+              currency={currency}
+              propertySize={propertySize}
+              addressDetails={addressDetails}
+              coords={coords}
+              description={description}
+              activeSpecs={activeSpecs}
+              specValues={specValues}
+              featureOptions={featureOptions}
+              selectedFeatures={selectedFeatures}
+              customFeatures={customFeatures}
+            />
+          )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="asking_price">Asking Price *</Label>
-                  <Input
-                    id="asking_price"
-                    name="asking_price"
-                    type="number"
-                    required
-                    placeholder="e.g. 5000000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency *</Label>
-                  <Select name="currency" defaultValue="USD" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="USD" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD ($)</SelectItem>
-                      <SelectItem value="EGP">EGP (E£)</SelectItem>
-                      <SelectItem value="EUR">EUR (€)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:col-span-2">
-                <div className="space-y-2">
-                  <Label htmlFor="property_size">Size (Sq M)</Label>
-                  <Input
-                    id="property_size"
-                    name="property_size"
-                    type="number"
-                    placeholder="e.g. 450"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bedrooms">Bedrooms</Label>
-                  <Input
-                    id="bedrooms"
-                    name="bedrooms"
-                    type="number"
-                    placeholder="e.g. 4"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bathrooms">Bathrooms</Label>
-                  <Input
-                    id="bathrooms"
-                    name="bathrooms"
-                    type="number"
-                    placeholder="e.g. 3"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="constructionStatus">Construction Status *</Label>
-                <Select name="constructionStatus" defaultValue="ready" required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Ready to Move In" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ready">Ready to Move In</SelectItem>
-                    <SelectItem value="under_construction">Under Construction</SelectItem>
-                    <SelectItem value="brand_new">Brand New (First Occupancy)</SelectItem>
-                    <SelectItem value="off_plan">Off-Plan</SelectItem>
-                    <SelectItem value="renovated">Fully Renovated</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-blue-900 hover:bg-blue-800 text-white py-3 text-lg"
-          >
-            {isSubmitting ? (
-              'Submitting...'
+          {/* Navigation Controls */}
+          <div className="flex justify-between items-center pt-6 border-t border-slate-100 mt-8">
+            {currentStep > 1 ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleBack}
+                className="border-2 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 h-12 rounded-xl transition-all font-bold px-6 flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
             ) : (
-              <>
-                <Send className="mr-2 h-5 w-5" />
-                Submit Listing Request
-              </>
+              <div />
             )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+
+            {currentStep < 5 ? (
+              <Button
+                type="button"
+                onClick={handleNext}
+                className="bg-blue-900 hover:bg-blue-800 text-white font-bold h-12 rounded-xl px-8 transition-all duration-300 shadow-md shadow-blue-900/10 flex items-center gap-2"
+              >
+                Next Step
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+                className="bg-blue-900 hover:bg-blue-800 text-white font-extrabold h-12 rounded-xl px-10 transition-all duration-300 shadow-lg shadow-blue-900/20 flex items-center gap-2"
+              >
+                {isSubmitting ? (
+                  'Submitting...'
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Submit Request
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
-

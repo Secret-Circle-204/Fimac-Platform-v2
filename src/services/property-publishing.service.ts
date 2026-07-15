@@ -169,6 +169,7 @@ export class PropertyPublishingService {
         title: sellerRequest.property_title,
         description: sellerRequest.property_description,
         propertyType: propertyTypeId,
+        propertyTypeSlug: sellerRequest.propertyTypeSlug ?? undefined,
         price: sellerRequest.asking_price,
         currency: sellerRequest.currency,
         listingStatus: forsaleStatusId,
@@ -176,11 +177,18 @@ export class PropertyPublishingService {
         category,
         area: sellerRequest.property_size ?? undefined,
         residential: category === 'residential' ? {
-          bedrooms: sellerRequest.bedrooms ?? undefined,
-          bathrooms: sellerRequest.bathrooms ?? undefined,
+          ...(sellerRequest.residential || {}),
+          bedrooms: sellerRequest.residential?.bedrooms ?? (typeof (sellerRequest as unknown as Record<string, unknown>).bedrooms === 'number' ? ((sellerRequest as unknown as Record<string, unknown>).bedrooms as number) : undefined),
+          bathrooms: sellerRequest.residential?.bathrooms ?? (typeof (sellerRequest as unknown as Record<string, unknown>).bathrooms === 'number' ? ((sellerRequest as unknown as Record<string, unknown>).bathrooms as number) : undefined),
         } : undefined,
+        commercial: category === 'commercial' ? sellerRequest.commercial : undefined,
+        hospitality: category === 'hospitality' ? sellerRequest.hospitality : undefined,
+        land: category === 'land' ? sellerRequest.land : undefined,
         seller: sellerId,
         seller_request: numericId,
+        features: sellerRequest.features && sellerRequest.features.length > 0
+          ? sellerRequest.features.map((f: number | string | { id: number | string }) => (typeof f === 'object' && f !== null ? Number(f.id) : Number(f)))
+          : undefined,
         // Feed the Google Maps URL into the smart location helper
         // so that the Property's beforeChange hook auto-resolves geocoding
         mapsUrlInput: sellerRequest.google_maps_url ?? undefined,

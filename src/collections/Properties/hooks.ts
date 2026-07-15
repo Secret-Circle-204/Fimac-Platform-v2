@@ -5,9 +5,8 @@ import type {
   CollectionAfterDeleteHook,
   CollectionBeforeDeleteHook,
 } from 'payload'
-import type { Property } from '@/payload-types'
+import type { Property, PropertyType } from '@/payload-types'
 import { triggerRevalidate } from '@/lib/cache/revalidate'
-import { sql } from '@payloadcms/db-postgres'
 import { service } from '@/services'
 
 import { buildFullAddress } from '@/lib/location/build-full-address'
@@ -256,7 +255,7 @@ export const syncLocationHook: CollectionBeforeChangeHook<Property> = measureBef
       // 7. Sync propertyTypeSlug for conditional field logic
       if (data.propertyType) {
         const propertyTypeId = typeof data.propertyType === 'object' && data.propertyType !== null
-          ? (data.propertyType as any).id
+          ? (data.propertyType as PropertyType).id
           : data.propertyType;
           
         if (propertyTypeId) {
@@ -294,7 +293,9 @@ export const revalidatePropertyCache: CollectionAfterChangeHook<Property> = asyn
   doc,
   previousDoc,
   req,
+  context,
 }) => {
+  if (context?.skipCacheInvalidation) return
   try {
     const id = doc?.id || previousDoc?.id
     if (id) {
@@ -313,6 +314,13 @@ export const revalidatePropertyCache: CollectionAfterChangeHook<Property> = asyn
     const currentSellerId = getSellerId(doc?.seller)
     const previousSellerId = getSellerId(previousDoc?.seller)
 
+    if (currentSellerId) {
+      triggerRevalidate(`seller-properties-${currentSellerId}`)
+    }
+    if (previousSellerId && previousSellerId !== currentSellerId) {
+      triggerRevalidate(`seller-properties-${previousSellerId}`)
+    }
+
     if (currentSellerId !== previousSellerId) {
       if (previousSellerId) {
         await service.sellerCounter.decrement(previousSellerId, req)
@@ -330,7 +338,9 @@ export const revalidatePropertyCache: CollectionAfterChangeHook<Property> = asyn
 export const revalidatePropertyDeleteCache: CollectionAfterDeleteHook<Property> = async ({
   doc,
   req,
+  context,
 }) => {
+  if (context?.skipCacheInvalidation) return
   try {
     const id = doc?.id
     if (id) {
@@ -348,6 +358,7 @@ export const revalidatePropertyDeleteCache: CollectionAfterDeleteHook<Property> 
 
     const sellerId = getSellerId(doc?.seller)
     if (sellerId) {
+      triggerRevalidate(`seller-properties-${sellerId}`)
       await service.sellerCounter.decrement(sellerId, req)
     }
   } catch (err) {

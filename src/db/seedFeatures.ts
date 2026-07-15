@@ -54,6 +54,7 @@ export async function seedFeatures(payload: Payload): Promise<void> {
       for (const feature of defaultFeatures) {
         await payload.create({
           collection: 'features',
+          context: { skipCacheInvalidation: true },
           data: {
             name: feature.name,
             slug: slugify(feature.name, { lower: true, strict: true }),

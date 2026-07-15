@@ -1,6 +1,8 @@
 import type { CollectionConfig } from 'payload'
 import { service } from '@/services'
 import { triggerRevalidate } from '@/lib/cache/revalidate'
+import { buildCategoryFields } from './Properties/specs-registry'
+
 
 export const SellerRequests: CollectionConfig = {
   slug: 'seller-requests',
@@ -21,6 +23,29 @@ export const SellerRequests: CollectionConfig = {
     delete: ({ req: { user } }) => user?.collection === 'users',
   },
   hooks: {
+    beforeValidate: [
+      async ({ data, req }) => {
+        if (data?.property_type) {
+          try {
+            const pType = await req.payload.findByID({
+              collection: 'property-types',
+              id: data.property_type,
+              depth: 1,
+              req,
+            })
+            if (pType) {
+              data.propertyTypeSlug = pType.slug
+              if (pType.category && typeof pType.category === 'object') {
+                data.category = pType.category.slug
+              }
+            }
+          } catch (error) {
+            req.payload.logger.error(`Error populating type details in SellerRequests beforeValidate: ${error}`)
+          }
+        }
+        return data
+      }
+    ],
     beforeChange: [
       async ({ data, req, operation }) => {
         if (operation !== 'create') return data
@@ -67,7 +92,8 @@ export const SellerRequests: CollectionConfig = {
       },
     ],
     afterChange: [
-      async ({ doc }) => {
+      async ({ doc, context }) => {
+        if (context?.skipCacheInvalidation) return;
         const sellerId = doc.seller && typeof doc.seller === 'object' ? doc.seller.id : doc.seller;
         if (sellerId) {
           triggerRevalidate(`seller-requests-${sellerId}`);
@@ -75,7 +101,8 @@ export const SellerRequests: CollectionConfig = {
       }
     ],
     afterDelete: [
-      async ({ doc }) => {
+      async ({ doc, context }) => {
+        if (context?.skipCacheInvalidation) return;
         const sellerId = doc.seller && typeof doc.seller === 'object' ? doc.seller.id : doc.seller;
         if (sellerId) {
           triggerRevalidate(`seller-requests-${sellerId}`);
@@ -84,6 +111,36 @@ export const SellerRequests: CollectionConfig = {
     ]
   },
   fields: [
+    {
+      name: 'propertyTypeSlug',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'propertyTypeWatcher',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/components/admin/fields/PropertyTypeWatcher#PropertyTypeWatcherField',
+        },
+      },
+    },
+    {
+      name: 'category',
+      type: 'select',
+      options: [
+        { label: 'Residential', value: 'residential' },
+        { label: 'Commercial', value: 'commercial' },
+        { label: 'Hospitality', value: 'hospitality' },
+        { label: 'Land', value: 'land' },
+      ],
+      admin: {
+        readOnly: true,
+        description: 'Automatically derived from property type.',
+      },
+    },
     {
       type: 'tabs',
       tabs: [
@@ -172,20 +229,61 @@ export const SellerRequests: CollectionConfig = {
               label: 'Google Maps Link',
             },
             {
-              name: 'bedrooms',
-              type: 'number',
-              label: 'Bedrooms',
-            },
-            {
-              name: 'bathrooms',
-              type: 'number',
-              label: 'Bathrooms',
-            },
-            {
               name: 'constructionStatus',
               type: 'relationship',
               relationTo: 'construction-statuses',
               required: true,
+            },
+            {
+              type: 'collapsible',
+              label: 'Specifications & Performance Metrics',
+              admin: {
+                initCollapsed: false,
+              },
+              fields: [
+                {
+                  name: 'residential',
+                  type: 'group',
+                  admin: {
+                    condition: (data) => data?.category === 'residential',
+                  },
+                  fields: buildCategoryFields('residential'),
+                },
+                {
+                  name: 'commercial',
+                  type: 'group',
+                  admin: {
+                    condition: (data) => data?.category === 'commercial',
+                  },
+                  fields: buildCategoryFields('commercial'),
+                },
+                {
+                  name: 'hospitality',
+                  type: 'group',
+                  admin: {
+                    condition: (data) => data?.category === 'hospitality',
+                  },
+                  fields: buildCategoryFields('hospitality'),
+                },
+                {
+                  name: 'land',
+                  type: 'group',
+                  admin: {
+                    condition: (data) => data?.category === 'land',
+                  },
+                  fields: buildCategoryFields('land'),
+                },
+              ],
+            },
+            {
+              name: 'features',
+              type: 'relationship',
+              relationTo: 'features',
+              hasMany: true,
+              index: true,
+              admin: {
+                description: 'Select the features for this property request.',
+              },
             },
           ],
         },
@@ -320,6 +418,23 @@ export const SellerRequests: CollectionConfig = {
 
         try {
           const result = await service.propertyPublishing.publishRequest(Number(requestId), req)
+
+          let sellerId: string | number | null | undefined = undefined
+          if (result.property.seller) {
+            if (typeof result.property.seller === 'object' && 'id' in result.property.seller) {
+              sellerId = result.property.seller.id
+            } else if (typeof result.property.seller === 'number' || typeof result.property.seller === 'string') {
+              sellerId = result.property.seller
+            }
+          }
+
+          if (sellerId) {
+            triggerRevalidate(`seller-properties-${sellerId}`)
+            triggerRevalidate(`seller-requests-${sellerId}`)
+          }
+          triggerRevalidate('search-results')
+          triggerRevalidate('featured-properties')
+          triggerRevalidate('search-filters')
 
           return Response.json({
             success: true,

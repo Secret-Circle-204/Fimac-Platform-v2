@@ -21,6 +21,7 @@ export async function seedPropertyCategories(payload: Payload): Promise<void> {
       for (const item of defaultPropertyCategories) {
         await payload.create({
           collection: 'property-categories',
+          context: { skipCacheInvalidation: true },
           data: {
             name: item.name,
             slug: item.slug,

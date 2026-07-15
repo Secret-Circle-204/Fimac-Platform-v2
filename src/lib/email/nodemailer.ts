@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer'
 import type { Transporter } from 'nodemailer'
-import { EMAIL_FROM, SMTP_SETTINGS, SERVER_URL } from '@/env'
+import { EMAIL_FROM, SMTP_SETTINGS } from '@/env'
 
 const APP_NAME = 'FIMAC Platform'
 const FOOTER_LOCATION = 'Tennessee, United States'

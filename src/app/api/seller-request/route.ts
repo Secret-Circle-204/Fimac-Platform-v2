@@ -3,6 +3,7 @@ import { getPayloadClient } from "@/db/client"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
 import { sendEmail, emailTemplates } from '@/lib/email/nodemailer'
 import { EMAIL_FROM, SERVER_URL } from '@/env'
+import slugify from 'slugify'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +18,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       property_type,
+      category,
       property_title,
       property_description,
       property_location,
@@ -32,6 +34,12 @@ export async function POST(request: NextRequest) {
       latitude,
       longitude,
       google_maps_url,
+      features,
+      customFeatures,
+      residential,
+      commercial,
+      hospitality,
+      land,
     } = body
 
     // Validation
@@ -73,6 +81,59 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid construction status value" }, { status: 400 })
     }
 
+    const derivedBedrooms = bedrooms ?? residential?.bedrooms
+    const derivedBathrooms = bathrooms ?? residential?.bathrooms
+
+    // Resolve features and dynamically create new custom features
+    const finalFeatureIds: number[] = []
+
+    // 1. Process selected pre-existing features
+    if (features && Array.isArray(features)) {
+      features.forEach((id) => {
+        const numericId = Number(id)
+        if (!isNaN(numericId)) {
+          finalFeatureIds.push(numericId)
+        }
+      })
+    }
+
+    // 2. Process typed custom features (create them if they don't exist yet)
+    if (customFeatures && Array.isArray(customFeatures)) {
+      for (const name of customFeatures) {
+        const trimmedName = name.trim()
+        if (!trimmedName) continue
+
+        const slug = slugify(trimmedName, { lower: true, strict: true })
+
+        // Check if this feature already exists by slug or name
+        const existingFeature = await payload.find({
+          collection: 'features',
+          where: {
+            or: [
+              { slug: { equals: slug } },
+              { name: { equals: trimmedName } }
+            ]
+          },
+          limit: 1,
+          depth: 0,
+        })
+
+        if (existingFeature.docs.length > 0) {
+          finalFeatureIds.push(Number(existingFeature.docs[0].id))
+        } else {
+          // Create new feature in DB
+          const newFeature = await payload.create({
+            collection: 'features',
+            data: {
+              name: trimmedName,
+              slug,
+            },
+          })
+          finalFeatureIds.push(Number(newFeature.id))
+        }
+      }
+    }
+
     // Create the seller request and link directly to active seller profile
     const sellerRequest = await payload.create({
       collection: "seller-requests",
@@ -90,14 +151,18 @@ export async function POST(request: NextRequest) {
         asking_price: Number(asking_price),
         currency,
         property_size: property_size ? Number(property_size) : undefined,
-        bedrooms: bedrooms ? Number(bedrooms) : undefined,
-        bathrooms: bathrooms ? Number(bathrooms) : undefined,
         constructionStatus: constructionStatusId,
         latitude: latitude ? Number(latitude) : undefined,
         longitude: longitude ? Number(longitude) : undefined,
         google_maps_url,
+        features: finalFeatureIds.length > 0 ? finalFeatureIds : undefined,
         seller: Number(user.id), // Dynamic direct database linkage!
         status: "new",
+        category: category || undefined,
+        residential: residential || undefined,
+        commercial: commercial || undefined,
+        hospitality: hospitality || undefined,
+        land: land || undefined,
       },
     })
 
@@ -134,8 +199,8 @@ export async function POST(request: NextRequest) {
         country,
         googleMapsUrl: google_maps_url || undefined,
         propertySize: property_size ? Number(property_size) : undefined,
-        bedrooms: bedrooms ? Number(bedrooms) : undefined,
-        bathrooms: bathrooms ? Number(bathrooms) : undefined,
+        bedrooms: derivedBedrooms ? Number(derivedBedrooms) : undefined,
+        bathrooms: derivedBathrooms ? Number(derivedBathrooms) : undefined,
         constructionStatus,
       })
 
@@ -156,8 +221,8 @@ export async function POST(request: NextRequest) {
         longitude: longitude ? Number(longitude) : undefined,
         googleMapsUrl: google_maps_url || undefined,
         propertySize: property_size ? Number(property_size) : undefined,
-        bedrooms: bedrooms ? Number(bedrooms) : undefined,
-        bathrooms: bathrooms ? Number(bathrooms) : undefined,
+        bedrooms: derivedBedrooms ? Number(derivedBedrooms) : undefined,
+        bathrooms: derivedBathrooms ? Number(derivedBathrooms) : undefined,
         constructionStatus,
         adminUrl,
       })

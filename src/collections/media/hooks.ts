@@ -163,9 +163,11 @@ export const mediaBeforeDelete: import('payload').CollectionBeforeDeleteHook = a
 
 export const mediaAfterChange: import('payload').CollectionAfterChangeHook = async ({
   doc,
-  previousDoc,
   req,
+  previousDoc,
+  context,
 }) => {
+  if (context?.skipCacheInvalidation) return doc
   // Smart Revalidation: Only trigger if meaningful display fields changed.
   const hasMeaningfulChange =
     !previousDoc || // It's a new document
@@ -210,7 +212,9 @@ export const mediaAfterDelete: import('payload').CollectionAfterDeleteHook = asy
   doc,
   req,
   id,
+  context,
 }) => {
+  if (context?.skipCacheInvalidation) return doc
   // Payload sometimes only provides id, sometimes doc on deletion. We use id as source of truth.
   const mediaId = id || (doc && doc.id)
   

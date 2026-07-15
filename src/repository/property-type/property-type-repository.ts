@@ -1,4 +1,4 @@
-import { PropertyType } from "@/payload-types"
+import { PropertyType, PropertyCategory } from "@/payload-types"
 import { CollectionSlug } from "payload"
 import { BaseRepository } from "../base-repository"
 import { BaseDecorator } from "../base-decorator"
@@ -15,5 +15,13 @@ export class PropertyTypeDecorator extends BaseDecorator<PropertyType> {
 
   get slug(): string {
     return this.original.slug
+  }
+
+  get specificationProfile(): string {
+    return this.original.specificationProfile
+  }
+
+  get category(): number | PropertyCategory {
+    return this.original.category
   }
 }

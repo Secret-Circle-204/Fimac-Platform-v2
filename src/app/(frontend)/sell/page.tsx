@@ -1,19 +1,49 @@
-import { SellForm } from "./sell-form"
-import { Building2 } from "lucide-react"
-import { getCachedPropertyTypes } from "@/lib/cache/property-types"
-import { getCurrentUser } from "@/lib/auth/get-current-user"
-import { redirect } from "next/navigation"
+import { SellForm } from './sell-form'
+import { Building2 } from 'lucide-react'
+import { getCachedPropertyTypes } from '@/lib/cache/property-types'
+import { getCurrentUser } from '@/lib/auth/get-current-user'
+import { redirect } from 'next/navigation'
+import { getPayloadClient } from '@/db/client'
 
 export default async function SellPage() {
   const user = await getCurrentUser()
-  if (!user || user.role !== "seller") {
-    redirect("/")
+  if (!user || user.role !== 'seller') {
+    redirect('/')
   }
 
   const propertyTypesData = await getCachedPropertyTypes()
   const propertyTypeOptions = propertyTypesData.map((t) => ({
     label: t.name,
     value: t.id, // We need the ID to populate the relationship correctly!
+    slug: t.slug,
+    specificationProfile: t.specificationProfile,
+    categorySlug: typeof t.category === 'object' && t.category !== null ? t.category.slug : '',
+  }))
+
+  console.log("SERVER PROPERTY TYPE OPTIONS:", propertyTypeOptions)
+
+  const categoriesMap = new Map<string, string>()
+  propertyTypesData.forEach((t) => {
+    if (t.category && typeof t.category === 'object') {
+      categoriesMap.set(t.category.slug, t.category.name)
+    }
+  })
+  const categoryOptions = Array.from(categoriesMap.entries()).map(([slug, name]) => ({
+    label: name,
+    value: slug,
+  }))
+
+  const payload = await getPayloadClient()
+  const featuresResult = await payload.find({
+    collection: 'features',
+    limit: 100,
+    sort: 'name',
+    depth: 0,
+  })
+  const featureOptions = featuresResult.docs.map((f) => ({
+    label: f.name,
+    value: f.id,
+    slug: f.slug,
   }))
 
   return (
@@ -101,8 +131,8 @@ export default async function SellPage() {
                   <div>
                     <h3 className="text-xl font-bold text-navy-deep mb-3">HD Photography</h3>
                     <p className="text-navy-deep/60 leading-relaxed">
-                      Professional 8K visual representation is mandatory to maintain our platform&apos;s
-                      ultra-luxury standards.
+                      Professional 8K visual representation is mandatory to maintain our
+                      platform&apos;s ultra-luxury standards.
                     </p>
                   </div>
                 </div>
@@ -125,9 +155,12 @@ export default async function SellPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-3 text-gold-royal">Ownership Verification</h3>
+                    <h3 className="text-xl font-bold mb-3 text-gold-royal">
+                      Ownership Verification
+                    </h3>
                     <p className="text-white/70 leading-relaxed">
-                      Proper authorization and proof of ownership must be uploaded to confirm legal authority for listing the asset.
+                      Proper authorization and proof of ownership must be uploaded to confirm legal
+                      authority for listing the asset.
                     </p>
                   </div>
                 </div>
@@ -139,7 +172,12 @@ export default async function SellPage() {
         {/* Form */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4 max-w-7xl">
-            <SellForm propertyTypeOptions={propertyTypeOptions} currentUser={user} />
+            <SellForm
+              categoryOptions={categoryOptions}
+              propertyTypeOptions={propertyTypeOptions}
+              featureOptions={featureOptions}
+              currentUser={user}
+            />
           </div>
         </section>
       </main>

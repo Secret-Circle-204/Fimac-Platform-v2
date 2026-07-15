@@ -1,11 +1,11 @@
 import { local } from '@/repository'
 import { buildPropertySearchQuery } from '@/repository/property/query-builder'
+import { resolveSearchIntent } from '@/repository/property/search/search-intent-resolver'
 // geocodeSearch removed to prevent rate limiting
 import { SearchHeader } from '@/components/search/search-header'
 import { SearchResultsWrapper } from '@/components/search/search-results-wrapper'
 import { getCachedPropertyTypes } from '@/lib/cache/property-types'
 import { getCachedListingStatuses } from '@/lib/cache/listing-statuses'
-import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { getCachedSearchFilters } from '@/lib/cache/search-filters'
 import { getCachedSearchResults, buildSearchCacheKey } from '@/lib/cache/search-results'
 
@@ -19,7 +19,6 @@ export default async function SearchPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const user = await getCurrentUser()
   const resolvedParams = await searchParams
   const location = typeof resolvedParams.location === 'string' ? resolvedParams.location : ''
   const lat = typeof resolvedParams.lat === 'string' ? parseFloat(resolvedParams.lat) : undefined
@@ -27,6 +26,7 @@ export default async function SearchPage({
   const radius = typeof resolvedParams.radius === 'string' ? parseFloat(resolvedParams.radius) : 50
 
   const type = typeof resolvedParams.type === 'string' ? resolvedParams.type : 'all'
+  const category = typeof resolvedParams.category === 'string' ? resolvedParams.category : 'all'
   const country = typeof resolvedParams.country === 'string' ? resolvedParams.country : 'all'
   const city = typeof resolvedParams.city === 'string' ? resolvedParams.city : 'all'
   const quickPrice =
@@ -74,12 +74,14 @@ export default async function SearchPage({
 
   const page = typeof resolvedParams.page === 'string' ? Math.max(1, parseInt(resolvedParams.page) || 1) : 1
 
-  const where = buildPropertySearchQuery({
+  // Resolve user intent mapping (e.g. type=land -> category=land)
+  const resolvedFilters = resolveSearchIntent({
     location,
     lat,
     lng,
     radius,
     type,
+    category,
     country,
     city,
     quickPrice,
@@ -90,20 +92,23 @@ export default async function SearchPage({
     locationIds,
   })
 
-  // Build deterministic cache key from current search parameters
+  const where = buildPropertySearchQuery(resolvedFilters)
+
+  // Build deterministic cache key from resolved search parameters
   const cacheKey = buildSearchCacheKey({
-    location,
-    type,
-    country,
-    city,
-    quickPrice,
-    listingStatus,
-    constructionStatus,
-    ...(bedrooms > 0 && { bedrooms: String(bedrooms) }),
-    ...(bathrooms > 0 && { bathrooms: String(bathrooms) }),
-    ...(lat !== null && { lat: String(lat) }),
-    ...(lng !== null && { lng: String(lng) }),
-    ...(radius !== 50 && { radius: String(radius) }),
+    location: resolvedFilters.location || '',
+    type: resolvedFilters.type || 'all',
+    category: resolvedFilters.category || 'all',
+    country: resolvedFilters.country || 'all',
+    city: resolvedFilters.city || 'all',
+    quickPrice: resolvedFilters.quickPrice || 'all',
+    listingStatus: resolvedFilters.listingStatus || 'all',
+    constructionStatus: resolvedFilters.constructionStatus || 'all',
+    ...(resolvedFilters.bedrooms !== undefined && resolvedFilters.bedrooms > 0 && { bedrooms: String(resolvedFilters.bedrooms) }),
+    ...(resolvedFilters.bathrooms !== undefined && resolvedFilters.bathrooms > 0 && { bathrooms: String(resolvedFilters.bathrooms) }),
+    ...(resolvedFilters.lat !== undefined && resolvedFilters.lat !== null && { lat: String(resolvedFilters.lat) }),
+    ...(resolvedFilters.lng !== undefined && resolvedFilters.lng !== null && { lng: String(resolvedFilters.lng) }),
+    ...(resolvedFilters.radius !== 50 && resolvedFilters.radius !== undefined && { radius: String(resolvedFilters.radius) }),
   })
 
   const searchResults = await getCachedSearchResults(where, cacheKey, page, sort)

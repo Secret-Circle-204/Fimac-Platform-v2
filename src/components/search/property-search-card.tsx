@@ -345,7 +345,7 @@ export function PropertySearchCard({ property }: PropertySearchCardProps) {
           <div className="flex items-center justify-between mb-3.5 pt-3 px-0.5 border-t border-dashed border-navy-deep/10 mt-2">
             <div className="text-[10px] font-bold text-navy-deep/40">Community Sync</div>
             <div className="flex items-center gap-2 z-30">
-              <ViewsBadge minimal views={property.views ?? 0} />
+              <ViewsBadge minimal views={property.views ?? 0} propertyId={property.id} />
             </div>
           </div>
 

@@ -16,6 +16,7 @@ import { PropertyTypes } from './PropertyTypes'
 import { ListingStatuses } from './ListingStatuses'
 import { ConstructionStatuses } from './ConstructionStatuses'
 import { PropertyCategories } from './PropertyCategories'
+import { IPLocations } from './IPLocations'
 
 export const collections = [
   Users,
@@ -36,4 +37,5 @@ export const collections = [
   ListingStatuses,
   ConstructionStatuses,
   PropertyCategories,
+  IPLocations,
 ]

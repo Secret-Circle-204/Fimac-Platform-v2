@@ -25,6 +25,7 @@ export async function seedListingStatuses(payload: Payload): Promise<void> {
       if (existing.docs.length === 0) {
         await payload.create({
           collection: 'listing-statuses',
+          context: { skipCacheInvalidation: true },
           data: item,
         })
         payload.logger.info(`✅ [Seeder]: Seeded missing listing status: ${item.name}`)
@@ -34,6 +35,7 @@ export async function seedListingStatuses(payload: Payload): Promise<void> {
           await payload.update({
             collection: 'listing-statuses',
             id: doc.id,
+            context: { skipCacheInvalidation: true },
             data: { name: 'For Sale' },
           })
           payload.logger.info('✅ [Seeder]: Corrected slug forsale status name to For Sale')
@@ -41,6 +43,7 @@ export async function seedListingStatuses(payload: Payload): Promise<void> {
           await payload.update({
             collection: 'listing-statuses',
             id: doc.id,
+            context: { skipCacheInvalidation: true },
             data: { name: 'Sold' },
           })
           payload.logger.info('✅ [Seeder]: Corrected slug sold status name to Sold')

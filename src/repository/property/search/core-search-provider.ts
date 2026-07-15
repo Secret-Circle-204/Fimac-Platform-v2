@@ -131,6 +131,7 @@ export class CoreSearchProvider implements CategorySearchProvider {
         { title: { contains: filters.location } },
         { 'location.address.city': { contains: filters.location } },
         { 'location.address.state': { contains: filters.location } },
+        { 'location.address.country': { contains: filters.location } },
         { 'location.address.zip': { contains: filters.location } },
         ...(filters.locationIds && filters.locationIds.length > 0
           ? [{ location_legacy: { in: filters.locationIds } }]

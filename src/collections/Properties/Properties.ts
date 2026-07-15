@@ -1,4 +1,4 @@
-import type { CollectionConfig, Field } from 'payload'
+import type { CollectionConfig } from 'payload'
 import {
   formatAddress,
   syncLocationHook,
@@ -12,93 +12,8 @@ import {
   measureAfterChange,
 } from '@/lib/diagnostics'
 import { validateLatField, validateLngField } from '@/lib/geo/is-valid-coordinate'
-import { ALL_SPEC_FIELDS, PROFILE_MAP } from './specs-registry'
-import type { SpecFieldDefinition } from './specs-registry'
+import { buildCategoryFields } from './specs-registry'
 
-function buildSpecField(spec: SpecFieldDefinition): Field {
-  const baseConfig = {
-    name: spec.name,
-    label: spec.label.en,
-    index: false,
-  }
-
-  const admin: any = {}
-  if (spec.unit) {
-    admin.description = `Unit: ${spec.unit}`
-  }
-  if (spec.adminCondition) {
-    admin.condition = spec.adminCondition
-  }
-
-  const hasAdmin = Object.keys(admin).length > 0
-
-  if (spec.type === 'select') {
-    return {
-      ...baseConfig,
-      type: 'select',
-      options: spec.selectOptions || [],
-      admin: hasAdmin ? admin : undefined,
-    }
-  }
-
-  if (spec.type === 'checkbox') {
-    return {
-      ...baseConfig,
-      type: 'checkbox',
-      admin: hasAdmin ? admin : undefined,
-    }
-  }
-
-  if (spec.type === 'number') {
-    return {
-      ...baseConfig,
-      type: 'number',
-      admin: hasAdmin ? admin : undefined,
-    }
-  }
-
-  return {
-    ...baseConfig,
-    type: 'text',
-    admin: hasAdmin ? admin : undefined,
-  }
-}
-
-function buildCategoryFields(category: 'residential' | 'commercial' | 'hospitality' | 'land'): Field[] {
-  const categorySpecs = Object.values(ALL_SPEC_FIELDS).filter((spec) => spec.category === category)
-
-  // 1. Get flat common specs (where subGroup is 'common')
-  const commonFields = categorySpecs
-    .filter((spec) => spec.subGroup === 'common')
-    .map(buildSpecField)
-
-  // 2. Get unique sub-groups (excluding 'common')
-  const subGroupNames = Array.from(
-    new Set(
-      categorySpecs.filter((spec) => spec.subGroup !== 'common').map((spec) => spec.subGroup),
-    ),
-  )
-
-  // 3. For each sub-group, build a Payload group field
-  const subGroupFields = subGroupNames.map((subGroupName) => {
-    const subGroupSpecs = categorySpecs.filter((spec) => spec.subGroup === subGroupName)
-    const childFields = subGroupSpecs.map(buildSpecField)
-
-    return {
-      name: subGroupName,
-      type: 'group',
-      label: `${subGroupName.charAt(0).toUpperCase() + subGroupName.slice(1)} Specifications`,
-      admin: {
-        condition: (data: any) => {
-          return data?.propertyTypeSlug && PROFILE_MAP[data.propertyTypeSlug] === subGroupName
-        },
-      },
-      fields: childFields,
-    } as Field
-  })
-
-  return [...commonFields, ...subGroupFields]
-}
 
 export const Properties: CollectionConfig = {
   slug: 'properties',
@@ -114,7 +29,30 @@ export const Properties: CollectionConfig = {
     delete: diagnosticAccessWrapper('delete', ({ req }) => req.user?.collection === 'users'),
   },
   hooks: {
-    beforeValidate: [measureBeforeValidate('property_beforeValidate')],
+    beforeValidate: [
+      async ({ data, req }) => {
+        if (data?.propertyType) {
+          try {
+            const pType = await req.payload.findByID({
+              collection: 'property-types',
+              id: data.propertyType,
+              depth: 1,
+              req,
+            })
+            if (pType) {
+              data.propertyTypeSlug = pType.slug
+              if (pType.category && typeof pType.category === 'object') {
+                data.category = pType.category.slug
+              }
+            }
+          } catch (error) {
+            req.payload.logger.error(`Error populating type details in Properties beforeValidate: ${error}`)
+          }
+        }
+        return data
+      },
+      measureBeforeValidate('property_beforeValidate'),
+    ],
     beforeChange: [syncLocationHook],
     beforeDelete: [deleteAssociatedPropertyData],
     afterChange: [measureAfterChange('property_afterChange', revalidatePropertyCache)],
@@ -511,7 +449,7 @@ export const Properties: CollectionConfig = {
                       fields: [
                         { name: 'city', type: 'text', index: true },
                         { name: 'state', type: 'text', index: true },
-                        { name: 'country', type: 'text', label: 'Country', defaultValue: 'Egypt' },
+                        { name: 'country', type: 'text', label: 'Country', defaultValue: 'Egypt', index: true },
                         { name: 'zip', type: 'text', index: true },
                       ],
                     },

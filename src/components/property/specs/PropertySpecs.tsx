@@ -36,8 +36,9 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { SpecItem } from './SpecItem'
+import type { Property } from '@/payload-types'
 import { ALL_SPEC_FIELDS, PROFILES, PROFILE_MAP } from '@/collections/Properties/specs-registry'
-import type { SpecIconKey } from '@/collections/Properties/specs-registry'
+import type { SpecIconKey, SpecFieldDefinition } from '@/collections/Properties/specs-registry'
 
 // Safe registry icons map
 export const SPEC_ICONS: Record<SpecIconKey, LucideIcon> = {
@@ -74,29 +75,39 @@ export const SPEC_ICONS: Record<SpecIconKey, LucideIcon> = {
 }
 
 interface PropertySpecsProps {
-  property: any
+  property: Property
 }
 
 // Safely get a nested value from an object using a dot-path
-function getNestedValue(obj: any, path: string): any {
-  if (!obj) return undefined
-  return path.split('.').reduce((acc, part) => acc?.[part], obj)
+function getNestedValue(obj: unknown, path: string): unknown {
+  if (!obj || typeof obj !== 'object') return undefined
+  return path.split('.').reduce<unknown>((acc, part) => {
+    if (acc && typeof acc === 'object' && part in acc) {
+      return (acc as Record<string, unknown>)[part]
+    }
+    return undefined
+  }, obj)
 }
 
 // Format the display value based on type, selectOptions, and unit
-function formatDisplayValue(val: any, spec: any): string | null {
+function formatDisplayValue(val: unknown, spec: SpecFieldDefinition): string | null {
   if (val === undefined || val === null || val === '') return null
 
+  let displayVal = val
   if (spec.type === 'select' && spec.selectOptions) {
-    const option = spec.selectOptions.find((opt: any) => opt.value === val)
-    val = option ? option.label : val
+    const selectedOpt = spec.selectOptions.find((opt) => opt.value === val)
+    displayVal = selectedOpt ? selectedOpt.label : val
   }
+
+  const formattedStr = typeof displayVal === 'number'
+    ? displayVal.toLocaleString()
+    : String(displayVal)
 
   if (spec.unit) {
-    return `${val.toLocaleString()} ${spec.unit}`
+    return `${formattedStr} ${spec.unit}`
   }
 
-  return val.toLocaleString()
+  return formattedStr
 }
 
 export const PropertySpecs: React.FC<PropertySpecsProps> = ({ property }) => {

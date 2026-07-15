@@ -107,6 +107,7 @@ export const PropertyViews: CollectionConfig = {
     {
       name: "source",
       type: "select",
+      index: true,
       options: [
         { label: "Direct", value: "direct" },
         { label: "Search Engine", value: "search" },
@@ -131,6 +132,7 @@ export const PropertyViews: CollectionConfig = {
     {
       name: "device",
       type: "select",
+      index: true,
       options: [
         { label: "Desktop", value: "desktop" },
         { label: "Mobile", value: "mobile" },
@@ -150,14 +152,17 @@ export const PropertyViews: CollectionConfig = {
         {
           name: "country",
           type: "text",
+          index: true,
         },
         {
           name: "city",
           type: "text",
+          index: true,
         },
         {
           name: "region",
           type: "text",
+          index: true,
         },
       ],
     },

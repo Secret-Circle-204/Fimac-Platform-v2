@@ -37,10 +37,15 @@ export const RATE_LIMIT_PRESETS = {
     windowMs: 15 * 60 * 1000, // 15 دقيقة
     maxRequests: 100, // 100 طلب
   },
-  // حدود معتدلة للـ Search
+  // حدود للـ Search
   SEARCH: {
     windowMs: 1 * 60 * 1000, // دقيقة واحدة
-    maxRequests: 30, // 30 طلب
+    maxRequests: 100, // 100 طلب في الدقيقة
+  },
+  // حدود لتسجيل المشاهدات (لكل عقار على حدة)
+  TRACK_VIEW: {
+    windowMs: 1 * 60 * 1000, // دقيقة واحدة
+    maxRequests: 30, // 30 طلب في الدقيقة لكل عقار
   },
   // حدود صارمة للـ Upload
   UPLOAD: {

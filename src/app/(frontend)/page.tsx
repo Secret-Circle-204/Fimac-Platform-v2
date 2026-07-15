@@ -11,46 +11,49 @@ import { FounderMessage } from '@/components/home/founder-message'
 import { FadeIn } from '@/components/animations/fade-in'
 // import { SearchFilters } from "@/components/home/search-filters"
 import Link from 'next/link'
-import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { getCachedLatestBlogPosts } from '@/lib/cache/blog-posts'
 
 
 const propertyTypes = [
-  { title: 'HOTELS', slug: 'hotel', count: 'Premium Hotels', image: '/propertyTypes/HOTELS-1.jpg' },
+  {
+    title: 'HOTELS',
+    href: '/search?category=hospitality',
+    count: 'Premium Hotels',
+    image: '/propertyTypes/HOTELS-1.jpg',
+  },
   {
     title: 'MOTELS',
-    slug: 'motel',
+    href: '/search?category=hospitality&type=motel',
     count: 'Budget-Friendly Investments',
     image: '/propertyTypes/MOTELS-1.jpg',
   },
   {
     title: 'RESORTS',
-    slug: 'resort',
+    href: '/search?category=hospitality&type=resort',
     count: 'Luxury Resorts',
     image: '/propertyTypes/RESORTS-1.jpg',
   },
   {
     title: 'LANDS',
-    slug: 'land',
+    href: '/search?category=land',
     count: 'Development Opportunities',
     image: '/propertyTypes/LANDS-1.jpg',
   },
   {
     title: 'ELITE REAL ESTATE',
-    slug: 'elite-real-estate',
+    href: '/search?category=residential',
     count: 'Luxury Properties',
     image: '/propertyTypes/ELITE-REAL-ESTATE.jpg',
   },
   {
     title: 'COMMERCIAL',
-    slug: 'commercial',
+    href: '/search?category=commercial',
     count: 'Business & Office Spaces',
     image: '/propertyTypes/commercial.png',
   },
 ]
 
 export default async function HomePage() {
-  const user = await getCurrentUser()
   const latestPosts = await getCachedLatestBlogPosts(4)
   return (
     <div className="flex min-h-screen flex-col">
@@ -96,7 +99,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-3 gap-6">
               {propertyTypes.map((type, index) => (
                 <FadeIn key={type.title} delay={index * 80}>
-                  <Link href={`/search?type=${type.slug}`}>
+                  <Link href={type.href}>
                     <div className="group relative overflow-hidden rounded-lg border border-slate-200 shadow-sm transition-shadow duration-500 hover:shadow-xl">
                       <Image
                         src={type.image}
@@ -143,19 +146,18 @@ export default async function HomePage() {
                   CONTACT US
                 </Button>
               </FadeIn>
-              {/* <FadeIn className="tablet:w-1/2 relative min-h-[320px]" delay={150}>
+              <FadeIn className="tablet:w-1/2 relative min-h-[320px]" delay={150}>
                 <div className="absolute inset-0">
                   <Image
-                    src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=4140&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                    src="/advisor_consultation.png"
                     alt="Professional real estate advisor in modern office"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    unoptimized={true}
                     className="object-cover transition-transform duration-700 hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/50 to-transparent" />
                 </div>
-              </FadeIn> */}
+              </FadeIn>
             </div>
           </div>
         </section>

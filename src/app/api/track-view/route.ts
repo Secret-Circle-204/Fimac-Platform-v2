@@ -4,6 +4,29 @@ import { sql } from "@payloadcms/db-postgres"
 import { createHash } from "crypto"
 import { cookies } from "next/headers"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
+import fs from "fs"
+import path from "path"
+import maxmind, { CityResponse, Reader } from "maxmind"
+import { viewsMemoryCache } from "@/lib/cache/views-memory-cache"
+
+// Global singleton GeoIP reader instance
+let geoipReader: Reader<CityResponse> | null = null
+
+async function getGeoIPReader() {
+  if (geoipReader) return geoipReader
+  const dbPath = path.join(process.cwd(), 'data', 'dbip-city-lite.mmdb')
+  if (fs.existsSync(dbPath)) {
+    try {
+      geoipReader = await maxmind.open(dbPath)
+      console.log(`✅ Loaded local GeoIP database: ${dbPath}`)
+    } catch (err) {
+      console.error(`❌ Failed to open local GeoIP database:`, err)
+    }
+  } else {
+    console.warn(`⚠️ Local GeoIP database file not found at: ${dbPath}`)
+  }
+  return geoipReader
+}
 
 // Helper to generate visitor fingerprint
 function generateVisitorId(req: NextRequest, userId?: string): string {
@@ -115,38 +138,10 @@ function getCountryName(code: string): string {
   return countries[code.toUpperCase()] || code
 }
 
-interface GeoCacheEntry {
-  data: { country: string; city: string; region: string } | null
-  timestamp: number
-}
-
-const GEO_CACHE_KEY = "FIMAC_GEO_IP_CACHE"
-const MAX_CACHE_SIZE = 10000
-
-const globalGeoCache = global as unknown as {
-  [GEO_CACHE_KEY]?: Map<string, GeoCacheEntry>
-}
-if (!globalGeoCache[GEO_CACHE_KEY]) {
-  globalGeoCache[GEO_CACHE_KEY] = new Map()
-}
-const geoCache = globalGeoCache[GEO_CACHE_KEY]!
-
-// Safe setter that prevents unbounded memory growth
-function setGeoCacheSafe(key: string, entry: GeoCacheEntry) {
-  if (geoCache.size >= MAX_CACHE_SIZE && !geoCache.has(key)) {
-    // Map iterates in insertion order, so the first key is the oldest
-    const oldestKey = geoCache.keys().next().value
-    if (oldestKey) {
-      geoCache.delete(oldestKey)
-    }
-  }
-  geoCache.set(key, entry)
-}
-
-// Helper to fetch geographical location from IP address (internal)
-async function getIPLocationInternal(ip: string): Promise<{ country: string; city: string; region: string } | null> {
+// Helper to resolve geographical location (internal pipeline)
+async function resolveIPLocation(ip: string): Promise<{ country: string; city: string; region: string; source: string } | null> {
   const cleanIp = ip.trim()
-  console.log(`🔍 [IP Lookup] Server-side getIPLocation requested for IP: "${cleanIp}"`)
+  console.log(`🔍 [IP Lookup] Server-side resolveIPLocation requested for IP: "${cleanIp}"`)
   
   // Detect local/private IP addresses
   const isLocal = 
@@ -160,16 +155,41 @@ async function getIPLocationInternal(ip: string): Promise<{ country: string; cit
     cleanIp.startsWith("172.31.")
 
   if (isLocal) {
-    console.log(`🏠 [IP Lookup] Local/Private IP detected ("${cleanIp}"). Skipping server-side external API query.`)
+    console.log(`🏠 [IP Lookup] Local/Private IP detected ("${cleanIp}"). Skipping GeoIP checks.`)
     return null
   }
 
-  // 1. Try ipinfo.io (highest accuracy for Egypt ISPs resolving to Hurghada/Red Sea)
+  // 1. Try local GeoIP database (DB-IP City Lite)
+  try {
+    const reader = await getGeoIPReader()
+    if (reader) {
+      const geo = reader.get(cleanIp)
+      if (geo && (geo.country || geo.city || geo.subdivisions)) {
+        const country = geo.country?.names?.en || geo.country?.iso_code || ""
+        const city = geo.city?.names?.en || ""
+        const region = geo.subdivisions?.[0]?.names?.en || ""
+        
+        if (country || city || region) {
+          console.log(`🌍 [GeoIP Local] Resolved IP ${cleanIp} to: ${city}, ${region}, ${country}`)
+          return {
+            country: getCountryName(country),
+            city,
+            region,
+            source: "local-db",
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("❌ [GeoIP Local] Failed to read from local DB-IP mmdb:", err)
+  }
+
+  // 2. Try ipinfo.io as fallback 1
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 1200) // 1.2s timeout
     
-    console.log(`📡 [IP Lookup] Querying ipinfo.io for public IP: "${cleanIp}"`)
+    console.log(`📡 [GeoIP API Fallback] Querying ipinfo.io for public IP: "${cleanIp}"`)
     const response = await fetch(`https://ipinfo.io/${cleanIp}/json`, {
       signal: controller.signal,
     })
@@ -178,44 +198,18 @@ async function getIPLocationInternal(ip: string): Promise<{ country: string; cit
     
     if (response.ok) {
       const geo = await response.json()
-      console.log(`📡 [IP Lookup] ipinfo.io response:`, geo)
+      console.log(`📡 [GeoIP API Fallback] ipinfo.io response:`, geo)
       if (geo.city || geo.country) {
         return {
           country: getCountryName(geo.country || ""),
           city: geo.city || "",
           region: geo.region || "",
+          source: "api",
         }
       }
     }
   } catch (err) {
-    console.warn("⚠️ ipinfo.io lookup failed/timed out, trying fallback...", err)
-  }
-
-  // 2. Try FreeIPAPI (fallback 1)
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 1200) // 1.2s timeout
-    
-    console.log(`📡 [IP Lookup] Querying free.freeipapi.com for public IP: "${cleanIp}"`)
-    const response = await fetch(`https://free.freeipapi.com/api/json/${cleanIp}`, {
-      signal: controller.signal,
-    })
-    
-    clearTimeout(timeoutId)
-    
-    if (response.ok) {
-      const geo = await response.json()
-      console.log(`📡 [IP Lookup] free.freeipapi.com response:`, geo)
-      if (geo.cityName || geo.countryName) {
-        return {
-          country: geo.countryName || "",
-          city: geo.cityName || "",
-          region: geo.regionName || "",
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("⚠️ free.freeipapi.com lookup failed/timed out, trying fallback...", err)
+    console.warn("⚠️ [GeoIP API Fallback] ipinfo.io lookup failed/timed out, trying fallback...", err)
   }
 
   // 3. Try ip-api.com as fallback 2
@@ -223,7 +217,7 @@ async function getIPLocationInternal(ip: string): Promise<{ country: string; cit
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 1200) // 1.2s timeout
     
-    console.log(`📡 [IP Lookup] Querying ip-api.com for public IP: "${cleanIp}"`)
+    console.log(`📡 [GeoIP API Fallback] Querying ip-api.com for public IP: "${cleanIp}"`)
     const response = await fetch(`http://ip-api.com/json/${cleanIp}`, {
       signal: controller.signal,
     })
@@ -232,35 +226,22 @@ async function getIPLocationInternal(ip: string): Promise<{ country: string; cit
     
     if (response.ok) {
       const geo = await response.json()
-      console.log(`📡 [IP Lookup] ip-api.com response:`, geo)
+      console.log(`📡 [GeoIP API Fallback] ip-api.com response:`, geo)
       if (geo.status === "success") {
         return {
           country: geo.country || "",
           city: geo.city || "",
           region: geo.regionName || "",
+          source: "api",
         }
       }
     }
   } catch (err) {
-    console.warn("⚠️ ip-api.com fallback lookup failed/timed out:", err)
+    console.warn("⚠️ [GeoIP API Fallback] ip-api.com fallback lookup failed:", err)
   }
 
-  console.log(`❌ [IP Lookup] All lookup providers failed for IP: "${cleanIp}"`)
+  console.log(`❌ [GeoIP API Fallback] All lookup providers failed for IP: "${cleanIp}"`)
   return null
-}
-
-async function getIPLocation(ip: string): Promise<{ country: string; city: string; region: string } | null> {
-  const cleanIp = ip.trim()
-  const cached = geoCache.get(cleanIp)
-  const now = Date.now()
-  if (cached && (now - cached.timestamp < 24 * 60 * 60 * 1000 || (!cached.data && now - cached.timestamp < 60 * 60 * 1000))) {
-    console.log(`🔍 [IP Lookup Cache] Hit for IP "${cleanIp}":`, cached.data)
-    return cached.data
-  }
-
-  const result = await getIPLocationInternal(cleanIp)
-  setGeoCacheSafe(cleanIp, { data: result, timestamp: Date.now() })
-  return result
 }
 
 export async function POST(request: NextRequest) {
@@ -336,9 +317,15 @@ export async function POST(request: NextRequest) {
 
     if (!isUniqueView) {
       console.log(`🔄 Repeat visitor (${visitorId.substring(0, 8)}) - Skipping write/increment`)
+      let currentViews = viewsMemoryCache.get(propertyId.toString())
+      if (currentViews === null) {
+        currentViews = property.views || 0
+        viewsMemoryCache.set(propertyId.toString(), currentViews)
+      }
       return NextResponse.json({
         success: true,
         isUniqueView: false,
+        views: currentViews,
       })
     }
 
@@ -350,43 +337,75 @@ export async function POST(request: NextRequest) {
 
     const hashedIp = hashIP(ip)
     let location = null
+    let isCdnOrClientResolved = false
 
-    console.log(`\n👤 [Track View] Incoming view request. Hashed IP: "${hashedIp}"`)
-    if (clientLocation) {
-      console.log("🌍 [Track View] Client provided location object:", clientLocation)
+    // ⚡ Performance: Read CDN Geolocation headers (Vercel, Cloudflare, etc.) to get instant offline geo-resolution
+    const cdnCountry = request.headers.get("x-vercel-ip-country") || request.headers.get("cf-ipcountry")
+    const cdnCity = request.headers.get("x-vercel-ip-city") || request.headers.get("cf-ipcity")
+    const cdnRegion = request.headers.get("x-vercel-ip-country-region") || request.headers.get("cf-region")
+
+    if (cdnCountry) {
+      location = {
+        country: getCountryName(cdnCountry),
+        city: cdnCity ? decodeURIComponent(cdnCity) : "",
+        region: cdnRegion ? decodeURIComponent(cdnRegion) : "",
+      }
+      isCdnOrClientResolved = true
+      console.log("🌍 [Track View] Resolved location via CDN headers:", location)
     }
 
-    if (clientLocation && (clientLocation.city || clientLocation.country)) {
+    console.log(`\n👤 [Track View] Incoming view request. Hashed IP: "${hashedIp}"`)
+
+    if (location) {
+      // Already resolved via CDN
+    } else if (clientLocation && (clientLocation.city || clientLocation.country)) {
       console.log("🌍 [Track View] Using client-provided geolocation:", clientLocation)
       location = {
         city: clientLocation.city || "",
         country: clientLocation.country || "",
         region: clientLocation.region || "",
       }
+      isCdnOrClientResolved = true
       if (clientLocation.ip) {
         ip = clientLocation.ip
         console.log(`🌍 [Track View] Overriding server IP with client IP: "${ip}"`)
       }
     } else {
-      // DB Cache Lookup: Find if we already geocoded this hashed IP
+      // DB Cache Lookup: Find if we already cached this hashed IP
       console.log(`🔍 [Track View] Checking database cache for hashed IP: "${hashedIp}"`)
-      const cachedView = await payload.find({
-        collection: "property-views",
+      const cachedLoc = await payload.find({
+        collection: "ip-locations",
         where: {
-          and: [
-            { ipAddress: { equals: hashedIp } },
-            { "location.country": { exists: true } },
-            { "location.country": { not_equals: "" } },
-          ],
+          hashedIp: { equals: hashedIp },
         },
         limit: 1,
         depth: 0,
-        select: { location: true },
       })
 
-      if (cachedView.docs.length > 0 && cachedView.docs[0].location) {
-        console.log("🌍 [Track View] DB Geolocation cache hit!", cachedView.docs[0].location)
-        location = cachedView.docs[0].location
+      if (cachedLoc.docs.length > 0) {
+        const cached = cachedLoc.docs[0]
+        console.log("🌍 [Track View] DB Geolocation cache hit!", cached)
+        location = {
+          country: cached.country || "",
+          city: cached.city || "",
+          region: cached.region || "",
+        }
+        
+        // Update lastUsed timestamp in background
+        after(async () => {
+          try {
+            const backgroundPayload = await getPayloadClient()
+            await backgroundPayload.update({
+              collection: "ip-locations",
+              id: cached.id,
+              data: {
+                lastUsed: new Date().toISOString(),
+              },
+            })
+          } catch (e) {
+            console.warn("⚠️ Failed to update lastUsed in background:", e)
+          }
+        })
       }
     }
 
@@ -419,45 +438,135 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // 7. Increment property views count directly using SQL after the response finishes to prevent Cache Invalidation Storm
-    after(async () => {
-      try {
-        const db = payload.db.drizzle
-        await db.execute(
-          sql`UPDATE properties SET views = COALESCE(views, 0) + 1 WHERE id = ${propertyId}`
-        )
-        console.log(`🆕 Unique view registered! Created view ${newView.id}. Incremented property ${propertyId} views in background.`)
-      } catch (err) {
-        console.error("❌ Failed to increment property views in background:", err)
+    // Synchronously increment property views and update memory cache
+    let currentViews = property.views || 0
+    try {
+      const db = payload.db.drizzle
+      const result = await db.execute(
+        sql`UPDATE properties SET views = COALESCE(views, 0) + 1 WHERE id = ${propertyId} RETURNING views`
+      )
+      const rows = (result && typeof result === "object" && "rows" in result)
+        ? (result as unknown as { rows: { views: number | null }[] }).rows
+        : (Array.isArray(result) ? result as unknown as { views: number | null }[] : [])
+      
+      if (rows && rows[0]) {
+        currentViews = rows[0].views || 0
+      } else {
+        currentViews += 1
       }
-    })
+      console.log(`🆕 Unique view registered! Incremented property ${propertyId} views to ${currentViews}.`)
+    } catch (err) {
+      console.error("❌ Failed to increment property views:", err)
+      currentViews += 1
+    }
+    viewsMemoryCache.set(propertyId.toString(), currentViews)
 
-    // 8. If location is null, trigger asynchronous background geolocation fetch
-    if (!location) {
-      console.log("📡 [Track View] Geolocation cache miss. Triggering background resolution...")
-      getIPLocation(ip)
-        .then(async (resolvedLocation) => {
-          if (resolvedLocation) {
-            console.log(`🌍 [Track View Background] IP resolved! Updating view ${newView.id} with location:`, resolvedLocation)
-            const backgroundPayload = await getPayloadClient()
+    // 7. Process background actions after sending response
+    after(async () => {
+      // 7b. Cache resolving & Fallback resolution chain (Increment views is already done synchronously)
+      try {
+        const backgroundPayload = await getPayloadClient()
+
+        if (location && isCdnOrClientResolved) {
+          // Resolved via CDN or Client, check if cached. If not, write it to database cache.
+          const cached = await backgroundPayload.find({
+            collection: "ip-locations",
+            where: { hashedIp: { equals: hashedIp } },
+            limit: 1,
+            depth: 0,
+          })
+          if (cached.docs.length === 0) {
+            await backgroundPayload.create({
+              collection: "ip-locations",
+              data: {
+                hashedIp,
+                country: location.country,
+                city: location.city,
+                region: location.region,
+                source: "cdn",
+                lastUsed: new Date().toISOString(),
+              },
+            })
+            console.log(`🌍 [Track View Background] Cached CDN/Client resolved location for ${hashedIp}`)
+          } else {
+            // Update lastUsed
+            await backgroundPayload.update({
+              collection: "ip-locations",
+              id: cached.docs[0].id,
+              data: {
+                lastUsed: new Date().toISOString(),
+              },
+            })
+          }
+        } else if (!location) {
+          // Geolocation cache miss. Trigger background resolution chain.
+          console.log("📡 [Track View Background] Cache miss. Running resolution chain...")
+          const resolved = await resolveIPLocation(ip)
+
+          if (resolved) {
+            // Cache resolved location
+            await backgroundPayload.create({
+              collection: "ip-locations",
+              data: {
+                hashedIp,
+                country: resolved.country,
+                city: resolved.city,
+                region: resolved.region,
+                source: resolved.source,
+                lastUsed: new Date().toISOString(),
+              },
+            })
+            // Update the view record
             await backgroundPayload.update({
               collection: "property-views",
               id: newView.id,
               data: {
-                location: resolvedLocation,
+                location: {
+                  country: resolved.country,
+                  city: resolved.city,
+                  region: resolved.region,
+                },
               },
             })
+            console.log(`🌍 [Track View Background] Cached and resolved location for ${hashedIp} -> ${resolved.city}, ${resolved.region}, ${resolved.country}`)
+          } else {
+            // All options failed (or local IP in development). Cache as "Unknown" to avoid future lookups.
+            await backgroundPayload.create({
+              collection: "ip-locations",
+              data: {
+                hashedIp,
+                country: "Unknown",
+                city: "Unknown",
+                region: "Unknown",
+                source: "unknown",
+                lastUsed: new Date().toISOString(),
+              },
+            })
+            // Update the view record
+            await backgroundPayload.update({
+              collection: "property-views",
+              id: newView.id,
+              data: {
+                location: {
+                  country: "Unknown",
+                  city: "Unknown",
+                  region: "Unknown",
+                },
+              },
+            })
+            console.log(`🌍 [Track View Background] Resolution failed. Cached as Unknown for ${hashedIp}`)
           }
-        })
-        .catch((err) => {
-          console.error("❌ [Track View Background] Failed to resolve IP geolocation:", err)
-        })
-    }
+        }
+      } catch (err) {
+        console.error("❌ [Track View Background] Error in cache/resolution execution:", err)
+      }
+    })
 
     return NextResponse.json({
       success: true,
       viewId: newView.id,
       isUniqueView: true,
+      views: currentViews,
     })
   } catch (error) {
     console.error("Track view error:", error)

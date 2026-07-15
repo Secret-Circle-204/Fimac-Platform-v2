@@ -32,7 +32,7 @@ export const FeaturedPropertyCard = () => {
             <PropertyConstructionStatus />
           </div>
           <div className="absolute top-4 right-4 z-10">
-            <ViewsBadge views={property.views} />
+            <ViewsBadge views={property.views || 0} propertyId={property.id} />
           </div>
         </div>
         <CardContent className="p-4">

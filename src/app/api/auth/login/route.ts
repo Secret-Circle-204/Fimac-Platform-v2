@@ -7,11 +7,12 @@ import { checkRateLimit, RATE_LIMIT_PRESETS } from '@/lib/security/rate-limit'
 export async function POST(request: NextRequest) {
   try {
     // الحصول على معرف العميل (IP)
-    const clientId =
+    const rawIp =
       request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const clientId = rawIp.includes(',') ? rawIp.split(',')[0].trim() : rawIp.trim()
 
-    // التحقق من Rate Limiting
-    if (!checkRateLimit(clientId, RATE_LIMIT_PRESETS.AUTH)) {
+    // التحقق من Rate Limiting باستخدام مفتاح فريد ومستقل للمصادقة
+    if (!checkRateLimit(`${clientId}:auth`, RATE_LIMIT_PRESETS.AUTH)) {
       return NextResponse.json(
         {
           error: 'Too many login attempts',
