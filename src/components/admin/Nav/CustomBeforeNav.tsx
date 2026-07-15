@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export const CustomBeforeNav: React.FC = () => {
   return (
@@ -63,9 +64,12 @@ export const CustomBeforeNav: React.FC = () => {
           }}
         />
 
-        <img
+        <Image
           src="/logo.svg"
           alt="FIMAC Logo"
+          width={100}
+          height={42}
+          unoptimized
           style={{
             height: '42px',
             width: 'auto',

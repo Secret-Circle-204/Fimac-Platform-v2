@@ -16,11 +16,6 @@ export interface CompanySettingsData {
   contactEmail?: string | null
   contactPhone?: string | null
   contactOffice?: string | null
-  businessHours?: {
-    mondayFriday?: string | null
-    saturday?: string | null
-    sunday?: string | null
-  } | null
   updatedAt?: string | null
   createdAt?: string | null
 }

@@ -390,7 +390,7 @@ export const deleteAssociatedPropertyData: CollectionBeforeDeleteHook = async ({
 
 export const swapSortOrderHook: CollectionBeforeChangeHook<Property> = measureBeforeChange(
   'swapSortOrderHook',
-  async ({ data, req, originalDoc, operation }) => {
+  async ({ data, req, originalDoc, operation: _operation }) => {
     // 1. Prevent recursion by checking custom context flag
     if (req.context && (req.context as Record<string, unknown>).disableSortSwap) {
       return data

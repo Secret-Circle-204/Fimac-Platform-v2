@@ -4,12 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useListQuery } from '@payloadcms/ui'
 import {
   Home,
-  Eye,
-  CheckCircle2,
-  FileText,
-  MapPin,
   Building,
-  ShieldAlert,
   Award,
   Hotel,
   Trees,

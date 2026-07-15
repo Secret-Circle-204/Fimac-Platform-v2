@@ -1,6 +1,6 @@
 import { ContactForm } from "@/components/contact/contact-form"
 import { Card, CardContent } from "@/components/ui/card"
-import { Mail, Phone, MapPin, Clock } from "lucide-react"
+import { Mail, Phone, MapPin } from "lucide-react"
 import { getCurrentUser } from "@/lib/auth/get-current-user"
 import { getCachedCompanySettings } from "@/lib/cache/company-settings"
 
@@ -16,9 +16,6 @@ export default async function ContactPage() {
   const contactEmail = settings.contactEmail || 'info@fimacgroup.com'
   const contactPhone = settings.contactPhone || '+1 (234) 567-8900'
   const contactOffice = settings.contactOffice || '123 Investment Plaza\nKnoxville, TN 37902'
-  const mondayFriday = settings.businessHours?.mondayFriday || '9:00 AM - 6:00 PM'
-  const saturday = settings.businessHours?.saturday || '10:00 AM - 4:00 PM'
-  const sunday = settings.businessHours?.sunday || 'Closed'
 
   return (
     <div className="flex min-h-screen flex-col pt-24">
@@ -95,23 +92,6 @@ export default async function ContactPage() {
                           <p className="font-medium">Office</p>
                           <p className="text-gray-600 whitespace-pre-line">
                             {contactOffice}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Business Hours */}
-                      <div className="flex items-start gap-3">
-                        <div className="bg-blue-100 p-2 rounded-lg">
-                          <Clock className="h-5 w-5 text-blue-900" />
-                        </div>
-                        <div>
-                          <p className="font-medium">Business Hours</p>
-                          <p className="text-gray-600">
-                            Monday - Friday: {mondayFriday}
-                            <br />
-                            Saturday: {saturday}
-                            <br />
-                            Sunday: {sunday}
                           </p>
                         </div>
                       </div>

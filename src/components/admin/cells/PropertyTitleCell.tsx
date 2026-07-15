@@ -5,13 +5,13 @@ import type { DefaultCellComponentProps } from 'payload'
 import type { Property, Media } from '@/payload-types'
 import Link from 'next/link'
 import { MapPin } from 'lucide-react'
+import Image from 'next/image'
 
 export const PropertyTitleCell: React.FC<DefaultCellComponentProps> = (props) => {
   const rowData = props.rowData as Property
   if (!rowData) return null
 
   const title = rowData.title || 'Untitled Property'
-  const category = rowData.category
   const listingStatus = rowData.listingStatus
   const id = rowData.id
   const city = rowData.location?.address?.city
@@ -28,8 +28,8 @@ export const PropertyTitleCell: React.FC<DefaultCellComponentProps> = (props) =>
   // Handle listing status label
   let statusName = ''
   if (listingStatus) {
-    if (typeof listingStatus === 'object') {
-      statusName = (listingStatus as any).name || ''
+    if (typeof listingStatus === 'object' && listingStatus !== null) {
+      statusName = (listingStatus as { name?: string }).name || ''
     }
   }
 
@@ -38,9 +38,12 @@ export const PropertyTitleCell: React.FC<DefaultCellComponentProps> = (props) =>
       {/* Thumbnail Container */}
       <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0 shadow-sm transition-transform hover:scale-105 duration-200">
         {photoUrl ? (
-          <img
+          <Image
             src={photoUrl}
             alt={title}
+            width={40}
+            height={40}
+            unoptimized
             className="w-full h-full object-cover"
           />
         ) : (
