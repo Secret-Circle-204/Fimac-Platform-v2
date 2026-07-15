@@ -13,7 +13,6 @@ import { FadeIn } from '@/components/animations/fade-in'
 import Link from 'next/link'
 import { getCachedLatestBlogPosts } from '@/lib/cache/blog-posts'
 
-
 const propertyTypes = [
   {
     title: 'HOTELS',
@@ -67,13 +66,12 @@ export default async function HomePage() {
               <h2 className="text-3xl font-bold mb-6">Your Partner in Real Estate Investment</h2>
               <p className="text-muted-foreground mb-6">
                 FIMAC (Financial Investment Management Advice Consultants) is a premier global
-                consultancy specializing in the sale and acquisition of hospitality properties.
-                Our exclusive platform and services are tailored for business owners, buyers, and
+                consultancy specializing in the sale and acquisition of hospitality properties. Our
+                exclusive platform and services are tailored for business owners, buyers, and
                 brokers in the hotel, motel, resort, and boutique hotel sectors. We provide a
                 sophisticated marketplace combined with expert advisory services, including
                 valuation, marketing, and negotiation. Our expertise ensures that every client
-                receives personalized attention and a strategic approach designed to maximize
-                value.
+                receives personalized attention and a strategic approach designed to maximize value.
               </p>
               <Button
                 className="bg-blue-brand-light text-white shadow-xs hover:bg-blue-brand-light/90 rounded-md px-6 py-2.5"
@@ -142,8 +140,11 @@ export default async function HomePage() {
                   requirements, whether you&apos;re looking for a mountain retreat or a downtown
                   condo.
                 </p>
-                <Button className="bg-blue-900 text-primary-foreground shadow-lg hover:bg-blue-900/90 rounded-md w-fit">
-                  CONTACT US
+                <Button
+                  asChild
+                  className="bg-blue-900 text-primary-foreground shadow-lg hover:bg-blue-900/90 rounded-md w-fit"
+                >
+                  <Link href="/contact">CONTACT US</Link>
                 </Button>
               </FadeIn>
               <FadeIn className="tablet:w-1/2 relative min-h-[320px]" delay={150}>
@@ -162,7 +163,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-
         {/* Blog Section */}
         {latestPosts.length > 0 && (
           <section className="py-16 bg-accent text-accent-foreground">
@@ -176,7 +176,10 @@ export default async function HomePage() {
               <div className="grid grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4 gap-6">
                 {latestPosts.map((post, index) => {
                   const postImageUrl =
-                    post.featuredImage && typeof post.featuredImage === 'object' && 'url' in post.featuredImage && post.featuredImage.url
+                    post.featuredImage &&
+                    typeof post.featuredImage === 'object' &&
+                    'url' in post.featuredImage &&
+                    post.featuredImage.url
                       ? post.featuredImage.url
                       : '/scene-with-business-.jpg'
 
@@ -212,10 +215,12 @@ export default async function HomePage() {
                             </p>
                             <div className="flex justify-between items-center text-xs text-muted-foreground">
                               <span>{postDate}</span>
-                              <Button asChild variant="link" className="text-primary p-0 h-auto font-medium">
-                                <Link href={`/blog/${post.slug}`}>
-                                  Continue Reading
-                                </Link>
+                              <Button
+                                asChild
+                                variant="link"
+                                className="text-primary p-0 h-auto font-medium"
+                              >
+                                <Link href={`/blog/${post.slug}`}>Continue Reading</Link>
                               </Button>
                             </div>
                           </CardContent>
@@ -227,17 +232,16 @@ export default async function HomePage() {
               </div>
 
               <div className="mt-12 flex justify-center">
-                <Button asChild className="bg-blue-900 hover:bg-blue-800 text-white rounded-md px-8 py-3">
-                  <Link href="/blog">
-                    View All Posts
-                  </Link>
+                <Button
+                  asChild
+                  className="bg-blue-900 hover:bg-blue-800 text-white rounded-md px-8 py-3"
+                >
+                  <Link href="/blog">View All Posts</Link>
                 </Button>
               </div>
             </div>
           </section>
         )}
-
-
       </main>
     </div>
   )
