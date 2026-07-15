@@ -1,0 +1,75 @@
+:root,
+html,
+[data-theme='light'],
+[data-theme='dark'] {
+  /* خلفية اللوحة الأساسية رمادية فاتحة جداً أو بيضاء نظيفة */
+  --theme-bg: #fafafa !important;
+  --theme-text: #1e293b !important; /* رمادي داكن مريح للكتابة والقراءة */
+
+  /* مستويات السطح والارتفاع (Elevation surfaces) */
+  --theme-elevation-0: #ffffff !important;
+  --theme-elevation-50: #f8fafc !important;  /* خلفية الكروت والمنصات الجانبية */
+  --theme-elevation-100: #f1f5f9 !important; /* خلفية الحقول والجداول */
+  --theme-elevation-150: #e2e8f0 !important; /* لون الحدود الخفيفة جداً */
+  --theme-elevation-200: #cbd5e1 !important; /* حدود أكثر وضوحاً */
+  --theme-elevation-300: #94a3b8 !important;
+  --theme-elevation-400: #64748b !important;
+  --theme-elevation-500: #475569 !important;
+  --theme-elevation-600: #334155 !important;
+  --theme-elevation-700: #1e293b !important;
+  --theme-elevation-800: #0f172a !important;
+  --theme-elevation-900: #020617 !important;
+
+  /* هوية المشروع: الأزرق كخيار أساسي للتحكم والأزرار */
+  --theme-primary-50: #eff6ff !important;
+  --theme-primary-100: #dbeafe !important;
+  --theme-primary-200: #bfdbfe !important;
+  --theme-primary-300: #93c5fd !important;
+  --theme-primary-400: #60a5fa !important;
+  --theme-primary-500: #1d4ed8 !important; /* أزرق ملكي مميز */
+  --theme-primary-600: #1e40af !important;
+  --theme-primary-700: #1d4ed8 !important;
+  --theme-primary-800: #1e3a8a !important;
+  --theme-primary-900: #172554 !important;
+  --theme-primary-950: #0f172a !important;
+
+  /* اللون الذهبي للتاكيدات والتنبيهات المتميزة */
+  --theme-warning-500: #d4af37 !important;  /* ذهبي مميز */
+  --theme-warning-600: #b89025 !important;
+
+  /* تقييد الفونتات: سيمي بولد وميديام فقط، ومنع الخطوط الضخمة جداً (bold/black) */
+  --font-weight-bold: 600 !important;
+  --font-weight-black: 600 !important;
+  --font-weight-semibold: 600 !important;
+  --font-weight-medium: 500 !important;
+
+  /* منع الفونتات الصغيرة جداً التي تشتت الانتباه */
+  --font-size-xs: 0.875rem !important;
+  --font-size-s: 0.95rem !important;
+  --font-size-m: 1.05rem !important;
+}
+
+/* تطبيق الخلفية اغمق قليلاً على المحتوى الأساسي للتباين البصري */
+.template-default__wrap {
+  background: #fafafa !important;
+  min-height: 100vh;
+}
+
+.collection-list,
+.payload__list,
+.render-server-component {
+  background: #fafafa !important;
+}
+
+/* شريط الإجراءات السفلي (List Selection Bar) باللون الأزرق الداكن الجذاب */
+.collection-list__list-selection {
+  background: #1d4ed8 !important;
+  border-top: 1px solid #1e3a8a !important;
+  color: #ffffff !important;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+.collection-list__list-selection button,
+.collection-list__list-selection a {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}

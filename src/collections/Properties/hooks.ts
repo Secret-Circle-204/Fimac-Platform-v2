@@ -254,10 +254,11 @@ export const syncLocationHook: CollectionBeforeChangeHook<Property> = measureBef
       }
       // 7. Sync propertyTypeSlug for conditional field logic
       if (data.propertyType) {
-        const propertyTypeId = typeof data.propertyType === 'object' && data.propertyType !== null
-          ? (data.propertyType as PropertyType).id
-          : data.propertyType;
-          
+        const propertyTypeId =
+          typeof data.propertyType === 'object' && data.propertyType !== null
+            ? (data.propertyType as PropertyType).id
+            : data.propertyType
+
         if (propertyTypeId) {
           try {
             const pType = await req.payload.findByID({
@@ -269,7 +270,9 @@ export const syncLocationHook: CollectionBeforeChangeHook<Property> = measureBef
               data.propertyTypeSlug = pType.slug
             }
           } catch (err) {
-            req.payload.logger.error(`Error resolving propertyType slug: ${err instanceof Error ? err.message : 'Unknown'}`)
+            req.payload.logger.error(
+              `Error resolving propertyType slug: ${err instanceof Error ? err.message : 'Unknown'}`,
+            )
           }
         }
       } else {
@@ -378,6 +381,74 @@ export const deleteAssociatedPropertyData: CollectionBeforeDeleteHook = async ({
       },
     })
   } catch (err) {
-    req.payload.logger.error({ err }, `[PropertiesHook] Failed to delete associated views for property ${id}`)
+    req.payload.logger.error(
+      { err },
+      `[PropertiesHook] Failed to delete associated views for property ${id}`,
+    )
   }
 }
+
+export const swapSortOrderHook: CollectionBeforeChangeHook<Property> = measureBeforeChange(
+  'swapSortOrderHook',
+  async ({ data, req, originalDoc, operation }) => {
+    // 1. Prevent recursion by checking custom context flag
+    if (req.context && (req.context as Record<string, unknown>).disableSortSwap) {
+      return data
+    }
+
+    const newSortOrder = data?.sortOrder
+    const oldSortOrder = originalDoc?.sortOrder
+
+    // 2. We only execute swap if a sortOrder exists, is modified, and is not the unassigned value (99999)
+    if (
+      newSortOrder !== undefined &&
+      newSortOrder !== null &&
+      newSortOrder !== 99999 &&
+      newSortOrder !== oldSortOrder
+    ) {
+      try {
+        // Find if there is an existing property that already has this sortOrder
+        const duplicateProperties = await req.payload.find({
+          collection: 'properties',
+          where: {
+            and: [
+              { sortOrder: { equals: newSortOrder } },
+              originalDoc?.id ? { id: { not_equals: originalDoc.id } } : {},
+            ],
+          },
+          limit: 1,
+          depth: 0,
+          req,
+        })
+
+        const duplicateProperty = duplicateProperties.docs?.[0]
+
+        if (duplicateProperty) {
+          req.payload.logger.info(
+            `[SortOrderSwap] Swapping sortOrder ${newSortOrder} with old value ${oldSortOrder || 99999} between properties.`,
+          )
+
+          // Set the context flag to prevent infinite recursion
+          req.context = req.context || {}
+          ;(req.context as Record<string, unknown>).disableSortSwap = true
+
+          // Update the duplicate property to take the old sortOrder (or 99999 if it was unassigned)
+          await req.payload.update({
+            collection: 'properties',
+            id: duplicateProperty.id,
+            data: {
+              sortOrder: oldSortOrder || 99999,
+            },
+            req, // propagate context to the nested update request
+          })
+        }
+      } catch (err) {
+        req.payload.logger.error(
+          `[SortOrderSwap] Failed to execute sorting swap: ${err instanceof Error ? err.message : 'Unknown'}`,
+        )
+      }
+    }
+
+    return data
+  },
+)

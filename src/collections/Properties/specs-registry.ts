@@ -935,7 +935,12 @@ export function buildSpecField(spec: SpecFieldDefinition): Field {
   const admin: {
     description?: string
     condition?: (data: Record<string, unknown>, siblingData: Record<string, unknown>) => boolean
-  } = {}
+    disableListColumn?: boolean
+    disableListFilter?: boolean
+  } = {
+    disableListColumn: true,
+    disableListFilter: true,
+  }
   if (spec.unit) {
     admin.description = `Unit: ${spec.unit}`
   }

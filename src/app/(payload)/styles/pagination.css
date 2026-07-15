@@ -1,0 +1,119 @@
+/* =========================================================
+   تخصيص أدوات التنقل والترقيم (Pagination & Page Controls)
+   ========================================================= */
+/* حاوية ترقيم الصفحات السفلية */
+.collection-list__page-controls,
+.page-controls,
+.list-controls__pagination {
+  margin-top: 24px !important;
+  padding: 16px 24px !important;
+  background-color: #f8fafc !important; /* Slate 50 */
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01) !important;
+}
+
+/* ترقيم الصفحات */
+.paginator {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* أزرار الترقيم الفردية (الأرقام والأسهم) */
+.paginator__page,
+.clickable-arrow,
+.pagination button,
+.pagination a {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important; /* Slate 600 */
+  min-width: 38px !important;
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  text-decoration: none !important;
+  padding: 0 12px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* تأثير التمرير (Hover) على أزرار الترقيم - بلمسة ذهبية ناعمة للهوية */
+.paginator__page:hover:not([disabled]),
+.clickable-arrow:hover:not([disabled]),
+.pagination button:hover:not([disabled]),
+.pagination a:hover {
+  background-color: rgba(212, 175, 55, 0.04) !important;
+  border-color: #d4af37 !important; /* ذهبي */
+  color: #b89025 !important;
+}
+
+/* زر الصفحة النشطة حالياً (Active Page) باللون الذهبي الفاخر */
+.paginator__page--is-current,
+.pagination button.is-active,
+.pagination a.is-active,
+.pagination [class*="active"] {
+  background-color: #d4af37 !important; /* ذهبي ملوكي */
+  border-color: #d4af37 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25) !important;
+}
+
+/* أزرار الأسهم المعطلة (Prev/Next Disabled) */
+.clickable-arrow--is-disabled,
+.pagination button[disabled],
+.pagination a[disabled] {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: #f1f5f9 !important; /* Slate 100 */
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+}
+
+/* علامة الفصل التلقائية (Separator) */
+.paginator__separator {
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+  padding: 0 4px !important;
+}
+
+/* أداة اختيار عدد العناصر بالصفحة (Per Page Selector) */
+.per-page {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #475569 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+.per-page select,
+.per-page__select,
+.per-page__select-val {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+  border-radius: 8px !important;
+  padding: 6px 12px !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  outline: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+.per-page select:focus,
+.per-page__select:focus {
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
+}

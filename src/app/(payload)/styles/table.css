@@ -1,0 +1,254 @@
+/* =========================================================
+   تخصيص تصميم الجدول (Table Header and Rows)
+   ========================================================= */
+/* الحاوية الخارجية الكبرى للجدول (div) - تمثل الكارت الأبيض ذو الحواف المنحنية والظلال لتجنب خروج التمرير أو الجدول من الشاشة */
+.table-wrap {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  overflow-x: auto !important; /* التمرير الأفقي هنا ليكون الكيرف ثابتاً ولا يضيع */
+  overflow-y: hidden !important; /* منع التمرير الرأسي */
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.02),
+    0 8px 10px -6px rgba(0, 0, 0, 0.02) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important; /* يمنع تمدد الفليكس بوكس ويدفعه للالتزام بعرض الشاشة */
+  box-sizing: border-box !important;
+  display: block !important;
+}
+
+/* حاوية الجدول الداخلية (div) - نجعلها شفافة وغير مانعة للتمرير */
+.table-wrap .table {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important; /* ترك التمرير للأب .table-wrap */
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-bottom: 0 !important;
+  box-sizing: border-box !important;
+  display: block !important;
+}
+
+/* حالة احتياطية إذا ظهر الجدول (.table) بدون الأب (.table-wrap) */
+.table {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.02),
+    0 8px 10px -6px rgba(0, 0, 0, 0.02) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  display: block !important;
+}
+
+/* تخصيص السكرولبار الأفقي ليكون أنيقاً ومتناسقاً تماماً مع انحناء الحواف */
+.table-wrap::-webkit-scrollbar,
+.table::-webkit-scrollbar {
+  height: 8px !important;
+}
+.table-wrap::-webkit-scrollbar-track,
+.table::-webkit-scrollbar-track {
+  background: #f8fafc !important; /* Slate 50 */
+  border-radius: 0 0 12px 12px !important;
+}
+.table-wrap::-webkit-scrollbar-thumb,
+.table::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important; /* Slate 300 */
+  border-radius: 4px !important;
+}
+.table-wrap::-webkit-scrollbar-thumb:hover,
+.table::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important; /* Slate 400 */
+}
+
+/* عنصر الجدول الداخلي الفعلي (table) ليتمدد بالكامل ويقيد العرض ضمن الصفحة */
+.table table {
+  width: 100% !important;
+  min-width: max-content !important; /* يضمن عدم انضغاط الجدول وتفعيل التمرير الأفقي عند الحاجة */
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  table-layout: auto !important; /* توزيع مرن للأعمدة للسماح بالسكرول الأفقي */
+}
+
+/* تحديد عرض عمود الاختيار (Checkbox) ليكون صغيراً ومحدداً */
+.table th:first-child,
+.table td:first-child {
+  width: 48px !important;
+  min-width: 48px !important;
+}
+
+/* تحديد حد أدنى لعرض الأعمدة الأخرى لمنع انضغاطها بشكل مشوه */
+.table th:not(:first-child),
+.table td:not(:first-child) {
+  min-width: 150px !important;
+}
+
+/* رأس الجدول باللون الكحلي الداكن الملوكي لمظهر فخم وهادئ */
+.table thead tr {
+  background: #0f172a !important; /* Slate 900 */
+}
+.table thead th {
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+  padding: 12px 8px !important; /* تقليل المسافات الجانبية */
+  border-bottom: 2px solid #334155 !important;
+  font-size: 0.825rem !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  vertical-align: middle !important;
+  white-space: normal !important; /* السماح بالتفاف النص للضغط */
+  word-break: break-word !important;
+}
+/* .table thead th * {
+  white-space: normal !important; /* كسر جمود النصوص الطويلة داخل الأزرار الفرعية لبايلود */
+/* word-break: break-word !important;
+/*} */
+.table thead th a {
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* صفوف الجدول متميزة ومريحة للعين */
+.table tbody tr {
+  background: #ffffff !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* تظليل الصفوف الفردية (Zebra Striping) لتمييزها بسهولة */
+.table tbody tr:nth-child(even) {
+  background-color: #f8fafc !important; /* Slate 50 */
+}
+
+/* تأثير التمرير الفخم فوق الصفوف */
+.table tbody tr {
+  position: relative !important;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(29, 78, 216, 0.04) !important;
+}
+
+/* خط التحديد الجانبي المستقيم تماماً على حافة الصف النشط */
+.table tbody tr td:first-child {
+  position: relative !important;
+}
+
+.table tbody tr td:first-child::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 4px !important;
+  background-color: #1d4ed8 !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s ease !important;
+  z-index: 10 !important;
+}
+
+.table tbody tr:hover td:first-child::before {
+  opacity: 1 !important;
+}
+
+/* حدود الخلايا والمحاذاة - مسافات أضيق لمظهر ملموم ومريح للعين */
+.table td {
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 10px 8px !important; /* مسافات داخلية محكمة لتجنب الحاجة للسكرول */
+  color: #475569 !important; /* Slate 600 */
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  vertical-align: middle !important;
+  white-space: normal !important; /* السماح بالتفاف النص للضغط */
+  word-break: break-word !important;
+}
+
+/* إزالة الأندر لاين المستفز من الروابط داخل الخلايا */
+.table td a,
+.table td a:hover,
+.table td a:focus,
+.table td [class*='cell'] a,
+.table td [class*='cell'] a:hover,
+.table tbody tr a,
+.table tbody tr a:hover {
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  color: #1d4ed8 !important;
+  font-weight: 600 !important;
+  transition: color 0.15s ease !important;
+}
+
+.table td a:hover,
+.table td [class*='cell'] a:hover,
+.table tbody tr a:hover {
+  color: #1e40af !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* جعل جميع الحقول تأخذ حواف دائرية بسيطة وناعمة */
+input,
+textarea,
+select,
+.react-select__control,
+.field-type {
+  border-radius: 8px !important;
+}
+
+/* التقوس الافتراضي لعناصر لوحة التحكم */
+:root {
+  --style-radius-s: 8px !important;
+  --style-radius-m: 10px !important;
+}
+
+/* =========================================================
+   تبسيط وتخصيص أسماء أعمدة العناوين الطويلة جداً (Nested Labels)
+   ========================================================= */
+/* تخصيص عمود المدينة */
+th[id*='city' i] .sort-column__label {
+  font-size: 0 !important;
+}
+th[id*='city' i] .sort-column__label::after {
+  content: 'City' !important;
+  font-size: 13px !important;
+  text-transform: capitalize !important;
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+}
+
+/* تخصيص عمود الولاية */
+th[id*='state' i] .sort-column__label {
+  font-size: 0 !important;
+}
+th[id*='state' i] .sort-column__label::after {
+  content: 'State' !important;
+  font-size: 13px !important;
+  text-transform: capitalize !important;
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+}
+
+/* تخصيص عمود البلد */
+th[id*='country' i] .sort-column__label {
+  font-size: 0 !important;
+}
+th[id*='country' i] .sort-column__label::after {
+  content: 'Country' !important;
+  font-size: 13px !important;
+  text-transform: capitalize !important;
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+}

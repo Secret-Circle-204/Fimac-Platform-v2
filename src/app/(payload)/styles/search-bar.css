@@ -1,0 +1,39 @@
+/* =========================================================
+   تخصيص شريط البحث (Search Bar)
+   ========================================================= */
+.search-filter {
+  margin-bottom: 0 !important;
+  max-width: 400px !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+.search-filter__input {
+  background-color: #f8fafc !important; /* رمادي فاتح جداً هادئ */
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 9999px !important; /* شكل بيضاوي Pill كامل */
+  padding: 12px 20px 12px 45px !important; /* مسافة داخلية مريحة مع مساحة لأيقونة البحث */
+  color: #1e293b !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+  width: 100% !important;
+}
+
+/* حالة التركيز (Focus) على شريط البحث */
+.search-filter__input:focus {
+  background-color: #ffffff !important;
+  border-color: #1d4ed8 !important; /* أزرق ملوكي */
+  box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.1), 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+  outline: none !important;
+}
+
+/* أيقونة البحث داخل شريط البحث */
+.search-filter svg {
+  color: #94a3b8 !important;
+  transition: color 0.3s ease !important;
+}
+.search-filter:focus-within svg {
+  color: #1d4ed8 !important;
+}

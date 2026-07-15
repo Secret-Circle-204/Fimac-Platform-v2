@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 import {
   formatAddress,
   syncLocationHook,
+  swapSortOrderHook,
   revalidatePropertyCache,
   revalidatePropertyDeleteCache,
   deleteAssociatedPropertyData,
@@ -14,13 +15,17 @@ import {
 import { validateLatField, validateLngField } from '@/lib/geo/is-valid-coordinate'
 import { buildCategoryFields } from './specs-registry'
 
-
 export const Properties: CollectionConfig = {
   slug: 'properties',
+  defaultSort: ['sortOrder', '-createdAt'],
   admin: {
     group: 'Real Estate',
     useAsTitle: 'title',
-    defaultColumns: ['title', 'price', 'listingStatus'],
+    defaultColumns: ['title', 'price', 'listingStatus', 'sortOrder'],
+    listSearchableFields: ['title', 'seller.full_name', 'seller.company_name', 'location.address.city', 'location.address.country'],
+    components: {
+      beforeList: ['@/components/admin/PropertiesDashboardHeader#PropertiesDashboardHeader'],
+    },
   },
   access: {
     read: diagnosticAccessWrapper('read', () => true),
@@ -30,8 +35,32 @@ export const Properties: CollectionConfig = {
   },
   hooks: {
     beforeValidate: [
-      async ({ data, req }) => {
-        if (data?.propertyType) {
+      async ({ data, req, operation }) => {
+        // Auto-increment sortOrder for new documents to maintain uniqueness and correct ordering
+        if (operation === 'create' && data && (!data.sortOrder || data.sortOrder === 99999)) {
+          try {
+            const highestSortOrder = await req.payload.find({
+              collection: 'properties',
+              where: {
+                sortOrder: {
+                  less_than: 99999,
+                },
+              },
+              sort: '-sortOrder',
+              limit: 1,
+              depth: 0,
+              req,
+            })
+            const maxOrder = highestSortOrder.docs?.[0]?.sortOrder || 0
+            data.sortOrder = maxOrder + 1
+          } catch (error) {
+            req.payload.logger.error(
+              `Error calculating sortOrder in Properties beforeValidate: ${error}`,
+            )
+          }
+        }
+
+        if (data && data.propertyType) {
           try {
             const pType = await req.payload.findByID({
               collection: 'property-types',
@@ -46,14 +75,16 @@ export const Properties: CollectionConfig = {
               }
             }
           } catch (error) {
-            req.payload.logger.error(`Error populating type details in Properties beforeValidate: ${error}`)
+            req.payload.logger.error(
+              `Error populating type details in Properties beforeValidate: ${error}`,
+            )
           }
         }
         return data
       },
       measureBeforeValidate('property_beforeValidate'),
     ],
-    beforeChange: [syncLocationHook],
+    beforeChange: [syncLocationHook, swapSortOrderHook],
     beforeDelete: [deleteAssociatedPropertyData],
     afterChange: [measureAfterChange('property_afterChange', revalidatePropertyCache)],
     afterRead: [formatAddress],
@@ -68,6 +99,17 @@ export const Properties: CollectionConfig = {
       unique: true,
       admin: {
         disabled: true,
+      },
+    },
+    {
+      name: 'sortOrder',
+      type: 'number',
+      defaultValue: 99999,
+      index: true,
+      admin: {
+        description:
+          'Custom sorting order (lower numbers display first, unassigned default to 99999)',
+        position: 'sidebar',
       },
     },
 
@@ -141,6 +183,9 @@ export const Properties: CollectionConfig = {
                       index: true,
                       admin: {
                         width: '50%',
+                        components: {
+                          Cell: '@/components/admin/cells/PropertyTitleCell#PropertyTitleCell',
+                        },
                       },
                     },
                     {
@@ -211,6 +256,10 @@ export const Properties: CollectionConfig = {
                   name: 'description',
                   type: 'textarea',
                   required: true,
+                  admin: {
+                    disableListColumn: true,
+                    disableListFilter: true,
+                  },
                 },
               ],
             },
@@ -230,6 +279,9 @@ export const Properties: CollectionConfig = {
                       index: true,
                       admin: {
                         width: '40%',
+                        components: {
+                          Cell: '@/components/admin/cells/PropertyPriceCell#PropertyPriceCell',
+                        },
                       },
                     },
                     {
@@ -313,7 +365,8 @@ export const Properties: CollectionConfig = {
                   label: 'Operational Metrics',
                   admin: {
                     condition: (data) => data?.category === 'hospitality',
-                    description: 'Business metrics — updated regularly. Separate from property specifications.',
+                    description:
+                      'Business metrics — updated regularly. Separate from property specifications.',
                   },
                   fields: [
                     { name: 'avgDailyRate', type: 'number', label: 'ADR (Average Daily Rate)' },
@@ -339,6 +392,8 @@ export const Properties: CollectionConfig = {
                   index: true,
                   admin: {
                     description: 'Select the features for this property.',
+                    disableListColumn: true,
+                    disableListFilter: true,
                   },
                 },
                 {
@@ -347,7 +402,10 @@ export const Properties: CollectionConfig = {
                   type: 'array',
                   admin: {
                     initCollapsed: true,
-                    description: 'Additional specifications for rare/special cases. Not searchable.',
+                    description:
+                      'Additional specifications for rare/special cases. Not searchable.',
+                    disableListColumn: true,
+                    disableListFilter: true,
                   },
                   fields: [
                     { name: 'label', type: 'text', required: true },
@@ -391,6 +449,8 @@ export const Properties: CollectionConfig = {
                 components: {
                   Field: '@/components/admin/fields/CustomMediaField#CustomMediaField',
                 },
+                disableListColumn: true,
+                disableListFilter: true,
               },
             },
           ],
@@ -405,6 +465,8 @@ export const Properties: CollectionConfig = {
               admin: {
                 description:
                   'Paste a Google Maps URL (short/long), coordinates (lat,lng), or search address to auto-fill details.',
+                disableListColumn: true,
+                disableListFilter: true,
               },
             },
             {
@@ -426,6 +488,10 @@ export const Properties: CollectionConfig = {
                           label: 'Latitude',
                           index: true,
                           validate: validateLatField,
+                          admin: {
+                            disableListColumn: true,
+                            disableListFilter: true,
+                          },
                         },
                         {
                           name: 'lng',
@@ -433,6 +499,10 @@ export const Properties: CollectionConfig = {
                           label: 'Longitude',
                           index: true,
                           validate: validateLngField,
+                          admin: {
+                            disableListColumn: true,
+                            disableListFilter: true,
+                          },
                         },
                       ],
                     },
@@ -443,22 +513,45 @@ export const Properties: CollectionConfig = {
                   type: 'group',
                   label: 'Address Snapshot',
                   fields: [
-                    { name: 'street', type: 'text' },
+                     {
+                      name: 'street',
+                      type: 'text',
+                      admin: {
+                        disableListColumn: true,
+                        disableListFilter: true,
+                      },
+                    },
                     {
                       type: 'row',
                       fields: [
                         { name: 'city', type: 'text', index: true },
                         { name: 'state', type: 'text', index: true },
-                        { name: 'country', type: 'text', label: 'Country', defaultValue: 'Egypt', index: true },
-                        { name: 'zip', type: 'text', index: true },
+                        {
+                          name: 'country',
+                          type: 'text',
+                          label: 'Country',
+                          defaultValue: 'Egypt',
+                          index: true,
+                        },
+                        {
+                          name: 'zip',
+                          type: 'text',
+                          index: true,
+                          admin: {
+                            disableListColumn: true,
+                            disableListFilter: true,
+                          },
+                        },
                       ],
                     },
-                    {
+                     {
                       name: 'fullAddress',
                       type: 'text',
                       admin: {
                         readOnly: true,
                         description: 'Auto-generated from components above.',
+                        disableListColumn: true,
+                        disableListFilter: true,
                       },
                     },
                   ],
@@ -481,7 +574,7 @@ export const Properties: CollectionConfig = {
                     position: 'sidebar',
                   },
                   fields: [
-                    {
+                     {
                       name: 'source',
                       type: 'select',
                       defaultValue: 'manual',
@@ -490,9 +583,29 @@ export const Properties: CollectionConfig = {
                         { label: 'Google Maps Extraction', value: 'google_maps' },
                         { label: 'Bulk Import', value: 'imported' },
                       ],
+                      admin: {
+                        disableListColumn: true,
+                        disableListFilter: true,
+                      },
                     },
-                    { name: 'extractedAt', type: 'date', admin: { readOnly: true } },
-                    { name: 'extractionConfidence', type: 'number', admin: { readOnly: true } },
+                    {
+                      name: 'extractedAt',
+                      type: 'date',
+                      admin: {
+                        readOnly: true,
+                        disableListColumn: true,
+                        disableListFilter: true,
+                      },
+                    },
+                    {
+                      name: 'extractionConfidence',
+                      type: 'number',
+                      admin: {
+                        readOnly: true,
+                        disableListColumn: true,
+                        disableListFilter: true,
+                      },
+                    },
                   ],
                 },
               ],
@@ -504,10 +617,14 @@ export const Properties: CollectionConfig = {
                 initCollapsed: true,
               },
               fields: [
-                {
+                 {
                   name: 'street',
                   type: 'text',
-                  admin: { readOnly: true },
+                  admin: {
+                    readOnly: true,
+                    disableListColumn: true,
+                    disableListFilter: true,
+                  },
                   label: 'Legacy Street',
                 },
                 {
@@ -515,7 +632,11 @@ export const Properties: CollectionConfig = {
                   type: 'relationship',
                   relationTo: 'locations',
                   index: true,
-                  admin: { readOnly: true },
+                  admin: {
+                    readOnly: true,
+                    disableListColumn: true,
+                    disableListFilter: true,
+                  },
                   label: 'Legacy Relation',
                 },
               ],
@@ -532,12 +653,14 @@ export const Properties: CollectionConfig = {
               defaultValue: false,
             },
             {
-              name: 'projectImage',
+               name: 'projectImage',
               type: 'upload',
               relationTo: 'media',
               label: 'Project Image',
               admin: {
                 condition: (data) => !!data?.hasProject,
+                disableListColumn: true,
+                disableListFilter: true,
               },
             },
             {
@@ -546,6 +669,8 @@ export const Properties: CollectionConfig = {
               label: 'Project Description',
               admin: {
                 condition: (data) => !!data?.hasProject,
+                disableListColumn: true,
+                disableListFilter: true,
               },
             },
           ],

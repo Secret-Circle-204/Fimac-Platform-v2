@@ -9,7 +9,7 @@ import sharp from 'sharp'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-import { DATABASE_URL, SERVER_URL } from '@/env'
+import { DATABASE_URL, SERVER_URL, PAYLOAD_SECRET } from '@/env'
 import { collections } from './collections'
 import { seedFeatures } from './db/seedFeatures'
 import { seedPropertyCategories } from './db/seedPropertyCategories'
@@ -34,7 +34,7 @@ export default buildConfig({
   collections,
   globals: [CompanySettings, AboutPage],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: PAYLOAD_SECRET,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },

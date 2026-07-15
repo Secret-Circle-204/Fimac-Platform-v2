@@ -464,6 +464,10 @@ export interface BlogCategory {
 export interface Property {
   id: string;
   /**
+   * Custom sorting order (lower numbers display first, unassigned default to 99999)
+   */
+  sortOrder?: number | null;
+  /**
    * The property owner/seller contact
    */
   seller?: (number | null) | Seller;
@@ -1586,6 +1590,7 @@ export interface LocationsSelect<T extends boolean = true> {
  */
 export interface PropertiesSelect<T extends boolean = true> {
   id?: T;
+  sortOrder?: T;
   seller?: T;
   seller_request?: T;
   views?: T;
