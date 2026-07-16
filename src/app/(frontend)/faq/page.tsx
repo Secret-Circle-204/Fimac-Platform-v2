@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { MessageCircle, Phone, Mail } from "lucide-react"
 import Link from "next/link"
+import { getCachedCompanySettings } from "@/lib/cache/company-settings"
 
 export const metadata = {
   title: "Frequently Asked Questions | Fimac Group",
@@ -18,7 +19,10 @@ export const metadata = {
   },
 }
 
-export default function FAQPage() {
+export default async function FAQPage() {
+  const settings = await getCachedCompanySettings()
+  const contactEmail = settings.contactEmail || ""
+  const contactPhone = settings.contactPhone || ""
   const schemaFaqs = [
     {
       question: "What is Fimac Group?",
@@ -50,7 +54,7 @@ export default function FAQPage() {
     },
     {
       question: "How is my information protected?",
-      answer: "We use bank-level encryption (256-bit SSL) to protect all data transmission. Sensitive financial information is stored in secure, encrypted databases with restricted access. We comply with all relevant data protection regulations and never sell your personal information."
+      answer: "We use bank-level encryption (256-bit SSL) to protect all data transmission. For visitor privacy, IP addresses are immediately hashed using SHA-256 before caching or storage, and raw IP addresses are never saved in our database. Sensitive financial information is stored in secure, encrypted databases with restricted access. We comply with relevant data protection regulations and never sell your personal information."
     }
   ]
 
@@ -189,9 +193,11 @@ export default function FAQPage() {
                   </AccordionTrigger>
                   <AccordionContent>
                     We use bank-level encryption (256-bit SSL) to protect all data transmission.
-                    Sensitive financial information is stored in secure, encrypted databases with
-                    restricted access. We comply with all relevant data protection regulations and
-                    never sell your personal information.
+                    For visitor privacy, IP addresses are immediately hashed using SHA-256 before caching
+                    or storage, meaning raw IP addresses are never stored in our database. Sensitive
+                    financial information is stored in secure, encrypted databases with restricted access.
+                    We comply with relevant data protection regulations and never sell your personal
+                    information.
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -216,18 +222,22 @@ export default function FAQPage() {
                       Contact Support
                     </Link>
                   </Button>
-                  <Button asChild size="lg" variant="outline">
-                    <a href="tel:+1234567890">
-                      <Phone className="mr-2 h-5 w-5" />
-                      Call Us
-                    </a>
-                  </Button>
-                  <Button asChild size="lg" variant="outline">
-                    <a href="mailto:info@fimacgroup.com">
-                      <Mail className="mr-2 h-5 w-5" />
-                      Email Us
-                    </a>
-                  </Button>
+                  {contactPhone && (
+                    <Button asChild size="lg" variant="outline">
+                      <a href={`tel:${contactPhone.replace(/[^+\d]/g, "")}`}>
+                        <Phone className="mr-2 h-5 w-5" />
+                        Call Us
+                      </a>
+                    </Button>
+                  )}
+                  {contactEmail && (
+                    <Button asChild size="lg" variant="outline">
+                      <a href={`mailto:${contactEmail}`}>
+                        <Mail className="mr-2 h-5 w-5" />
+                        Email Us
+                      </a>
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

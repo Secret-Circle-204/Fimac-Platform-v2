@@ -1,3 +1,5 @@
+import { getCachedCompanySettings } from "@/lib/cache/company-settings"
+
 export const metadata = {
   title: "Terms of Service | FIMAC Platform",
   description: "Read the terms and conditions for using the FIMAC investment platform.",
@@ -7,7 +9,9 @@ export const metadata = {
   },
 }
 
-export default function TermsOfServicePage() {
+export default async function TermsOfServicePage() {
+  const settings = await getCachedCompanySettings()
+  const contactEmail = settings.contactEmail || ""
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 pt-24">
@@ -15,20 +19,26 @@ export default function TermsOfServicePage() {
         <section className="bg-blue-fimac text-white py-12">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl font-bold">Terms of Service</h1>
-            <p className="text-blue-100 mt-2">Last updated: March 5, 2026</p>
+            <p className="text-blue-100 mt-2">Last updated: July 16, 2026</p>
           </div>
         </section>
 
         {/* Content */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4 max-w-4xl prose prose-slate prose-lg">
-            <p className="text-sm text-slate-500 italic">
-              IMPORTANT — PLEASE READ THESE TERMS OF SERVICE CAREFULLY BEFORE USING THE FIMAC
-              PLATFORM. BY ACCESSING, BROWSING, OR USING THIS PLATFORM, YOU ACKNOWLEDGE THAT YOU
-              HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS. IF YOU DO NOT AGREE TO
-              ALL OF THESE TERMS, YOU ARE NOT AUTHORIZED TO USE THIS PLATFORM AND MUST IMMEDIATELY
-              DISCONTINUE ACCESS.
-            </p>
+            <div className="p-6 bg-red-50 border-l-4 border-red-600 rounded-r-lg mb-8">
+              <p className="text-sm text-red-900 font-bold uppercase tracking-wide mb-2">
+                IMPORTANT LEGAL NOTICE — PLEASE READ CAREFULLY
+              </p>
+              <p className="text-sm text-red-800 leading-relaxed font-semibold">
+                BY ACCESSING, BROWSING, REGISTERING ON, OR USING THE FIMAC PLATFORM, YOU CONSTITUTE
+                YOUR BINDING AND UNCONDITIONAL AGREEMENT TO THESE TERMS OF SERVICE IN THEIR ENTIRETY.
+                THIS PLATFORM AND ALL OF ITS ASSOCIATED SERVICES ARE STRICTLY CONDITIONAL UPON YOUR
+                ACCEPTANCE OF THESE TERMS. IF YOU DO NOT AGREE TO BE BOUND BY THESE TERMS OF SERVICE,
+                YOU ARE NOT AUTHORIZED TO USE THIS PLATFORM AND MUST IMMEDIATELY DISCONTINUE ALL ACCESS
+                AND USE.
+              </p>
+            </div>
 
             <h2>1. Definitions</h2>
             <ul>
@@ -37,10 +47,10 @@ export default function TermsOfServicePage() {
                 all associated services, features, and content.
               </li>
               <li>
-                <strong>&quot;FIMAC&quot;</strong>, <strong>&quot;Company&quot;</strong>,{" "}
+                <strong>&quot;FIMAC&quot;</strong>, <strong>&quot;Fimac Group&quot;</strong>, <strong>&quot;Company&quot;</strong>,{" "}
                 <strong>&quot;we&quot;</strong>, <strong>&quot;our&quot;</strong>, or{" "}
                 <strong>&quot;us&quot;</strong> refers to Financial Investment Management Advisory
-                &amp; Consultants.
+                &amp; Consultants (also known as Fimac Group).
               </li>
               <li>
                 <strong>&quot;User&quot;</strong>, <strong>&quot;you&quot;</strong>, or{" "}
@@ -74,13 +84,14 @@ export default function TermsOfServicePage() {
               and complete.{" "}
               <strong>
                 If you are entering into these Terms on behalf of a company or other legal entity,
-                you represent that you have the authority to bind such entity to these Terms.
+                you represent that you have the authority to bind such entity to these Terms. If you
+                do not agree, please do not use our Platform.
               </strong>
             </p>
 
             <h2>3. Description of Services</h2>
             <p>
-              FIMAC provides a digital platform that provides qualified buyers with access to
+              Fimac Group provides a digital platform that provides qualified buyers with access to
               exclusive hospitality properties. Our services include, but are not limited to:
             </p>
             <ul>
@@ -104,7 +115,7 @@ export default function TermsOfServicePage() {
 
             <h3>4.1 Registration</h3>
             <p>
-              To access certain features, you must create an buyer account using your email
+              To access certain features, you must create a buyer account using your email
               address or through Google Sign-In. You are solely responsible for:
             </p>
             <ul>
@@ -145,14 +156,15 @@ export default function TermsOfServicePage() {
               harmful to the Platform, other Users, or FIMAC.
             </p>
 
+            <h2>5. Disclaimer of Information Accuracy</h2>
             <p>
               <strong>
                 WHILE FIMAC ENDEAVORS TO PRESENT ACCURATE PROPERTY INFORMATION, WE MAKE NO
                 WARRANTIES, REPRESENTATIONS, OR GUARANTEES — WHETHER EXPRESS, IMPLIED, OR STATUTORY
                 — REGARDING THE ACCURACY, COMPLETENESS, RELIABILITY, TIMELINESS, OR SUITABILITY OF
                 ANY LISTING INFORMATION, INCLUDING BUT NOT LIMITED TO PROPERTY DESCRIPTIONS,
-                VALUATIONS, FINANCIAL PROJECTIONS, PHOTOGRAPHS, DIMENSIONS, OR ANY OTHER DATA
-                DISPLAYED ON THE PLATFORM.
+                VALUATIONS, FINANCIAL PROJECTIONS, ZONING, CAPACITY LIMITS, LAND AREA, PHOTOGRAPHS,
+                DIMENSIONS, OR ANY OTHER DATA DISPLAYED ON THE PLATFORM.
               </strong>{" "}
               All listing information is provided by independent sources and has not been
               independently verified by FIMAC unless explicitly stated otherwise. Buyers are
@@ -167,8 +179,8 @@ export default function TermsOfServicePage() {
                 FIMAC DOES NOT GUARANTEE THAT: (A) ANY PROPERTY LISTING WILL RESULT IN A COMPLETED
                 TRANSACTION; (B) ANY INVESTMENT WILL GENERATE A RETURN OR PROFIT; (C) ANY FINANCIAL
                 PROJECTIONS OR ESTIMATES PRESENTED ON THE PLATFORM ARE ACCURATE OR WILL BE ACHIEVED;
-                (D) ANY PROPERTY WILL APPRECIATE IN VALUE; OR (E) ANY BUYER ON THE PLATFORM IS
-                TRUSTWORTHY, CREDITWORTHY, OR WILL FULFILL THEIR OBLIGATIONS.
+                (D) ANY PROPERTY WILL APPRECIATE IN VALUE; OR (E) ANY BUYER OR SELLER ON THE PLATFORM
+                IS TRUSTWORTHY, CREDITWORTHY, OR WILL FULFILL THEIR OBLIGATIONS.
               </strong>
               All investment decisions are made at your own risk and sole discretion. Past
               performance is not indicative of future results.
@@ -249,28 +261,30 @@ export default function TermsOfServicePage() {
                 NON-INFRINGEMENT; (B) WARRANTIES ARISING FROM COURSE OF DEALING, USAGE, OR TRADE
                 PRACTICE; (C) WARRANTIES THAT THE PLATFORM WILL BE UNINTERRUPTED, TIMELY, SECURE,
                 ERROR-FREE, OR FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS; (D) WARRANTIES REGARDING
-                THE ACCURACY, RELIABILITY, OR COMPLETENESS OF ANY INFORMATION OR CONTENT; AND (E)
-                WARRANTIES THAT THE PLATFORM WILL MEET YOUR REQUIREMENTS OR EXPECTATIONS.
+                THE ACCURACY, RELIABILITY, OR COMPLETENESS OF ANY INFORMATION, ESTIMATES, OR CONTENT;
+                AND (E) WARRANTIES THAT THE PLATFORM WILL MEET YOUR REQUIREMENTS OR EXPECTATIONS.
               </strong>
             </p>
 
-            <h2>11. LIMITATION OF LIABILITY</h2>
+            <h2>11. LIMITATION OF LIABILITY AND LEGAL RELEASE</h2>
             <p>
               <strong>
                 TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL FIMAC, ITS
                 OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, AFFILIATES, SUCCESSORS, OR ASSIGNS BE LIABLE
-                FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE
-                DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, LOSS OF REVENUE, LOSS OF
-                DATA, LOSS OF BUSINESS OPPORTUNITIES, LOSS OF GOODWILL, COST OF PROCUREMENT OF
-                SUBSTITUTE SERVICES, OR ANY OTHER INTANGIBLE LOSSES, ARISING OUT OF OR IN CONNECTION
-                WITH: (A) YOUR USE OF OR INABILITY TO USE THE PLATFORM; (B) ANY TRANSACTION OR
-                RELATIONSHIP BETWEEN YOU AND ANY THIRD PARTY THROUGH THE PLATFORM; (C) ANY CONTENT,
-                INFORMATION, OR MATERIAL OBTAINED THROUGH THE PLATFORM; (D) UNAUTHORIZED ACCESS TO
-                OR ALTERATION OF YOUR DATA; (E) ANY INVESTMENT DECISION MADE BASED ON INFORMATION
-                AVAILABLE ON THE PLATFORM; OR (F) ANY OTHER MATTER RELATED TO THE PLATFORM,
-                REGARDLESS OF WHETHER SUCH DAMAGES ARE BASED ON WARRANTY, CONTRACT, TORT (INCLUDING
-                NEGLIGENCE), STRICT LIABILITY, OR ANY OTHER LEGAL THEORY, AND REGARDLESS OF WHETHER
-                FIMAC HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+                FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE
+                DAMAGES, OR LOSS OF CAPITAL, AND YOU HEREBY IRREVOCABLY RELEASE FIMAC AND ALL RELATED
+                PARTIES FROM ANY AND ALL RECOVERY FOR DIRECT OR INDIRECT LOSSES. THIS LIMITATION AND
+                RELEASE COVERS, WITHOUT LIMITATION: (A) LOSS OF PROFITS, LOSS OF REVENUE, LOSS OF
+                DATA, LOSS OF BUSINESS OPPORTUNITIES, LOSS OF GOODWILL, OR COST OF PROCUREMENT OF
+                SUBSTITUTE SERVICES; (B) YOUR USE OF OR INABILITY TO USE THE PLATFORM; (C) ANY TRANSACTION,
+                DISPUTE, OR RELATIONSHIP BETWEEN YOU AND ANY THIRD PARTY (INCLUDING OTHER USERS,
+                BUYERS, OR SELLERS) THROUGH THE PLATFORM; (D) ANY CONTENT, MATERIAL, PROPERTY
+                VALUATIONS, OR ZONING INFORMATION OBTAINED THROUGH THE PLATFORM; (E) UNAUTHORIZED
+                ACCESS TO, ALTERATION OF, OR BREACH OF YOUR DATA; (F) ANY INVESTMENT DECISION MADE
+                BASED ON INFORMATION AVAILABLE ON THE PLATFORM; OR (G) ANY OTHER MATTER RELATED TO
+                THE PLATFORM, REGARDLESS OF THE LEGAL THEORY (WARRANTY, CONTRACT, TORT, OR STRICT
+                LIABILITY), AND REGARDLESS OF WHETHER FIMAC HAS BEEN ADVISED OF THE POSSIBILITY OF
+                SUCH DAMAGES.
               </strong>
             </p>
             <p>
@@ -396,8 +410,11 @@ export default function TermsOfServicePage() {
               any reason at its sole discretion. Changes will be effective immediately upon posting
               to the Platform with an updated &quot;Last updated&quot; date. Your continued use of
               the Platform following the posting of revised Terms constitutes your binding
-              acceptance of such changes. It is your responsibility to review these Terms
-              periodically.
+              acceptance of such changes.{" "}
+              <strong>
+                If you do not agree with the updated terms, you must immediately cease using the
+                Platform. It is your responsibility to review these Terms periodically.
+              </strong>
             </p>
 
             <h2>22. Contact Information</h2>
@@ -406,9 +423,14 @@ export default function TermsOfServicePage() {
               contact:
             </p>
             <ul>
-              <li>
-                <strong>Email:</strong> legal@fimac-group.com
-              </li>
+              {contactEmail && (
+                <li>
+                  <strong>Email:</strong>{" "}
+                  <a href={`mailto:${contactEmail}`} className="text-blue-900 hover:underline">
+                    {contactEmail}
+                  </a>
+                </li>
+              )}
               <li>
                 <strong>Website:</strong> <a href="/contact">Contact Page</a>
               </li>

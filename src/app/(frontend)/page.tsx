@@ -13,6 +13,7 @@ import { FadeIn } from '@/components/animations/fade-in'
 import Link from 'next/link'
 import { getCachedLatestBlogPosts } from '@/lib/cache/blog-posts'
 import { getCachedAboutPage } from '@/lib/cache/about-page'
+import { getCachedCompanySettings } from '@/lib/cache/company-settings'
 import { SERVER_URL } from '@/env'
 import type { Metadata } from 'next'
 
@@ -67,6 +68,7 @@ const propertyTypes = [
 export default async function HomePage() {
   const latestPosts = await getCachedLatestBlogPosts(4)
   const aboutPage = await getCachedAboutPage()
+  const settings = await getCachedCompanySettings()
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -76,8 +78,8 @@ export default async function HomePage() {
     url: SERVER_URL,
     logo: `${SERVER_URL}/advisor_consultation.png`,
     image: `${SERVER_URL}/scene-with-business-.jpg`,
-    telephone: '+1 (234) 567-8900',
-    email: 'info@fimacgroup.com',
+    ...(settings.contactPhone ? { telephone: settings.contactPhone } : {}),
+    ...(settings.contactEmail ? { email: settings.contactEmail } : {}),
     address: {
       '@type': 'PostalAddress',
       streetAddress: '123 Investment Plaza',

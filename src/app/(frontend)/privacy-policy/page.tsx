@@ -1,3 +1,5 @@
+import { getCachedCompanySettings } from "@/lib/cache/company-settings"
+
 export const metadata = {
   title: "Privacy Policy | FIMAC Platform",
   description: "Learn how FIMAC collects, uses, and protects your personal information.",
@@ -7,7 +9,9 @@ export const metadata = {
   },
 }
 
-export default function PrivacyPolicyPage() {
+export default async function PrivacyPolicyPage() {
+  const settings = await getCachedCompanySettings()
+  const contactEmail = settings.contactEmail || ""
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 pt-24">
@@ -15,28 +19,35 @@ export default function PrivacyPolicyPage() {
         <section className="bg-blue-fimac text-white py-12">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl font-bold">Privacy Policy</h1>
-            <p className="text-blue-100 mt-2">Last updated: March 5, 2026</p>
+            <p className="text-blue-100 mt-2">Last updated: July 16, 2026</p>
           </div>
         </section>
 
         {/* Content */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4 max-w-4xl prose prose-slate prose-lg">
-            <p className="text-sm text-slate-500 italic">
-              PLEASE READ THIS PRIVACY POLICY CAREFULLY. BY ACCESSING OR USING THE FIMAC PLATFORM,
-              YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THIS PRIVACY
-              POLICY. IF YOU DO NOT AGREE, PLEASE DO NOT USE OUR PLATFORM.
-            </p>
+            <div className="p-6 bg-red-50 border-l-4 border-red-600 rounded-r-lg mb-8">
+              <p className="text-sm text-red-900 font-bold uppercase tracking-wide mb-2">
+                IMPORTANT LEGAL NOTICE — PLEASE READ CAREFULLY
+              </p>
+              <p className="text-sm text-red-800 leading-relaxed font-semibold">
+                BY ACCESSING, BROWSING, REGISTERING ON, OR USING THE FIMAC PLATFORM, YOU CONSTITUTE
+                YOUR BINDING AND UNCONDITIONAL AGREEMENT TO THIS PRIVACY POLICY IN ITS ENTIRETY.
+                THIS PLATFORM IS STRICTLY CONDITIONAL UPON YOUR ACCEPTANCE OF THESE TERMS. IF YOU DO
+                NOT AGREE TO BE BOUND BY THIS PRIVACY POLICY, YOU ARE NOT AUTHORIZED TO USE THIS
+                PLATFORM AND MUST IMMEDIATELY DISCONTINUE ALL ACCESS AND USE.
+              </p>
+            </div>
 
             <h2>1. Introduction</h2>
             <p>
-              FIMAC (&quot;Financial Investment Management Advisory &amp; Consultants&quot;,
+              FIMAC (also referred to as &quot;Fimac Group&quot;, &quot;Financial Investment Management Advisory &amp; Consultants&quot;,
               &quot;we&quot;, &quot;our&quot;, &quot;us&quot;, or &quot;the Company&quot;) operates
               the FIMAC Platform (the &quot;Platform&quot;, &quot;Service&quot;, or
               &quot;Website&quot;). This Privacy Policy governs the manner in which we collect, use,
               maintain, and disclose information collected from users (&quot;User&quot;,
               &quot;you&quot;, or &quot;your&quot;) of the Platform. This Privacy Policy applies to
-              the Platform and all products and services offered by FIMAC.
+              the Platform and all products and services offered by Fimac Group.
             </p>
 
             <h2>2. Information We Collect</h2>
@@ -45,7 +56,7 @@ export default function PrivacyPolicyPage() {
             <p>We collect information that you voluntarily provide when you:</p>
             <ul>
               <li>
-                Create an buyer account (full name, email address, phone number, company name)
+                Create a buyer account (full name, email address, phone number, company name)
               </li>
               <li>
                 Authenticate using third-party services such as Google OAuth (name, email address,
@@ -59,10 +70,15 @@ export default function PrivacyPolicyPage() {
             <h3>2.2 Information Collected Automatically</h3>
             <p>
               When you access or use our Platform, we automatically collect certain technical
-              information, including but not limited to:
+              information. For security and analytics purposes, this includes:
             </p>
             <ul>
-              <li>Internet Protocol (IP) address and geolocation data</li>
+              <li>
+                <strong>Hashed IP Addresses:</strong> To protect user privacy while ensuring platform security and accurate usage tracking, your raw IP address is hashed using SHA-256 immediately upon receipt of a request. The raw IP address is never stored in plaintext within our databases.
+              </li>
+              <li>
+                <strong>Approximate Geolocation Data:</strong> We resolve approximate geographical locations (such as city, region, and country) from these hashed IP records or incoming request headers. No precise GPS tracking or physical location mapping is performed.
+              </li>
               <li>Browser type, version, and language preferences</li>
               <li>Operating system and device identifiers</li>
               <li>Pages visited, time spent, click patterns, and navigation paths</li>
@@ -160,32 +176,24 @@ export default function PrivacyPolicyPage() {
               </li>
             </ul>
 
-            <h2>6. Data Security</h2>
+            <h2>6. Data Security and Exclusion of Liability</h2>
             <p>
               We implement commercially reasonable and industry-standard technical and
               organizational security measures to protect your personal information against
-              unauthorized access, alteration, disclosure, or destruction, including but not limited
-              to:
+              unauthorized access, alteration, disclosure, or destruction, including TLS/SSL encryption for data transmission, cryptographic hashing of credentials, and role-based access controls.
             </p>
-            <ul>
-              <li>
-                TLS/SSL encryption for all data transmitted between your browser and our servers
-              </li>
-              <li>
-                Cryptographic hashing of authentication credentials (passwords are never stored in
-                plaintext)
-              </li>
-              <li>Role-based access controls and principle of least privilege</li>
-              <li>Regular security assessments and vulnerability scanning</li>
-              <li>Secure data backup and disaster recovery procedures</li>
-            </ul>
             <p>
               <strong>
-                NOTWITHSTANDING THE FOREGOING, NO METHOD OF ELECTRONIC TRANSMISSION OR STORAGE IS
-                100% SECURE. WHILE WE STRIVE TO USE COMMERCIALLY REASONABLE MEANS TO PROTECT YOUR
-                PERSONAL INFORMATION, WE CANNOT AND DO NOT GUARANTEE ABSOLUTE SECURITY. YOU
-                ACKNOWLEDGE AND ACCEPT THAT ANY TRANSMISSION OF DATA TO OUR PLATFORM IS AT YOUR OWN
-                RISK.
+                NOTWITHSTANDING THE FOREGOING, YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT NO METHOD OF
+                ELECTRONIC TRANSMISSION OR STORAGE IS 100% SECURE. FIMAC DOES NOT GUARANTEE, WARRANT,
+                OR REPRESENT THAT YOUR INFORMATION WILL BE COMPLETELY SECURE FROM AUTHORIZED OR
+                UNAUTHORIZED ACCESS, USE, ALTERATION, BREACH, OR DESTRUCTION BY THIRD PARTIES.
+                TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COMPANY AND ITS DIRECTORS,
+                OFFICERS, EMPLOYEES, AND AGENTS ARE COMPLETELY EXONERATED AND DISCLAIMED FROM ANY
+                AND ALL LIABILITY FOR DAMAGES OF ANY KIND (INCLUDING DIRECT, INDIRECT, SPECIAL,
+                CONSEQUENTIAL, OR INCIDENTAL) ARISING FROM OR RELATING TO DATA BREACHES, SYSTEM
+                FAILURES, OR UNAUTHORIZED INTERCEPTION OF DATA. ANY TRANSMISSION OF DATA TO OUR
+                PLATFORM IS AT YOUR OWN SOLE RISK.
               </strong>
             </p>
 
@@ -239,11 +247,12 @@ export default function PrivacyPolicyPage() {
             <h2>11. Third-Party Links and Services</h2>
             <p>
               The Platform may contain links to third-party websites, services, or applications that
-              are not operated or controlled by FIMAC.{" "}
+              are not operated or controlled by Fimac Group.{" "}
               <strong>
-                This Privacy Policy does not apply to third-party services, and we are not
-                responsible for the privacy practices, content, or security of any external websites
-                or services.
+                This Privacy Policy does not apply to third-party services. Fimac Group is not
+                responsible for, and completely disclaims any liability for, the privacy practices,
+                content, or security of any external websites or services. Any access of external
+                links is done at your own risk.
               </strong>{" "}
               We strongly encourage you to review the privacy policies of any third-party services
               before providing personal information.
@@ -261,19 +270,20 @@ export default function PrivacyPolicyPage() {
             <h2>13. Changes to This Privacy Policy</h2>
             <p>
               We reserve the right to update or modify this Privacy Policy at any time and for any
-              reason. Any changes will be effective immediately upon posting the revised Privacy
-              Policy on this page with an updated &quot;Last updated&quot; date. Your continued use
-              of the Platform after any changes constitutes your acceptance of the revised Privacy
-              Policy.{" "}
+              reason at our sole discretion. Any changes will be effective immediately upon posting
+              the revised Privacy Policy on this page with an updated &quot;Last updated&quot; date.
+              Your continued use of the Platform after any changes constitutes your binding
+              acceptance of the revised Privacy Policy.{" "}
               <strong>
-                It is your sole responsibility to review this page periodically for any changes.
+                If you do not agree with the updated terms, you must immediately cease using the
+                Platform. It is your sole responsibility to review this page periodically for any changes.
               </strong>
             </p>
 
             <h2>14. Governing Law</h2>
             <p>
               This Privacy Policy shall be governed by and construed in accordance with the laws
-              applicable to the jurisdiction in which FIMAC operates, without regard to conflict of
+              applicable to the jurisdiction in which Fimac Group operates, without regard to conflict of
               law principles.
             </p>
 
@@ -283,9 +293,14 @@ export default function PrivacyPolicyPage() {
               data practices, or wish to exercise your data rights, please contact us at:
             </p>
             <ul>
-              <li>
-                <strong>Email:</strong> privacy@fimac-group.com
-              </li>
+              {contactEmail && (
+                <li>
+                  <strong>Email:</strong>{" "}
+                  <a href={`mailto:${contactEmail}`} className="text-blue-900 hover:underline">
+                    {contactEmail}
+                  </a>
+                </li>
+              )}
               <li>
                 <strong>Website:</strong> <a href="/contact">Contact Page</a>
               </li>

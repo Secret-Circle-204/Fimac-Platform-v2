@@ -17,9 +17,9 @@ export default async function ContactPage() {
   const user = await getCurrentUser()
   const settings = await getCachedCompanySettings()
 
-  const contactEmail = settings.contactEmail || 'info@fimacgroup.com'
-  const contactPhone = settings.contactPhone || '+1 (234) 567-8900'
-  const contactOffice = settings.contactOffice || '123 Investment Plaza\nKnoxville, TN 37902'
+  const contactEmail = settings.contactEmail || ""
+  const contactPhone = settings.contactPhone || ""
+  const contactOffice = settings.contactOffice || ""
 
   return (
     <div className="flex min-h-screen flex-col pt-24">
@@ -59,46 +59,52 @@ export default async function ContactPage() {
                     <h3 className="text-xl font-bold mb-4">Contact Information</h3>
                     <div className="space-y-4">
                       {/* Email */}
-                      <div className="flex items-start gap-3">
-                        <div className="bg-blue-100 p-2 rounded-lg">
-                          <Mail className="h-5 w-5 text-blue-900" />
+                      {contactEmail && (
+                        <div className="flex items-start gap-3">
+                          <div className="bg-blue-100 p-2 rounded-lg">
+                            <Mail className="h-5 w-5 text-blue-900" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Email</p>
+                            <a
+                              href={`mailto:${contactEmail}`}
+                              className="text-blue-900 hover:underline"
+                            >
+                              {contactEmail}
+                            </a>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">Email</p>
-                          <a
-                            href={`mailto:${contactEmail}`}
-                            className="text-blue-900 hover:underline"
-                          >
-                            {contactEmail}
-                          </a>
-                        </div>
-                      </div>
+                      )}
 
                       {/* Phone */}
-                      <div className="flex items-start gap-3">
-                        <div className="bg-blue-100 p-2 rounded-lg">
-                          <Phone className="h-5 w-5 text-blue-900" />
+                      {contactPhone && (
+                        <div className="flex items-start gap-3">
+                          <div className="bg-blue-100 p-2 rounded-lg">
+                            <Phone className="h-5 w-5 text-blue-900" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Phone</p>
+                            <a href={`tel:${contactPhone.replace(/[^+\d]/g, "")}`} className="text-blue-900 hover:underline">
+                              {contactPhone}
+                            </a>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">Phone</p>
-                          <a href={`tel:${contactPhone.replace(/\s+/g, '')}`} className="text-blue-900 hover:underline">
-                            {contactPhone}
-                          </a>
-                        </div>
-                      </div>
+                      )}
 
                       {/* Address */}
-                      <div className="flex items-start gap-3">
-                        <div className="bg-blue-100 p-2 rounded-lg">
-                          <MapPin className="h-5 w-5 text-blue-900" />
+                      {contactOffice && (
+                        <div className="flex items-start gap-3">
+                          <div className="bg-blue-100 p-2 rounded-lg">
+                            <MapPin className="h-5 w-5 text-blue-900" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Office</p>
+                            <p className="text-gray-600 whitespace-pre-line">
+                              {contactOffice}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">Office</p>
-                          <p className="text-gray-600 whitespace-pre-line">
-                            {contactOffice}
-                          </p>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -154,13 +160,15 @@ export default async function ContactPage() {
               >
                 View FAQ
               </a>
-              <a
-                href="tel:+1234567890"
-                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              >
-                <Phone className="mr-2 h-5 w-5" />
-                Call Us Now
-              </a>
+              {contactPhone && (
+                <a
+                  href={`tel:${contactPhone.replace(/[^+\d]/g, "")}`}
+                  className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  <Phone className="mr-2 h-5 w-5" />
+                  Call Us Now
+                </a>
+              )}
             </div>
           </div>
         </section>
