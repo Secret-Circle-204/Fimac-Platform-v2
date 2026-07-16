@@ -1,4 +1,5 @@
 import { default as default_26ea60a4763d0a50f25f8064c00e9c4a } from '@/components/admin/media-library/MediaLibraryView'
+import { ViewPropertyButtonField as ViewPropertyButtonField_b7d243ef44b97c68e4489bba3c753b8c } from '@/components/admin/fields/ViewPropertyButton'
 import { PropertyTypeWatcherField as PropertyTypeWatcherField_420ce17ff9e7dfe4decff066fcec28df } from '@/components/admin/fields/PropertyTypeWatcher'
 import { PropertyTitleCell as PropertyTitleCell_99645ef70d36e137f5bd27d62e01c2bb } from '@/components/admin/cells/PropertyTitleCell'
 import { PropertyPriceCell as PropertyPriceCell_44a37093d8dd6cd0e7379894b6fdc573 } from '@/components/admin/cells/PropertyPriceCell'
@@ -35,6 +36,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 /** @type import('payload').ImportMap */
 export const importMap = {
   "@/components/admin/media-library/MediaLibraryView#default": default_26ea60a4763d0a50f25f8064c00e9c4a,
+  "@/components/admin/fields/ViewPropertyButton#ViewPropertyButtonField": ViewPropertyButtonField_b7d243ef44b97c68e4489bba3c753b8c,
   "@/components/admin/fields/PropertyTypeWatcher#PropertyTypeWatcherField": PropertyTypeWatcherField_420ce17ff9e7dfe4decff066fcec28df,
   "@/components/admin/cells/PropertyTitleCell#PropertyTitleCell": PropertyTitleCell_99645ef70d36e137f5bd27d62e01c2bb,
   "@/components/admin/cells/PropertyPriceCell#PropertyPriceCell": PropertyPriceCell_44a37093d8dd6cd0e7379894b6fdc573,

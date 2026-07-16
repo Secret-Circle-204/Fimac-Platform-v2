@@ -190,7 +190,7 @@ export class PropertyPublishingService {
           ? sellerRequest.features.map((f: number | string | { id: number | string }) => (typeof f === 'object' && f !== null ? Number(f.id) : Number(f)))
           : undefined,
         customSpecifications: sellerRequest.customSpecifications && sellerRequest.customSpecifications.length > 0
-          ? sellerRequest.customSpecifications.map((spec: any) => ({
+          ? sellerRequest.customSpecifications.map((spec) => ({
               label: spec.label,
               icon: spec.icon ?? undefined,
               valueType: spec.valueType,

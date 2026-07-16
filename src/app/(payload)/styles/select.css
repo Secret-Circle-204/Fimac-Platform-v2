@@ -1,0 +1,393 @@
+/* =========================================================
+   تخصيص القوائم المنسدلة وعناصر الاختيار (Dropdowns / Select / Relationships)
+   الهوية الجديدة: متوافقة مع بادئة Payload الافتراضية (.rs)
+   ========================================================= */
+
+/* منع حقول القائمة المنسدلة من دفع السايدبار أو إفساد أبعاد الصفحة */
+.rs,
+.react-select {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* القائمة المنبثقة للخيارات (Dropdown Menu Container) */
+.rs__menu,
+.react-select__menu {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  width: 100% !important;
+  min-width: 250px !important;
+  max-width: 100% !important;
+  z-index: 9999 !important; /* ضمان الظهور فوق السايدبار والنموذج */
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+  
+  /* تصميم عصري مرتفع ونظيف (Premium Card Elevation) */
+  background-color: var(--theme-elevation-0, #ffffff) !important;
+  border: 1px solid var(--theme-elevation-150, #e2e8f0) !important;
+  border-radius: 8px !important;
+  box-shadow: 
+    0 10px 25px -5px rgba(15, 23, 42, 0.08), 
+    0 8px 10px -6px rgba(15, 23, 42, 0.05),
+    0 0 1px 0 rgba(15, 23, 42, 0.1) !important;
+  
+  overflow: hidden !important;
+}
+
+/* قائمة الخيارات الداخلية القابلة للتمرير (Menu List Container) */
+.rs__menu-list,
+.react-select__menu-list {
+  max-height: 200px !important; /* تحديد أقصى ارتفاع مريح وأنيق (حوالي 5 عناصر) لتجنب زيادة ارتفاع الشاشة */
+  padding: 4px !important;
+  overflow-y: auto !important;
+  scroll-behavior: smooth !important;
+  
+  /* شريط التمرير لمتصفح فايرفوكس */
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(100, 116, 139, 0.25) transparent !important;
+}
+
+/* تخصيص شريط التمرير لمتصفحات كرووم وإيدج وسافاري (Premium Webkit Scrollbar) */
+.rs__menu-list::-webkit-scrollbar,
+.react-select__menu-list::-webkit-scrollbar {
+  width: 5px !important;
+  height: 5px !important;
+}
+
+.rs__menu-list::-webkit-scrollbar-track,
+.react-select__menu-list::-webkit-scrollbar-track {
+  background: transparent !important;
+  margin: 4px 0 !important;
+}
+
+.rs__menu-list::-webkit-scrollbar-thumb,
+.react-select__menu-list::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 116, 139, 0.25) !important; /* رمادي متوسط متناسق مع الفاتح والداكن */
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+}
+
+.rs__menu-list::-webkit-scrollbar-thumb:hover,
+.react-select__menu-list::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.45) !important;
+}
+
+/* خيارات القائمة المنسدلة الفردية (Individual Options) */
+.rs__option,
+.react-select__option {
+  padding: 8px 12px !important;
+  font-size: var(--font-size-s, 0.95rem) !important;
+  font-weight: 500 !important;
+  color: var(--theme-text, #1e293b) !important;
+  border-radius: 6px !important;
+  margin-bottom: 2px !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+
+/* الحالات المختلفة للخيارات (Focus/Hover, Selected) */
+.rs__option--is-focused,
+.react-select__option--is-focused {
+  background-color: var(--theme-primary-50, #eff6ff) !important;
+  color: var(--theme-primary-500, #1d4ed8) !important;
+}
+
+.rs__option--is-selected,
+.react-select__option--is-selected {
+  background-color: var(--theme-primary-500, #1d4ed8) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.rs__option--is-selected.rs__option--is-focused,
+.react-select__option--is-selected.react-select__option--is-focused {
+  background-color: var(--theme-primary-600, #1e40af) !important;
+  color: #ffffff !important;
+}
+
+/* مظهر حقل الإدخال الأساسي للبحث والتحديد (Control Input Box) */
+.rs__control,
+.react-select__control {
+  border-color: var(--theme-elevation-200, #cbd5e1) !important;
+  background-color: var(--theme-elevation-0, #ffffff) !important;
+  min-height: 40px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.rs__control:hover,
+.react-select__control:hover {
+  border-color: var(--theme-primary-300, #93c5fd) !important;
+}
+
+.rs__control--is-focused,
+.react-select__control--is-focused {
+  border-color: var(--theme-primary-500, #1d4ed8) !important;
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.1) !important;
+}
+
+/* حشوة النص والنائب داخل حقل الإدخال */
+.rs__value-container,
+.react-select__value-container {
+  padding: 2px 12px !important;
+}
+
+.rs__placeholder,
+.react-select__placeholder {
+  color: var(--theme-elevation-400, #64748b) !important;
+}
+
+/* تنسيق الكبسولات في حالة الاختيار المتعدد (Multi-value Tags/Chips) */
+.rs__multi-value,
+.react-select__multi-value {
+  background-color: var(--theme-primary-50, #eff6ff) !important;
+  border: 1px solid var(--theme-primary-100, #dbeafe) !important;
+  border-radius: 4px !important;
+  padding: 1px 4px !important;
+  margin: 2px !important;
+}
+
+.rs__multi-value__label,
+.react-select__multi-value__label {
+  color: var(--theme-primary-700, #1d4ed8) !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  padding: 0 4px !important;
+}
+
+.rs__multi-value__remove,
+.react-select__multi-value__remove {
+  color: var(--theme-primary-400, #60a5fa) !important;
+  border-radius: 3px !important;
+  transition: all 0.12s ease !important;
+}
+
+.rs__multi-value__remove:hover,
+.react-select__multi-value__remove:hover {
+  background-color: var(--theme-primary-100, #dbeafe) !important;
+  color: var(--theme-primary-700, #1d4ed8) !important;
+  cursor: pointer !important;
+}
+
+/* =========================================================
+   الذكاء الاصطناعي لتوجيه القائمة المنسدلة للأعلى (Smart Drop-up Logic)
+   للحقول التي تقع في أسفل النماذج وتسبب زيادة ارتفاع الشاشة
+   ========================================================= */
+
+/* استهداف حقل الميزات (Features) وأي حقول تقع في نهاية النماذج */
+#field-features .rs__menu,
+.field-features .rs__menu,
+div[id$="-features"] .rs__menu,
+#field-features .react-select__menu,
+.field-features .react-select__menu,
+div[id$="-features"] .react-select__menu,
+/* كذلك حقول المواصفات المخصصة وأي حقل يقع في نهاية الأقسام القابلة للطي */
+.collapsible .field-type:last-of-type .rs__menu,
+.collapsible .field-type:last-of-type .react-select__menu {
+  top: auto !important;
+  bottom: 100% !important;
+  margin-top: 0 !important;
+  margin-bottom: 6px !important;
+  
+  /* عكس اتجاه الظل البصري ليتناسب مع فتحها للأعلى */
+  box-shadow: 
+    0 -10px 25px -5px rgba(15, 23, 42, 0.08), 
+    0 -8px 10px -6px rgba(15, 23, 42, 0.05),
+    0 0 1px 0 rgba(15, 23, 42, 0.1) !important;
+}
+
+/* التجاوب وتحسين الحجم على الشاشات الصغيرة وأجهزة الجوال */
+@media (max-width: 768px) {
+  .rs__menu,
+  .react-select__menu {
+    min-width: 100% !important;
+  }
+  
+  .rs__option,
+  .react-select__option {
+    padding: 10px 14px !important; /* تحسين استجابة اللمس */
+  }
+}
+
+/* =========================================================
+   تخصيص زر الإضافة (+) لحقول العلاقات (Add New Button)
+   تصميم مودرن ومنفصل بتأثيرات بصرية حركية فاخرة
+   ========================================================= */
+
+/* فصل حقل التحديد وزر الإضافة بمسافة وتنسيق مظهر الحواف الدائرية */
+.relationship__wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important; /* مسافة مريحة بين الحقل والزر */
+}
+
+/* استعادة الحواف الدائرية الكاملة لحقل الإدخال بعد فصله */
+.rs__control,
+.react-select__control {
+  border-radius: 8px !important;
+}
+
+/* تصميم الزر المودرن بلون الهوية الأساسي (أزرق ملكي) */
+.relationship-add-new__add-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  border-radius: 8px !important; /* حواف دائرية مطابقة للحقل */
+  border: 1px solid var(--theme-primary-600, #1e40af) !important;
+  background-color: var(--theme-primary-500, #1d4ed8) !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding: 0 !important;
+  box-shadow: 0 2px 4px rgba(29, 78, 216, 0.1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* علامة الزائد (+) */
+.relationship-add-new__add-button svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: #ffffff !important; /* لون أبيض ناصع للعلامة */
+  stroke-width: 2.5px !important;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* تأثيرات التحويم (Hover State) وتوهج خفيف */
+.relationship-add-new__add-button:hover {
+  background-color: var(--theme-primary-600, #1e40af) !important;
+  border-color: var(--theme-primary-700, #1d4ed8) !important;
+  box-shadow: 
+    0 4px 12px rgba(29, 78, 216, 0.2), 
+    0 0 0 3px rgba(29, 78, 216, 0.15) !important;
+}
+
+/* دوران خفيف لعلامة (+) عند التحويم */
+.relationship-add-new__add-button:hover svg {
+  transform: rotate(90deg) !important;
+}
+
+/* تأثير التجاوب اللمسي عند الضغط (Click/Active State) */
+.relationship-add-new__add-button:active {
+  transform: scale(0.92) !important;
+}
+
+/* =========================================================
+   تخصيص أيقونة التعديل (Edit Icon) لحقول العلاقات
+   جعل لونها ذهبياً (Gold) للمقروئية العالية على الخلفية الفاتحة
+   ========================================================= */
+
+/* استهداف أزرار التعديل وأيقونات الـ SVG بداخلها */
+.relationship--single-value__drawer-toggler,
+.relationship--multi-value-label__drawer-toggler,
+.relationship--multi-value-label__icon {
+  color: var(--theme-warning-500, #d4af37) !important;
+  stroke: var(--theme-warning-500, #d4af37) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.relationship--single-value__drawer-toggler svg,
+.relationship--multi-value-label__drawer-toggler svg,
+.relationship--multi-value-label__icon svg {
+  stroke: var(--theme-warning-500, #d4af37) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* تأثيرات التحويم لزر وأيقونة التعديل (Hover & Scale) */
+.relationship--single-value__drawer-toggler:hover,
+.relationship--multi-value-label__drawer-toggler:hover {
+  color: var(--theme-warning-600, #b89025) !important;
+  stroke: var(--theme-warning-600, #b89025) !important;
+  transform: scale(1.12) !important;
+}
+
+.relationship--single-value__drawer-toggler:hover svg,
+.relationship--multi-value-label__drawer-toggler:hover svg {
+  stroke: var(--theme-warning-600, #b89025) !important;
+  transform: scale(1.12) !important;
+}
+
+/* تأثير الضغط عند النقر */
+.relationship--single-value__drawer-toggler:active,
+.relationship--multi-value-label__drawer-toggler:active {
+  transform: scale(0.92) !important;
+}
+
+/* =========================================================
+   تخصيص زر معاينة العقار على الموقع (View Property Button)
+   زر ذهبي فاخر (Gold Edition) بتوهج وتأثيرات حركية أنيقة
+   ========================================================= */
+
+.view-property-btn-container {
+  margin-top: 14px !important;
+  margin-bottom: 14px !important;
+  width: 100% !important;
+}
+
+.view-property-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  padding: 10px 16px !important;
+  background-color: transparent !important;
+  border: 1.5px solid var(--theme-warning-500, #d4af37) !important;
+  color: var(--theme-warning-500, #d4af37) !important;
+  font-size: var(--font-size-s, 0.95rem) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 4px rgba(212, 175, 55, 0.05) !important;
+}
+
+/* تأثيرات التحويم والتوهج الفاخر (Hover & Glow) */
+.view-property-btn:hover {
+  background-color: var(--theme-warning-500, #d4af37) !important;
+  color: #0f172a !important; /* لون داكن للتباين الواضح مع الخلفية الذهبية */
+  box-shadow: 
+    0 6px 16px rgba(212, 175, 55, 0.22), 
+    0 0 0 3px rgba(212, 175, 55, 0.15) !important;
+  transform: translateY(-1.5px) !important;
+}
+
+/* تأثير الضغط الحركي (Tactile Click Response) */
+.view-property-btn:active {
+  transform: translateY(0) scale(0.96) !important;
+}
+
+/* أيقونة السهم الخارجي */
+.view-property-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: currentColor !important;
+  stroke-width: 2.2px !important;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* انزلاق الأيقونة للأعلى واليمين قليلاً عند التحويم */
+.view-property-btn:hover svg {
+  transform: translate(2px, -2px) !important;
+}
+
+/* حالة عدم تفعيل الزر (العقارات الجديدة قبل الحفظ الأول) */
+.view-property-btn--disabled {
+  border-color: var(--theme-elevation-200, #cbd5e1) !important;
+  color: var(--theme-elevation-400, #64748b) !important;
+  background-color: var(--theme-elevation-50, #f8fafc) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  opacity: 0.65 !important;
+  box-shadow: none !important;
+}
+
+
+

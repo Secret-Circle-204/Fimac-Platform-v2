@@ -203,6 +203,7 @@
 input,
 textarea,
 select,
+.rs__control,
 .react-select__control,
 .field-type {
   border-radius: 8px !important;

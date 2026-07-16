@@ -131,6 +131,7 @@ export const Properties: CollectionConfig = {
       admin: {
         description: 'Original seller request (if applicable)',
         position: 'sidebar',
+        readOnly: true,
       },
     },
     {
@@ -142,6 +143,16 @@ export const Properties: CollectionConfig = {
         description: 'Total tracked property views',
         position: 'sidebar',
         readOnly: true,
+      },
+    },
+    {
+      name: 'viewOnSite',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/components/admin/fields/ViewPropertyButton#ViewPropertyButtonField',
+        },
       },
     },
     {
@@ -400,7 +411,6 @@ export const Properties: CollectionConfig = {
                       andConditions.push({
                         or: [
                           { visibleInCategories: { exists: false } },
-                          { visibleInCategories: { equals: null } },
                           { visibleInCategories: { in: [category] } },
                         ],
                       })
@@ -411,7 +421,6 @@ export const Properties: CollectionConfig = {
                       andConditions.push({
                         or: [
                           { visibleInPropertyTypes: { exists: false } },
-                          { visibleInPropertyTypes: { equals: null } },
                           { visibleInPropertyTypes: { in: [typeId] } },
                         ],
                       })

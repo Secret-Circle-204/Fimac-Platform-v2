@@ -85,14 +85,26 @@
   background: rgba(0, 240, 255, 0.5);
 }
 
-/* Make breadcrumbs and links in header pop */
-.app-header a {
-  color: rgba(255, 255, 255, 0.9) !important;
-  transition: color 0.3s ease;
+/* Make breadcrumbs and links in header pop and match the light (#fafafa) background */
+.app-header,
+.step-nav,
+.step-nav a,
+.step-nav span,
+.step-nav__link,
+.app-header a,
+.app-header span {
+  color: #1e293b !important; /* Dark slate text for dividers/non-links */
+  transition: all 0.3s ease;
 }
+
+.step-nav a,
+.app-header a {
+  color: #072364 !important; /* Fimac Navy for clickable links */
+}
+
+.step-nav a:hover,
 .app-header a:hover {
-  color: #00f0ff !important;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+  color: #1d4ed8 !important; /* Royal blue hover */
 }
 
 /* Custom Dashboard Button Animation */

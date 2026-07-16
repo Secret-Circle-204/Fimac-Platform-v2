@@ -136,12 +136,12 @@ export default function PropertyViewsDashboard() {
   // 3. Define Theme-based Colors for Recharts
   const gridColor = isDarkMode ? "#27272a" : "#e4e4e7" // zinc-800 : zinc-200
   const textColor = isDarkMode ? "#a1a1aa" : "#71717a" // zinc-400 : zinc-500
-  const primaryChartColor = isDarkMode ? "#e4e4e7" : "#18181b" // zinc-200 : zinc-900
+  const primaryChartColor = isDarkMode ? "#60a5fa" : "#072364" // Fimac Navy
   const chartGradientEnd = "rgba(0, 0, 0, 0)"
 
   const pieColors = isDarkMode
-    ? ["#f4f4f5", "#a1a1aa", "#3f3f46"] // Light Gray, Gray, Dark Gray (Zinc variants)
-    : ["#18181b", "#71717a", "#d4d4d8"] // Dark Gray, Gray, Light Gray
+    ? ["#60a5fa", "#3b82f6", "#1e3a8a"] // Light Blue, Blue, Navy
+    : ["#072364", "#1d4ed8", "#60a5fa"] // Fimac Navy, Blue, Light Blue
 
   if (loading) {
     return (
@@ -208,7 +208,7 @@ export default function PropertyViewsDashboard() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Property Views Analytics</h1>
-            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-full border border-zinc-200 dark:border-zinc-700">
+            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[#072364]/10 dark:bg-[#60a5fa]/10 text-[#072364] dark:text-[#60a5fa] rounded-full border border-[#072364]/20 dark:border-[#60a5fa]/20">
               Live Logs
             </span>
           </div>
@@ -219,7 +219,7 @@ export default function PropertyViewsDashboard() {
         <button
           onClick={() => fetchData(true)}
           disabled={refreshing}
-          className="self-start sm:self-center flex items-center gap-2 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-50 dark:hover:bg-zinc-200 text-zinc-50 dark:text-zinc-900 font-medium rounded-lg text-xs shadow-xs transition-colors disabled:opacity-50"
+          className="self-start sm:self-center flex items-center gap-2 px-3 py-2 bg-[#072364] hover:bg-[#05133a] dark:bg-zinc-50 dark:hover:bg-zinc-200 text-zinc-50 dark:text-zinc-900 font-medium rounded-lg text-xs shadow-xs transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
           {refreshing ? "Refreshing..." : "Refresh Data"}
@@ -229,25 +229,25 @@ export default function PropertyViewsDashboard() {
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Total Views Card */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-linear-to-br dark:from-[#061433] dark:to-[#0A1A3F] border border-zinc-200 dark:border-blue-900/30 p-6 rounded-xl shadow-xs flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Total Page Loads</p>
             <h3 className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-50">{stats.totalViews}</h3>
             <p className="text-2xs text-zinc-400 dark:text-zinc-500 font-medium">All recorded interactions</p>
           </div>
-          <div className="p-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50">
+          <div className="p-3 bg-[#072364]/10 dark:bg-[#60a5fa]/10 text-[#072364] dark:text-[#60a5fa] rounded-xl border border-[#072364]/20 dark:border-[#60a5fa]/20">
             <Eye className="h-6 w-6" />
           </div>
         </div>
 
         {/* Unique Visitors Card */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-linear-to-br dark:from-[#061433] dark:to-[#0A1A3F] border border-zinc-200 dark:border-blue-900/30 p-6 rounded-xl shadow-xs flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Unique Visitors</p>
             <h3 className="text-3xl font-extrabold text-zinc-900 dark:text-zinc-50">{stats.totalUniqueVisitors}</h3>
             <p className="text-2xs text-zinc-400 dark:text-zinc-500 font-medium">24h fingerprint deduplicated</p>
           </div>
-          <div className="p-3 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50">
+          <div className="p-3 bg-[#072364]/10 dark:bg-[#60a5fa]/10 text-[#072364] dark:text-[#60a5fa] rounded-xl border border-[#072364]/20 dark:border-[#60a5fa]/20">
             <Users className="h-6 w-6" />
           </div>
         </div>
@@ -256,7 +256,7 @@ export default function PropertyViewsDashboard() {
       {/* Main Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Timeline Area Chart (Spans 2 columns) */}
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl shadow-xs flex flex-col h-[400px]">
+        <div className="lg:col-span-2 bg-white dark:bg-linear-to-br dark:from-[#061433] dark:to-[#0A1A3F] border border-zinc-200 dark:border-blue-900/30 p-6 rounded-xl shadow-xs flex flex-col h-[400px]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h4 className="font-bold text-zinc-900 dark:text-zinc-50 text-sm">Views Timeline</h4>
@@ -292,7 +292,7 @@ export default function PropertyViewsDashboard() {
         </div>
 
         {/* Device Breakdown Pie Chart (Spans 1 column) */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl shadow-xs flex flex-col h-[400px]">
+        <div className="bg-white dark:bg-linear-to-br dark:from-[#061433] dark:to-[#0A1A3F] border border-zinc-200 dark:border-blue-900/30 p-6 rounded-xl shadow-xs flex flex-col h-[400px]">
           <div>
             <h4 className="font-bold text-zinc-900 dark:text-zinc-50 text-sm">Device Breakdown</h4>
             <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-0.5">Distribution of user hardware</p>
@@ -346,9 +346,9 @@ export default function PropertyViewsDashboard() {
       {/* Bottom Grid — 2x2 */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Popular Listings */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl shadow-xs flex flex-col min-h-[440px] justify-between">
+        <div className="bg-white dark:bg-linear-to-br dark:from-[#061433] dark:to-[#0A1A3F] border border-zinc-200 dark:border-blue-900/30 p-6 rounded-xl shadow-xs flex flex-col min-h-[440px] justify-between">
           <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-850 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4 text-zinc-500" />
                 <h4 className="font-bold text-zinc-900 dark:text-zinc-50 text-sm">Top Viewed Assets</h4>
@@ -363,7 +363,7 @@ export default function PropertyViewsDashboard() {
                     setPopularSearch(e.target.value)
                     setPopularPage(1)
                   }}
-                  className="w-full pl-8 pr-2.5 py-1 text-3xs bg-zinc-50 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 text-zinc-800 dark:text-zinc-200"
+                  className="w-full pl-8 pr-2.5 py-1 text-3xs bg-zinc-50 dark:bg-[#05133a]/60 border border-zinc-200/80 dark:border-blue-900/50 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 text-zinc-800 dark:text-zinc-200"
                 />
               </div>
             </div>
@@ -383,7 +383,7 @@ export default function PropertyViewsDashboard() {
                         <p className="text-3xs text-zinc-400 dark:text-zinc-500 font-medium">Rank #{globalIdx}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 text-2xs font-extrabold rounded-md border border-zinc-200/50 dark:border-zinc-700/50">
+                        <span className="px-2.5 py-1 bg-[#072364]/10 dark:bg-[#60a5fa]/10 text-[#072364] dark:text-[#60a5fa] text-2xs font-extrabold rounded-md border border-[#072364]/20 dark:border-[#60a5fa]/20">
                           {prop.count} views
                         </span>
                       </div>
@@ -419,9 +419,9 @@ export default function PropertyViewsDashboard() {
         </div>
 
         {/* Top Visited Locations */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl shadow-xs flex flex-col min-h-[440px] justify-between">
+        <div className="bg-white dark:bg-linear-to-br dark:from-[#061433] dark:to-[#0A1A3F] border border-zinc-200 dark:border-blue-900/30 p-6 rounded-xl shadow-xs flex flex-col min-h-[440px] justify-between">
           <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-850 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-zinc-500" />
                 <h4 className="font-bold text-zinc-900 dark:text-zinc-50 text-sm">Top Visited Locations</h4>
@@ -436,7 +436,7 @@ export default function PropertyViewsDashboard() {
                     setLocationSearch(e.target.value)
                     setLocationPage(1)
                   }}
-                  className="w-full pl-8 pr-2.5 py-1 text-3xs bg-zinc-50 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 text-zinc-800 dark:text-zinc-200"
+                  className="w-full pl-8 pr-2.5 py-1 text-3xs bg-zinc-50 dark:bg-[#05133a]/60 border border-zinc-200/80 dark:border-blue-900/50 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 text-zinc-800 dark:text-zinc-200"
                 />
               </div>
             </div>
@@ -451,16 +451,16 @@ export default function PropertyViewsDashboard() {
                   <div key={idx} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5 font-bold text-zinc-900 dark:text-zinc-50 truncate" title={`${loc.city}, ${loc.country}`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-950 dark:bg-zinc-50 shrink-0"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#072364] dark:bg-[#60a5fa] shrink-0"></span>
                         <span className="truncate max-w-[180px] sm:max-w-[260px] md:max-w-[360px] lg:max-w-[480px]">{loc.city}, {loc.country}</span>
                       </div>
                       <span className="text-zinc-500 dark:text-zinc-400 text-2xs font-extrabold shrink-0">
                         {loc.count} ({loc.percentage}%)
                       </span>
                     </div>
-                    <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-zinc-100 dark:bg-[#072364]/20 h-1.5 rounded-full overflow-hidden">
                       <div
-                        className="bg-zinc-950 dark:bg-zinc-50 h-full rounded-full transition-all duration-500"
+                        className="bg-[#072364] dark:bg-[#60a5fa] h-full rounded-full transition-all duration-500"
                         style={{ width: `${loc.percentage}%` }}
                       />
                     </div>
@@ -495,9 +495,9 @@ export default function PropertyViewsDashboard() {
         </div>
 
         {/* Real-time Activity Feed */}
-        <div className="xl:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl shadow-xs flex flex-col min-h-[440px] justify-between">
+        <div className="xl:col-span-2 bg-white dark:bg-linear-to-br dark:from-[#061433] dark:to-[#0A1A3F] border border-zinc-200 dark:border-blue-900/30 p-6 rounded-xl shadow-xs flex flex-col min-h-[440px] justify-between">
           <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-850 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-zinc-500" />
                 <h4 className="font-bold text-zinc-900 dark:text-zinc-50 text-sm">Recent Traffic Activity</h4>
@@ -512,7 +512,7 @@ export default function PropertyViewsDashboard() {
                     setRecentSearch(e.target.value)
                     setRecentPage(1)
                   }}
-                  className="w-full pl-8 pr-2.5 py-1 text-3xs bg-zinc-50 dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 text-zinc-800 dark:text-zinc-200"
+                  className="w-full pl-8 pr-2.5 py-1 text-3xs bg-zinc-50 dark:bg-[#05133a]/60 border border-zinc-200/80 dark:border-blue-900/50 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 text-zinc-800 dark:text-zinc-200"
                 />
               </div>
             </div>

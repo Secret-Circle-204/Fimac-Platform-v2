@@ -163,7 +163,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         setZoom(16) // Set higher zoom on search results to lock in location
 
         const addr = result.address || {}
-        const parts = result.display_name ? result.display_name.split(',').map((p: any) => p.trim()) : []
+        const parts = result.display_name ? result.display_name.split(',').map((p: string) => p.trim()) : []
         const country = addr.country || (parts.length > 0 ? parts[parts.length - 1] : '')
         const state = addr.state || addr.region || (parts.length > 1 ? parts[parts.length - 2] : '')
         const city = addr.city || addr.town || addr.village || addr.county || (parts.length > 2 ? parts[parts.length - 3] : '')
@@ -208,7 +208,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
 
         if (data && data.address) {
           const addr = data.address || {}
-          const parts = data.display_name ? data.display_name.split(',').map((p: any) => p.trim()) : []
+          const parts = data.display_name ? data.display_name.split(',').map((p: string) => p.trim()) : []
           const country = addr.country || (parts.length > 0 ? parts[parts.length - 1] : '')
           const state = addr.state || addr.region || (parts.length > 1 ? parts[parts.length - 2] : '')
           const city = addr.city || addr.town || addr.village || addr.county || (parts.length > 2 ? parts[parts.length - 3] : '')
@@ -263,7 +263,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
 
       if (data && data.address) {
         const addr = data.address || {}
-        const parts = data.display_name ? data.display_name.split(',').map((p: any) => p.trim()) : []
+        const parts = data.display_name ? data.display_name.split(',').map((p: string) => p.trim()) : []
         const country = addr.country || (parts.length > 0 ? parts[parts.length - 1] : '')
         const state = addr.state || addr.region || (parts.length > 1 ? parts[parts.length - 2] : '')
         const city = addr.city || addr.town || addr.village || addr.county || (parts.length > 2 ? parts[parts.length - 3] : '')

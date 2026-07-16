@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       }
       // 2. Check category restriction
       if (f.visibleInCategories && f.visibleInCategories.length > 0) {
-        if (!f.visibleInCategories.includes(category as any)) {
+        if (!f.visibleInCategories.includes(category as 'residential' | 'commercial' | 'hospitality' | 'land')) {
           return false
         }
       }
