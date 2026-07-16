@@ -150,7 +150,63 @@ async function resolveIPLocation(ip: string): Promise<{ country: string; city: s
     return null
   }
 
-  // 1. Try local GeoIP database (DB-IP City Lite)
+  // 1. Try ipinfo.io first (Live API - High Accuracy)
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 1200) // 1.2s timeout
+    
+    console.log(`📡 [GeoIP API] Querying ipinfo.io for public IP: "${cleanIp}"`)
+    const response = await fetch(`https://ipinfo.io/${cleanIp}/json`, {
+      signal: controller.signal,
+    })
+    
+    clearTimeout(timeoutId)
+    
+    if (response.ok) {
+      const geo = await response.json()
+      console.log(`📡 [GeoIP API] ipinfo.io response:`, geo)
+      if (geo.city || geo.country) {
+        return {
+          country: getCountryName(geo.country || ""),
+          city: geo.city || "",
+          region: geo.region || "",
+          source: "api-ipinfo",
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("⚠️ [GeoIP API] ipinfo.io lookup failed/timed out, trying next provider...", err)
+  }
+
+  // 2. Try ip-api.com as second choice (Live API - High Accuracy)
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 1200) // 1.2s timeout
+    
+    console.log(`📡 [GeoIP API] Querying ip-api.com for public IP: "${cleanIp}"`)
+    const response = await fetch(`http://ip-api.com/json/${cleanIp}`, {
+      signal: controller.signal,
+    })
+    
+    clearTimeout(timeoutId)
+    
+    if (response.ok) {
+      const geo = await response.json()
+      console.log(`📡 [GeoIP API] ip-api.com response:`, geo)
+      if (geo.status === "success") {
+        return {
+          country: geo.country || "",
+          city: geo.city || "",
+          region: geo.regionName || "",
+          source: "api-ipapi",
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("⚠️ [GeoIP API] ip-api.com lookup failed, trying next provider...", err)
+  }
+
+  // 3. Try local GeoIP database (DB-IP City Lite) as fallback
   try {
     const reader = await getGeoIPReader()
     if (reader) {
@@ -175,64 +231,8 @@ async function resolveIPLocation(ip: string): Promise<{ country: string; city: s
     console.error("❌ [GeoIP Local] Failed to read from local DB-IP mmdb:", err)
   }
 
-  // 2. Try ipinfo.io as fallback 1
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 1200) // 1.2s timeout
-    
-    console.log(`📡 [GeoIP API Fallback] Querying ipinfo.io for public IP: "${cleanIp}"`)
-    const response = await fetch(`https://ipinfo.io/${cleanIp}/json`, {
-      signal: controller.signal,
-    })
-    
-    clearTimeout(timeoutId)
-    
-    if (response.ok) {
-      const geo = await response.json()
-      console.log(`📡 [GeoIP API Fallback] ipinfo.io response:`, geo)
-      if (geo.city || geo.country) {
-        return {
-          country: getCountryName(geo.country || ""),
-          city: geo.city || "",
-          region: geo.region || "",
-          source: "api",
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("⚠️ [GeoIP API Fallback] ipinfo.io lookup failed/timed out, trying fallback...", err)
-  }
-
-  // 3. Try ip-api.com as fallback 2
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 1200) // 1.2s timeout
-    
-    console.log(`📡 [GeoIP API Fallback] Querying ip-api.com for public IP: "${cleanIp}"`)
-    const response = await fetch(`http://ip-api.com/json/${cleanIp}`, {
-      signal: controller.signal,
-    })
-    
-    clearTimeout(timeoutId)
-    
-    if (response.ok) {
-      const geo = await response.json()
-      console.log(`📡 [GeoIP API Fallback] ip-api.com response:`, geo)
-      if (geo.status === "success") {
-        return {
-          country: geo.country || "",
-          city: geo.city || "",
-          region: geo.regionName || "",
-          source: "api",
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("⚠️ [GeoIP API Fallback] ip-api.com fallback lookup failed:", err)
-  }
-
-  console.log(`❌ [GeoIP API Fallback] All lookup providers failed for IP: "${cleanIp}"`)
-  return null
+  console.log(`❌ [GeoIP Fallback] All lookup providers failed for IP: "${cleanIp}"`)
+  return null;
 }
 
 export async function POST(request: NextRequest) {
