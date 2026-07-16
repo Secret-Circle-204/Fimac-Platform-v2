@@ -10,9 +10,57 @@ import { getCachedSearchFilters } from '@/lib/cache/search-filters'
 import { getCachedSearchResults, buildSearchCacheKey } from '@/lib/cache/search-results'
 import { getCachedConstructionStatuses } from '@/lib/cache/construction-statuses'
 
-export const metadata = {
-  title: 'Search Properties | Fimac Group',
-  description: 'Search and filter hospitality investment properties',
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const resolvedParams = await searchParams
+  const type = typeof resolvedParams.type === 'string' ? resolvedParams.type : ''
+  const category = typeof resolvedParams.category === 'string' ? resolvedParams.category : ''
+  const country = typeof resolvedParams.country === 'string' ? resolvedParams.country : ''
+  const city = typeof resolvedParams.city === 'string' ? resolvedParams.city : ''
+
+  const titleParts = []
+
+  if (category && category !== 'all') {
+    if (category === 'hospitality') {
+      titleParts.push(type && type !== 'all' ? `${type.charAt(0).toUpperCase()}${type.slice(1)}s` : 'Hotels & Hospitality Properties')
+    } else if (category === 'residential') {
+      titleParts.push('Luxury Residential Properties')
+    } else if (category === 'commercial') {
+      titleParts.push('Commercial Real Estate Assets')
+    } else if (category === 'land') {
+      titleParts.push('Development Land & Lots')
+    } else {
+      const capCat = category.charAt(0).toUpperCase() + category.slice(1)
+      titleParts.push(`${capCat} Properties`)
+    }
+  } else {
+    titleParts.push('Luxury Properties & Hotel Investments')
+  }
+
+  if (city && city !== 'all') {
+    const capCity = city.charAt(0).toUpperCase() + city.slice(1)
+    titleParts.push(`in ${capCity}`)
+  } else if (country && country !== 'all') {
+    const capCountry = country.charAt(0).toUpperCase() + country.slice(1)
+    titleParts.push(`in ${capCountry}`)
+  } else {
+    titleParts.push('Globally')
+  }
+
+  const generatedTitle = `${titleParts.join(' ')} | Fimac Group`
+  const locationSuffix = city && city !== 'all' ? `in ${city}` : country && country !== 'all' ? `in ${country}` : 'globally'
+  const generatedDesc = `Browse premium properties, off-market hotel assets, and real estate investment listings ${locationSuffix} on Fimac Group. Explore detailed specifications, location data, and visual layouts.`
+
+  return {
+    title: generatedTitle,
+    description: generatedDesc,
+    alternates: {
+      canonical: '/search',
+    },
+  }
 }
 
 export default async function SearchPage({

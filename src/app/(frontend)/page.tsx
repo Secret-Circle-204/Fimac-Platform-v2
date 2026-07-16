@@ -13,6 +13,17 @@ import { FadeIn } from '@/components/animations/fade-in'
 import Link from 'next/link'
 import { getCachedLatestBlogPosts } from '@/lib/cache/blog-posts'
 import { getCachedAboutPage } from '@/lib/cache/about-page'
+import { SERVER_URL } from '@/env'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'FIMAC | Global Real Estate Investment & Hospitality Advisors',
+  description: 'FIMAC Group connects buyers with premium hotels, resorts, commercial assets, and residential real estate globally. Contact our advisors for off-market hospitality investments.',
+  keywords: ['real estate investment', 'luxury hotels', 'commercial property', 'residential real estate', 'property investment', 'FIMAC', 'Fimac Group', 'hotels for sale'],
+  alternates: {
+    canonical: '/',
+  },
+}
 
 const propertyTypes = [
   {
@@ -56,9 +67,35 @@ const propertyTypes = [
 export default async function HomePage() {
   const latestPosts = await getCachedLatestBlogPosts(4)
   const aboutPage = await getCachedAboutPage()
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateAgent',
+    name: 'FIMAC Group',
+    description: 'FIMAC is a premier real estate platform offering global properties, luxury hotels, residential real estate, commercial assets, and expert consulting.',
+    url: SERVER_URL,
+    logo: `${SERVER_URL}/advisor_consultation.png`,
+    image: `${SERVER_URL}/scene-with-business-.jpg`,
+    telephone: '+1 (234) 567-8900',
+    email: 'info@fimacgroup.com',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: '123 Investment Plaza',
+      addressLocality: 'Knoxville',
+      addressRegion: 'TN',
+      postalCode: '37902',
+      addressCountry: 'US',
+    },
+  }
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <div className="flex min-h-screen flex-col">
+        <main className="flex-1">
         <Hero />
 
         {/* About Section */}
@@ -246,5 +283,6 @@ export default async function HomePage() {
         )}
       </main>
     </div>
+    </>
   )
 }

@@ -11,12 +11,69 @@ import Link from "next/link"
 
 export const metadata = {
   title: "Frequently Asked Questions | Fimac Group",
-  description: "Find answers to common questions about hospitality investment",
+  description: "Find answers to common questions about hospitality investment and real estate acquisitions.",
+  keywords: ["real estate FAQ", "hotel investment questions", "FIMAC help", "buyer verification"],
+  alternates: {
+    canonical: '/faq',
+  },
 }
 
 export default function FAQPage() {
+  const schemaFaqs = [
+    {
+      question: "What is Fimac Group?",
+      answer: "Fimac Group is a specialized platform connecting buyers with exclusive off-market hospitality properties like hotels and resorts. We facilitate the buying and selling of hotels, resorts, vacation rentals, and other hospitality properties in the Southeast United States."
+    },
+    {
+      question: "How does the platform work?",
+      answer: "Our platform offers a curated selection of hospitality properties. Buyers can browse listings, access detailed due diligence materials, and contact the platform directly. We provide support throughout the entire acquisition process."
+    },
+    {
+      question: "Is there a fee to use the platform?",
+      answer: "Browsing properties and basic registration are free. We charge fees for certain premium services such as property listings and transaction facilitation. All fees are transparent and disclosed upfront."
+    },
+    {
+      question: "How do I become a verified buyer?",
+      answer: "To become verified, you need to: (1) Create an buyer account, (2) Complete your profile with investment preferences, (3) Upload proof of funds or financial capability, (4) Sign our platform NDA. Our team typically reviews applications within 2-3 business days."
+    },
+    {
+      question: "What information can I access on listed properties?",
+      answer: "You'll gain access to detailed property information including: land area, zoning, capacity limits, and other essential details. This information is crucial for proper due diligence."
+    },
+    {
+      question: "What types of properties are available?",
+      answer: "We specialize in various hospitality properties including: hotels (boutique to full-service), resorts, motels, inns & bed and breakfasts, vacation rental properties, and commercial hospitality real estate. Properties range from $1M to $50M+."
+    },
+    {
+      question: "Do you provide financing assistance?",
+      answer: "While we don't provide financing directly, we work with several lenders specializing in hospitality real estate and can connect you with appropriate financing partners. We also provide resources on SBA loans and commercial real estate financing options."
+    },
+    {
+      question: "How is my information protected?",
+      answer: "We use bank-level encryption (256-bit SSL) to protect all data transmission. Sensitive financial information is stored in secure, encrypted databases with restricted access. We comply with all relevant data protection regulations and never sell your personal information."
+    }
+  ]
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: schemaFaqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  }
+
   return (
-    <div className="flex min-h-screen flex-col pt-24">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <div className="flex min-h-screen flex-col pt-24">
       <main className="flex-1">
         {/* Hero Section */}
         <section className="bg-blue-fimac text-white py-16">
@@ -178,5 +235,6 @@ export default function FAQPage() {
         </section>
       </main>
     </div>
+    </>
   )
 }

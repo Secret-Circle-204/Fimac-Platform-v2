@@ -7,6 +7,10 @@ import { getCachedCompanySettings } from "@/lib/cache/company-settings"
 export const metadata = {
   title: "Contact Us | Fimac Group",
   description: "Get in touch with our team for investment opportunities and inquiries",
+  keywords: ["contact FIMAC", "Fimac phone number", "real estate support", "hospitality investment contact"],
+  alternates: {
+    canonical: '/contact',
+  },
 }
 
 export default async function ContactPage() {

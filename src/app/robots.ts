@@ -24,6 +24,7 @@ export default function robots(): MetadataRoute.Robots {
           '/(payload)/',    // Payload admin panel (Next.js route group)
           '/admin/',        // Payload admin alias
           '/next/',         // Any internal Next.js diagnostic or edge routes
+          '/dashboard/',    // User dashboards (buyer, seller, etc.)
         ],
       },
     ],

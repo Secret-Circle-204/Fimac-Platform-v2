@@ -1,6 +1,10 @@
 export const metadata = {
   title: "Privacy Policy | FIMAC Platform",
   description: "Learn how FIMAC collects, uses, and protects your personal information.",
+  keywords: ["privacy policy", "FIMAC privacy", "data protection"],
+  alternates: {
+    canonical: '/privacy-policy',
+  },
 }
 
 export default function PrivacyPolicyPage() {

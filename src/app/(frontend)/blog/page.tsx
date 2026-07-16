@@ -10,8 +10,11 @@ import type { Where } from "payload"
 
 export const metadata = {
   title: "Blog | Fimac Group",
-  description:
-    "Stay updated with the latest hospitality investment trends, market analysis, and expert advice",
+  description: "Stay updated with the latest hospitality investment trends, market analysis, and expert real estate advice.",
+  keywords: ["real estate blog", "hospitality blog", "hotel investment trends", "FIMAC updates"],
+  alternates: {
+    canonical: '/blog',
+  },
 }
 
 const getCachedBlogData = async (page: number, categoryId: string) => {

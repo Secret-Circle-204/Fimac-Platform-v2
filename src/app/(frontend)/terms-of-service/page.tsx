@@ -1,6 +1,10 @@
 export const metadata = {
   title: "Terms of Service | FIMAC Platform",
   description: "Read the terms and conditions for using the FIMAC investment platform.",
+  keywords: ["terms of service", "FIMAC agreement", "legal agreement"],
+  alternates: {
+    canonical: '/terms-of-service',
+  },
 }
 
 export default function TermsOfServicePage() {

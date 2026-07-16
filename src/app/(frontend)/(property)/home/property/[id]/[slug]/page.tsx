@@ -60,6 +60,12 @@ export async function generateMetadata({ params }: { params: Params }) {
       ? (property.original.photos[0].url ?? null)
       : null
 
+  const absolutePhotoUrl = primaryPhotoUrl
+    ? primaryPhotoUrl.startsWith('http') ? primaryPhotoUrl : `${SERVER_URL}${primaryPhotoUrl}`
+    : null
+
+  const absolutePageUrl = `${SERVER_URL}${property.url}`
+
   return {
     metadataBase: new URL(SERVER_URL || 'http://localhost:3000'),
     alternates: {
@@ -68,12 +74,12 @@ export async function generateMetadata({ params }: { params: Params }) {
     title: property.original.location?.address?.fullAddress || property.title,
     description: property.description,
     openGraph: {
-      url: property.url,
+      url: absolutePageUrl,
       title: property.original.location?.address?.fullAddress || property.title,
       description: property.description ?? undefined,
       type: 'website',
-      images: primaryPhotoUrl
-        ? [{ url: primaryPhotoUrl, width: 1200, height: 630, alt: property.title ?? 'Property' }]
+      images: absolutePhotoUrl
+        ? [{ url: absolutePhotoUrl, width: 1200, height: 630, alt: property.title ?? 'Property' }]
         : [],
     },
   }
@@ -140,17 +146,18 @@ export default async function PropertyDetailPage({
       ? 'https://schema.org/InStock'
       : 'https://schema.org/OutOfStock'
 
-  // Extract all photo URLs from Media objects, filtering nulls
+  // Extract all photo URLs from Media objects, filtering nulls and converting to absolute URLs
   const schemaImages = (property.original.photos ?? [])
     .map((p) => (typeof p === 'object' && 'url' in p ? p.url : null))
     .filter((url): url is string => typeof url === 'string' && url.length > 0)
+    .map((url) => url.startsWith('http') ? url : `${SERVER_URL}${url}`)
 
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'RealEstateListing',
     name: property.title || property.original.location?.address?.fullAddress,
     description: property.description,
-    url: property.url,
+    url: `${SERVER_URL}${property.url}`,
     datePosted: property.original.createdAt,
     image: schemaImages,
     offers: {

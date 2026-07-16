@@ -8,6 +8,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { RichText } from '@/components/shared/rich-text'
 import { ShareButton } from '@/components/shared/share-button'
+import { SERVER_URL } from "@/env"
 
 import { unstable_cache } from "next/cache"
 import { cache } from "react"
@@ -73,10 +74,39 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
+  const title = post.seo?.metaTitle || `${post.title} | Fimac Group Blog`
+  const description = post.seo?.metaDescription || post.excerpt
+  const postImageUrl = post.featuredImage && typeof post.featuredImage === "object" && post.featuredImage.url
+    ? post.featuredImage.url
+    : "/scene-with-business-.jpg"
+
+  const absoluteImageUrl = postImageUrl.startsWith('http') ? postImageUrl : `${SERVER_URL}${postImageUrl}`
+
   return {
-    title: post.seo?.metaTitle || `${post.title} | Fimac Group Blog`,
-    description: post.seo?.metaDescription || post.excerpt,
-    keywords: post.seo?.metaKeywords,
+    title,
+    description,
+    keywords: post.seo?.metaKeywords || post.tags?.map((t: { tag?: string | null }) => t.tag).filter(Boolean) || [],
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+    },
+    openGraph: {
+      type: "article",
+      title,
+      description,
+      url: `/blog/${post.slug}`,
+      images: [
+        {
+          url: absoluteImageUrl,
+          alt: post.title,
+        }
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [absoluteImageUrl],
+    },
   }
 }
 
@@ -98,9 +128,48 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     ? await getRelatedPosts(post.id, categoryId) 
     : []
 
+  const postImageUrl = post.featuredImage && typeof post.featuredImage === "object" && post.featuredImage.url
+    ? post.featuredImage.url
+    : "/scene-with-business-.jpg"
+  const absoluteImageUrl = postImageUrl.startsWith('http') ? postImageUrl : `${SERVER_URL}${postImageUrl}`
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    image: [absoluteImageUrl],
+    datePublished: post.publishedDate || post.createdAt,
+    dateModified: post.updatedAt,
+    author: [
+      {
+        '@type': 'Person',
+        name: post.author || 'Fimac Group Team',
+        url: `${SERVER_URL}/about`,
+      },
+    ],
+    publisher: {
+      '@type': 'Organization',
+      name: 'FIMAC Group',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SERVER_URL}/advisor_consultation.png`,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${SERVER_URL}/blog/${post.slug}`,
+    },
+  }
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <div className="flex min-h-screen flex-col">
+        <main className="flex-1">
         {/* Back Button */}
         <section className="bg-gray-50 py-4 border-b">
           <div className="container mx-auto px-4">
@@ -252,5 +321,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       </main>
     </div>
+    </>
   )
 }

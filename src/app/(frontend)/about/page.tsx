@@ -4,8 +4,11 @@ import { getCachedAboutPage } from '@/lib/cache/about-page'
 
 export const metadata = {
   title: 'About FIMAC | Hospitality Investment Advisors',
-  description:
-    "Discover FIMAC's mission, values, and strengths in global hospitality transactions.",
+  description: "Discover FIMAC's mission, values, and strengths in global hospitality transactions.",
+  keywords: ["FIMAC company", "about FIMAC", "real estate advisors", "hospitality transactions"],
+  alternates: {
+    canonical: '/about',
+  },
 }
 
 export default async function AboutPage() {

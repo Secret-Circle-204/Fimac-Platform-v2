@@ -25,7 +25,7 @@ if (globalRef.ipCacheCleanupInterval) {
 
 export const ipLocationsCache = {
   cache,
-  TTL: 300000, // 5 minutes in milliseconds
+  TTL: 600000, // 10 minutes in milliseconds
   MAX_SIZE: 5000, // FIFO Max entries limit
 
   /**
