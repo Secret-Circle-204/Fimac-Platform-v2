@@ -5,7 +5,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import type { Payload } from 'payload'
-import type { PropertyType } from '../src/payload-types'
+import type { PropertyType, Feature } from '../src/payload-types'
 import slugify from 'slugify'
 
 // Define explicit interfaces to enforce strict TS safety without any/as any/suppressions
@@ -1718,12 +1718,17 @@ async function main() {
     { name: 'Landscaped Garden', slug: 'landscaped-garden', featureGroup: 'outdoor' as const },
     { name: 'Underground Parking', slug: 'underground-parking', featureGroup: 'parking' as const },
   ]
-  const featureIds: number[] = []
+  const featureDocs: Feature[] = []
   for (const feat of featuresList) {
     const id = await getOrCreateFeature(payload, feat.name, feat.slug, feat.featureGroup)
-    featureIds.push(id)
+    const doc = await payload.findByID({
+      collection: 'features',
+      id,
+      depth: 0,
+    })
+    featureDocs.push(doc as unknown as Feature)
   }
-  console.log(`✅ Features setup complete: ${featureIds.length} features added.`)
+  console.log(`✅ Features setup complete: ${featureDocs.length} features resolved.`)
 
   // 6. Seller
   console.log('👤 Setting up seller...')
@@ -1830,6 +1835,33 @@ async function main() {
       }
     }
 
+    const propertyTypeID = typeId
+    const allowedFeatureIds = featureDocs
+      .filter((feat) => {
+        if (feat.visibleInCategories && feat.visibleInCategories.length > 0) {
+          if (
+            !feat.visibleInCategories.includes(
+              categorySlug as 'residential' | 'commercial' | 'hospitality' | 'land',
+            )
+          ) {
+            return false
+          }
+        }
+        if (feat.visibleInPropertyTypes && feat.visibleInPropertyTypes.length > 0) {
+          const typeIds = feat.visibleInPropertyTypes.map((t) => {
+            if (typeof t === 'object' && t !== null) {
+              return t.id
+            }
+            return t as number
+          })
+          if (!typeIds.includes(propertyTypeID)) {
+            return false
+          }
+        }
+        return true
+      })
+      .map((feat) => feat.id)
+
     // Server-side ID generation fallback
     const propertyCustomId = crypto.randomBytes(8).toString('hex')
 
@@ -1848,7 +1880,7 @@ async function main() {
         listingStatus: forSaleStatusId,
         constructionStatus: readyStatusId,
         seller: sellerId,
-        features: featureIds,
+        features: allowedFeatureIds,
         photos: [],
         hasProject: true,
         projectDescription: {
