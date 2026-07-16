@@ -192,6 +192,16 @@ export const SellerRequests: CollectionConfig = {
               defaultValue: 'Egypt',
             },
             {
+              name: 'zip',
+              type: 'text',
+              label: 'Zip / Postal Code',
+            },
+            {
+              name: 'full_address',
+              type: 'text',
+              label: 'Full Address',
+            },
+            {
               name: 'asking_price',
               type: 'number',
               required: true,
@@ -284,6 +294,40 @@ export const SellerRequests: CollectionConfig = {
               admin: {
                 description: 'Select the features for this property request.',
               },
+            },
+            {
+              name: 'customSpecifications',
+              label: 'Custom Specifications',
+              type: 'array',
+              admin: {
+                initCollapsed: true,
+                description: 'Additional specifications for rare/special cases.',
+              },
+              fields: [
+                { name: 'label', type: 'text', required: true },
+                {
+                  name: 'icon',
+                  type: 'text',
+                  label: 'Lucide Icon Name',
+                  admin: {
+                    description: 'Optional Lucide icon name (e.g. Wind, Sun, Battery, Wifi)',
+                  },
+                },
+                {
+                  name: 'valueType',
+                  type: 'select',
+                  required: true,
+                  defaultValue: 'text',
+                  options: [
+                    { label: 'Text', value: 'text' },
+                    { label: 'Number', value: 'number' },
+                    { label: 'Date', value: 'date' },
+                    { label: 'Yes/No', value: 'boolean' },
+                    { label: 'URL', value: 'url' },
+                  ],
+                },
+                { name: 'value', type: 'text', required: true },
+              ],
             },
           ],
         },

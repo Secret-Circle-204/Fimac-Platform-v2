@@ -25,6 +25,7 @@ interface LocationStepProps {
     city: string
     state: string
     country: string
+    zip: string
   }
   onLocationChange: (data: {
     lat: number
@@ -33,12 +34,14 @@ interface LocationStepProps {
     city: string
     state: string
     country: string
+    zip: string
   }) => void
   onAddressDetailsChange: (details: {
     address: string
     city: string
     state: string
     country: string
+    zip: string
   }) => void
 }
 
@@ -89,7 +92,7 @@ export function LocationStep({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:col-span-2">
           <div className="space-y-2">
             <Label htmlFor="city" className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
               City <span className="text-red-500 ml-1 font-bold">*</span>
@@ -138,6 +141,22 @@ export function LocationStep({
                 required
                 className="h-14 border-slate-200 focus:border-blue-900 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-base font-semibold text-navy-deep pl-12 pr-4"
                 placeholder="e.g. Egypt"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="zip" className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Zip Code
+            </Label>
+            <div className="relative">
+              <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none z-10" />
+              <Input
+                id="zip"
+                name="zip"
+                value={addressDetails.zip || ''}
+                onChange={(e) => onAddressDetailsChange({ ...addressDetails, zip: e.target.value })}
+                className="h-14 border-slate-200 focus:border-blue-900 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-base font-semibold text-navy-deep pl-12 pr-4"
+                placeholder="e.g. 46619"
               />
             </div>
           </div>

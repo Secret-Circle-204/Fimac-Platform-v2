@@ -774,6 +774,8 @@ export interface SellerRequest {
   city: string;
   state: string;
   country: string;
+  zip?: string | null;
+  full_address?: string | null;
   asking_price: number;
   currency: 'EGP' | 'USD' | 'EUR';
   property_size?: number | null;
@@ -913,6 +915,21 @@ export interface SellerRequest {
    * Select the features for this property request.
    */
   features?: (number | Feature)[] | null;
+  /**
+   * Additional specifications for rare/special cases.
+   */
+  customSpecifications?:
+    | {
+        label: string;
+        /**
+         * Optional Lucide icon name (e.g. Wind, Sun, Battery, Wifi)
+         */
+        icon?: string | null;
+        valueType: 'text' | 'number' | 'date' | 'boolean' | 'url';
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * Registered name of the seller at submission time.
    */
@@ -1054,7 +1071,22 @@ export interface Feature {
   /**
    * Categorization grouping for display in front-end.
    */
-  featureGroup?: ('lifestyle' | 'security' | 'utilities' | 'amenities') | null;
+  featureGroup?:
+    | (
+        | 'interior'
+        | 'outdoor'
+        | 'security'
+        | 'parking'
+        | 'utilities'
+        | 'accessibility'
+        | 'business'
+        | 'hospitality'
+        | 'land_development'
+        | 'agriculture'
+        | 'sustainability'
+        | 'luxury'
+      )
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2007,6 +2039,8 @@ export interface SellerRequestsSelect<T extends boolean = true> {
   city?: T;
   state?: T;
   country?: T;
+  zip?: T;
+  full_address?: T;
   asking_price?: T;
   currency?: T;
   property_size?: T;
@@ -2153,6 +2187,15 @@ export interface SellerRequestsSelect<T extends boolean = true> {
         soilType?: T;
       };
   features?: T;
+  customSpecifications?:
+    | T
+    | {
+        label?: T;
+        icon?: T;
+        valueType?: T;
+        value?: T;
+        id?: T;
+      };
   full_name?: T;
   email?: T;
   phone?: T;
@@ -2294,11 +2337,6 @@ export interface CompanySetting {
   contactEmail: string;
   contactPhone: string;
   contactOffice: string;
-  businessHours: {
-    mondayFriday: string;
-    saturday: string;
-    sunday: string;
-  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2351,13 +2389,6 @@ export interface CompanySettingsSelect<T extends boolean = true> {
   contactEmail?: T;
   contactPhone?: T;
   contactOffice?: T;
-  businessHours?:
-    | T
-    | {
-        mondayFriday?: T;
-        saturday?: T;
-        sunday?: T;
-      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

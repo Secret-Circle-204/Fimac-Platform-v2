@@ -189,9 +189,17 @@ export class PropertyPublishingService {
         features: sellerRequest.features && sellerRequest.features.length > 0
           ? sellerRequest.features.map((f: number | string | { id: number | string }) => (typeof f === 'object' && f !== null ? Number(f.id) : Number(f)))
           : undefined,
-        // Feed the Google Maps URL into the smart location helper
-        // so that the Property's beforeChange hook auto-resolves geocoding
-        mapsUrlInput: sellerRequest.google_maps_url ?? undefined,
+        customSpecifications: sellerRequest.customSpecifications && sellerRequest.customSpecifications.length > 0
+          ? sellerRequest.customSpecifications.map((spec: any) => ({
+              label: spec.label,
+              icon: spec.icon ?? undefined,
+              valueType: spec.valueType,
+              value: spec.value,
+            }))
+          : undefined,
+        // Do not pass mapsUrlInput to avoid triggering redundant reverse-geocoding
+        // which overwrites the seller's valid, pre-resolved address components.
+        mapsUrlInput: undefined,
         location: {
           geo: {
             lat: sellerRequest.latitude ?? undefined,
@@ -202,6 +210,8 @@ export class PropertyPublishingService {
             city: sellerRequest.city,
             state: sellerRequest.state,
             country: sellerRequest.country,
+            zip: typeof (sellerRequest as unknown as Record<string, unknown>).zip === 'string' ? ((sellerRequest as unknown as Record<string, unknown>).zip as string) : undefined,
+            fullAddress: typeof (sellerRequest as unknown as Record<string, unknown>).full_address === 'string' ? ((sellerRequest as unknown as Record<string, unknown>).full_address as string) : undefined,
           },
         },
       }

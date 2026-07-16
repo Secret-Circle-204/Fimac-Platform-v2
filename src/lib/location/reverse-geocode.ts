@@ -97,10 +97,10 @@ export async function reverseGeocode(
       const country = addr.country || 'Egypt'
       const state = addr.state || addr.governorate || addr.county || ''
 
-      // Extract street
-      let street = addr.road || addr.suburb || addr.neighbourhood || addr.quarter || addr.city_district || addr.locality || addr.place || ''
-      if (addr.house_number && (addr.road || addr.locality)) {
-        street = `${addr.house_number} ${addr.road || addr.locality}`
+      // Extract street (strictly road, suburb, neighbourhood, or quarter, avoiding city-level fallbacks like locality, place, or district)
+      let street = addr.road || addr.suburb || addr.neighbourhood || addr.quarter || ''
+      if (addr.house_number && addr.road) {
+        street = `${addr.house_number} ${addr.road}`
       }
 
       // Extract city

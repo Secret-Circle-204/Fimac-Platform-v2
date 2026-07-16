@@ -371,6 +371,35 @@ export const revalidatePropertyDeleteCache: CollectionAfterDeleteHook<Property> 
 
 export const deleteAssociatedPropertyData: CollectionBeforeDeleteHook = async ({ req, id }) => {
   try {
+    // 1. Find the property being deleted to check if it has a linked seller request
+    const propertyDoc = await req.payload.findByID({
+      collection: 'properties',
+      id,
+      depth: 0,
+    })
+
+    if (propertyDoc && propertyDoc.seller_request) {
+      const sellerReqId =
+        typeof propertyDoc.seller_request === 'object' && propertyDoc.seller_request !== null
+          ? propertyDoc.seller_request.id
+          : propertyDoc.seller_request
+
+      await req.payload.update({
+        collection: 'seller-requests',
+        id: sellerReqId,
+        data: {
+          status: 'rejected',
+        },
+      })
+    }
+  } catch (err) {
+    req.payload.logger.error(
+      { err },
+      `[PropertiesHook] Failed to reject associated seller request for property ${id}`,
+    )
+  }
+
+  try {
     // Delete all property views associated with this property to satisfy foreign key constraints
     await req.payload.delete({
       collection: 'property-views',

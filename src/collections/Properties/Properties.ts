@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Where } from 'payload'
 import {
   formatAddress,
   syncLocationHook,
@@ -390,6 +390,41 @@ export const Properties: CollectionConfig = {
                   relationTo: 'features',
                   hasMany: true,
                   index: true,
+                  filterOptions: ({ data }) => {
+                    const category = data?.category
+                    const propertyType = data?.propertyType
+
+                    const andConditions: Where[] = []
+
+                    if (category) {
+                      andConditions.push({
+                        or: [
+                          { visibleInCategories: { exists: false } },
+                          { visibleInCategories: { equals: null } },
+                          { visibleInCategories: { in: [category] } },
+                        ],
+                      })
+                    }
+
+                    if (propertyType) {
+                      const typeId = typeof propertyType === 'object' ? propertyType.id : propertyType
+                      andConditions.push({
+                        or: [
+                          { visibleInPropertyTypes: { exists: false } },
+                          { visibleInPropertyTypes: { equals: null } },
+                          { visibleInPropertyTypes: { in: [typeId] } },
+                        ],
+                      })
+                    }
+
+                    if (andConditions.length > 0) {
+                      return {
+                        and: andConditions,
+                      }
+                    }
+
+                    return true
+                  },
                   admin: {
                     description: 'Select the features for this property.',
                     disableListColumn: true,

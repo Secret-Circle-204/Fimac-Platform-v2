@@ -8,7 +8,7 @@ const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
   images: {
-    minimumCacheTTL: 31536000,          // cache optimised images for 1 year
+    minimumCacheTTL: 31536000, // cache optimised images for 1 year
     localPatterns: [
       {
         pathname: '/**',

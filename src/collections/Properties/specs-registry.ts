@@ -634,7 +634,12 @@ export const ALL_SPEC_FIELDS: Record<string, SpecFieldDefinition> = {
     subGroup: 'resort',
     unit: 'm²',
     adminCondition: (data, siblingData) => {
-      return typeof siblingData === 'object' && siblingData !== null && 'hasPrivateBeach' in siblingData && !!siblingData.hasPrivateBeach
+      return (
+        typeof siblingData === 'object' &&
+        siblingData !== null &&
+        'hasPrivateBeach' in siblingData &&
+        !!siblingData.hasPrivateBeach
+      )
     },
   },
   'hospitality.resort.hasGolfCourse': {
@@ -785,10 +790,7 @@ export const PROFILES: Record<string, string[]> = {
     'residential.villa.hasDriverRoom',
     'residential.villa.hasMaidRoom',
   ],
-  apartment: [
-    'residential.apartment.hasBalcony',
-    'residential.apartment.hasMaidRoom',
-  ],
+  apartment: ['residential.apartment.hasBalcony', 'residential.apartment.hasMaidRoom'],
   chalet: [
     'residential.chalet.hasPool',
     'residential.chalet.hasGarden',
@@ -885,7 +887,7 @@ export const PROFILE_MAP: Record<string, string> = {
   loft: 'apartment',
   villa: 'villa',
   penthouse: 'villa',
-  'townhouse': 'villa',
+  townhouse: 'villa',
   'twin-house': 'villa',
   'farm-house': 'villa',
   mansion: 'villa',
@@ -902,7 +904,6 @@ export const PROFILE_MAP: Record<string, string> = {
   'holiday-village': 'resort',
   motel: 'motel',
   'guest-house': 'motel',
-  hostel: 'motel',
   'bed-and-breakfast': 'motel',
   camp: 'camp',
   'glamping-site': 'camp',
@@ -982,7 +983,9 @@ export function buildSpecField(spec: SpecFieldDefinition): Field {
   }
 }
 
-export function buildCategoryFields(category: 'residential' | 'commercial' | 'hospitality' | 'land'): Field[] {
+export function buildCategoryFields(
+  category: 'residential' | 'commercial' | 'hospitality' | 'land',
+): Field[] {
   const categorySpecs = Object.values(ALL_SPEC_FIELDS).filter((spec) => spec.category === category)
 
   // 1. Get flat common specs (where subGroup is 'common')
@@ -1018,4 +1021,3 @@ export function buildCategoryFields(category: 'residential' | 'commercial' | 'ho
 
   return [...commonFields, ...subGroupFields]
 }
-

@@ -8,6 +8,13 @@ interface FeatureOption {
   slug: string
 }
 
+interface CustomSpec {
+  label: string
+  icon?: string
+  valueType: 'text' | 'number' | 'date' | 'boolean' | 'url'
+  value: string
+}
+
 interface ReviewStepProps {
   selectedCategoryName: string
   selectedPropertyTypeName: string
@@ -29,6 +36,7 @@ interface ReviewStepProps {
   featureOptions: FeatureOption[]
   selectedFeatures: Array<number | string>
   customFeatures: string[]
+  customSpecs?: CustomSpec[]
 }
 
 export function ReviewStep({
@@ -47,6 +55,7 @@ export function ReviewStep({
   featureOptions,
   selectedFeatures,
   customFeatures,
+  customSpecs = [],
 }: ReviewStepProps) {
   const formattedConstructionStatus = () => {
     switch (constructionStatus) {
@@ -165,7 +174,7 @@ export function ReviewStep({
         </div>
 
         {/* Dynamic Specifications Summary */}
-        {activeSpecs.length > 0 && (
+        {(activeSpecs.length > 0 || customSpecs.length > 0) && (
           <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100/80 space-y-4 md:col-span-2 shadow-sm">
             <h4 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Property Specifications
@@ -173,6 +182,18 @@ export function ReviewStep({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {activeSpecs.map((spec) => {
                 const rawVal = specValues[spec.path]
+                if (
+                  rawVal === undefined ||
+                  rawVal === null ||
+                  rawVal === '' ||
+                  rawVal === false ||
+                  rawVal === 'false' ||
+                  rawVal === 'No' ||
+                  rawVal === 'no'
+                ) {
+                  return null
+                }
+
                 let displayVal = '—'
 
                 if (spec.type === 'checkbox') {
@@ -187,6 +208,22 @@ export function ReviewStep({
                 return (
                   <div key={spec.path} className="flex flex-col p-4 bg-white rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
                     <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">{spec.label.en}</span>
+                    <span className="font-bold text-navy-deep mt-1 text-sm">{displayVal}</span>
+                  </div>
+                )
+              })}
+
+              {/* Custom Specifications */}
+              {customSpecs.map((spec, index) => {
+                let displayVal = spec.value
+                if (spec.valueType === 'boolean') {
+                  displayVal = spec.value === 'true' || spec.value === 'Yes' ? 'Yes' : 'No'
+                }
+                return (
+                  <div key={`custom-spec-${index}`} className="flex flex-col p-4 bg-white rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                      {spec.label} <span className="text-[9px] text-slate-300 font-bold">(Custom)</span>
+                    </span>
                     <span className="font-bold text-navy-deep mt-1 text-sm">{displayVal}</span>
                   </div>
                 )

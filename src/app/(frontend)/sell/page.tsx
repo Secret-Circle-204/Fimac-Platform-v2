@@ -1,9 +1,7 @@
 import { SellForm } from './sell-form'
 import { Building2 } from 'lucide-react'
-import { getCachedPropertyTypes } from '@/lib/cache/property-types'
 import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { redirect } from 'next/navigation'
-import { getPayloadClient } from '@/db/client'
 
 export default async function SellPage() {
   const user = await getCurrentUser()
@@ -11,40 +9,12 @@ export default async function SellPage() {
     redirect('/')
   }
 
-  const propertyTypesData = await getCachedPropertyTypes()
-  const propertyTypeOptions = propertyTypesData.map((t) => ({
-    label: t.name,
-    value: t.id, // We need the ID to populate the relationship correctly!
-    slug: t.slug,
-    specificationProfile: t.specificationProfile,
-    categorySlug: typeof t.category === 'object' && t.category !== null ? t.category.slug : '',
-  }))
-
-  console.log("SERVER PROPERTY TYPE OPTIONS:", propertyTypeOptions)
-
-  const categoriesMap = new Map<string, string>()
-  propertyTypesData.forEach((t) => {
-    if (t.category && typeof t.category === 'object') {
-      categoriesMap.set(t.category.slug, t.category.name)
-    }
-  })
-  const categoryOptions = Array.from(categoriesMap.entries()).map(([slug, name]) => ({
-    label: name,
-    value: slug,
-  }))
-
-  const payload = await getPayloadClient()
-  const featuresResult = await payload.find({
-    collection: 'features',
-    limit: 100,
-    sort: 'name',
-    depth: 0,
-  })
-  const featureOptions = featuresResult.docs.map((f) => ({
-    label: f.name,
-    value: f.id,
-    slug: f.slug,
-  }))
+  const categoryOptions = [
+    { label: 'Residential', value: 'residential' },
+    { label: 'Commercial', value: 'commercial' },
+    { label: 'Hospitality', value: 'hospitality' },
+    { label: 'Land', value: 'land' },
+  ]
 
   return (
     <div className="flex min-h-screen bg-blue-fimac flex-col pt-24">
@@ -174,8 +144,6 @@ export default async function SellPage() {
           <div className="container mx-auto px-4 max-w-7xl">
             <SellForm
               categoryOptions={categoryOptions}
-              propertyTypeOptions={propertyTypeOptions}
-              featureOptions={featureOptions}
               currentUser={user}
             />
           </div>

@@ -50,7 +50,12 @@ export function PricingStep({
               name="asking_price"
               type="number"
               value={askingPrice}
-              onChange={(e) => onAskingPriceChange(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value
+                if (val !== '' && Number(val) < 0) return
+                onAskingPriceChange(val)
+              }}
+              onWheel={(e) => e.currentTarget.blur()}
               required
               className="h-14 border-slate-200 focus:border-blue-900 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-base font-semibold text-navy-deep pl-12 pr-4"
               placeholder="e.g. 5000000"
@@ -90,7 +95,12 @@ export function PricingStep({
               name="property_size"
               type="number"
               value={propertySize}
-              onChange={(e) => onPropertySizeChange(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value
+                if (val !== '' && Number(val) < 0) return
+                onPropertySizeChange(val)
+              }}
+              onWheel={(e) => e.currentTarget.blur()}
               required
               className="h-14 border-slate-200 focus:border-blue-900 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-base font-semibold text-navy-deep pl-12 pr-4"
               placeholder="e.g. 450"

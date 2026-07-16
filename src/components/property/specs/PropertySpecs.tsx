@@ -150,8 +150,16 @@ export const PropertySpecs: React.FC<PropertySpecsProps> = ({ property }) => {
 
         const rawValue = getNestedValue(property, spec.path)
 
-        // Don't render empty values
-        if (rawValue === undefined || rawValue === null || rawValue === '') {
+        // Don't render empty, false, or "No" values
+        if (
+          rawValue === undefined ||
+          rawValue === null ||
+          rawValue === '' ||
+          rawValue === false ||
+          rawValue === 'false' ||
+          rawValue === 'No' ||
+          rawValue === 'no'
+        ) {
           return null
         }
 

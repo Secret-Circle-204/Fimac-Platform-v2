@@ -11,11 +11,7 @@ export const defaultConstructionStatuses = [
     slug: 'under_construction',
     colorTheme: 'amber',
   },
-  {
-    name: 'Brand New (First Occupancy)',
-    slug: 'brand_new',
-    colorTheme: 'blue',
-  },
+
   {
     name: 'Off-Plan',
     slug: 'off_plan',

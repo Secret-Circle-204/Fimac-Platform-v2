@@ -46,7 +46,7 @@ export default buildConfig({
       idleTimeoutMillis: 60000,
       connectionTimeoutMillis: 20000,
     },
-    push: true,
+    push: false,
     migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
@@ -55,18 +55,28 @@ export default buildConfig({
     try {
       const db = payload.db.drizzle
       await db.execute(sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`)
-      await db.execute(sql`CREATE INDEX IF NOT EXISTS properties_title_trgm_idx ON properties USING gin (title gin_trgm_ops)`)
-      await db.execute(sql`CREATE INDEX IF NOT EXISTS properties_city_trgm_idx ON properties USING gin (location_address_city gin_trgm_ops)`)
-      await db.execute(sql`CREATE INDEX IF NOT EXISTS properties_state_trgm_idx ON properties USING gin (location_address_state gin_trgm_ops)`)
-      await db.execute(sql`CREATE INDEX IF NOT EXISTS properties_zip_trgm_idx ON properties USING gin (location_address_zip gin_trgm_ops)`)
+      await db.execute(
+        sql`CREATE INDEX IF NOT EXISTS properties_title_trgm_idx ON properties USING gin (title gin_trgm_ops)`,
+      )
+      await db.execute(
+        sql`CREATE INDEX IF NOT EXISTS properties_city_trgm_idx ON properties USING gin (location_address_city gin_trgm_ops)`,
+      )
+      await db.execute(
+        sql`CREATE INDEX IF NOT EXISTS properties_state_trgm_idx ON properties USING gin (location_address_state gin_trgm_ops)`,
+      )
+      await db.execute(
+        sql`CREATE INDEX IF NOT EXISTS properties_zip_trgm_idx ON properties USING gin (location_address_zip gin_trgm_ops)`,
+      )
       payload.logger.info('✅ Database search performance indexes initialized successfully!')
     } catch (err) {
-      payload.logger.error(`❌ Failed to initialize pg_trgm search indexes: ${err instanceof Error ? err.message : 'Unknown'}`)
+      payload.logger.error(
+        `❌ Failed to initialize pg_trgm search indexes: ${err instanceof Error ? err.message : 'Unknown'}`,
+      )
     }
 
-    await seedFeatures(payload)
     await seedPropertyCategories(payload)
     await seedPropertyTypes(payload)
+    await seedFeatures(payload)
     await seedListingStatuses(payload)
     await seedConstructionStatuses(payload)
 

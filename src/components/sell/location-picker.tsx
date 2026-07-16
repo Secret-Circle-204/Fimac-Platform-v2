@@ -44,6 +44,7 @@ interface LocationData {
   city: string
   state: string
   country: string
+  zip: string
 }
 
 interface LocationPickerProps {
@@ -161,11 +162,14 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         setMarkerPosition(newPos)
         setZoom(16) // Set higher zoom on search results to lock in location
 
-        const addr = result.address
-        const street = addr.road || addr.suburb || addr.pedestrian || addr.neighbourhood || result.display_name.split(',')[0]
-        const city = addr.city || addr.town || addr.village || addr.county || ''
-        const state = addr.state || addr.region || ''
-        const country = addr.country || ''
+        const addr = result.address || {}
+        const parts = result.display_name ? result.display_name.split(',').map((p: any) => p.trim()) : []
+        const country = addr.country || (parts.length > 0 ? parts[parts.length - 1] : '')
+        const state = addr.state || addr.region || (parts.length > 1 ? parts[parts.length - 2] : '')
+        const city = addr.city || addr.town || addr.village || addr.county || (parts.length > 2 ? parts[parts.length - 3] : '')
+        const street = addr.road || addr.suburb || addr.pedestrian || addr.neighbourhood || ''
+
+        const zip = addr.postcode || ''
 
         onChange({
           lat,
@@ -174,6 +178,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
           city,
           state,
           country,
+          zip,
         })
       } else {
         setGeocodingError('Location not found. Please try a different search.')
@@ -202,11 +207,14 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         const data = await response.json()
 
         if (data && data.address) {
-          const addr = data.address
-          const street = addr.road || addr.suburb || addr.pedestrian || addr.neighbourhood || data.display_name.split(',')[0]
-          const city = addr.city || addr.town || addr.village || addr.county || ''
-          const state = addr.state || addr.region || ''
-          const country = addr.country || ''
+          const addr = data.address || {}
+          const parts = data.display_name ? data.display_name.split(',').map((p: any) => p.trim()) : []
+          const country = addr.country || (parts.length > 0 ? parts[parts.length - 1] : '')
+          const state = addr.state || addr.region || (parts.length > 1 ? parts[parts.length - 2] : '')
+          const city = addr.city || addr.town || addr.village || addr.county || (parts.length > 2 ? parts[parts.length - 3] : '')
+          const street = addr.road || addr.suburb || addr.pedestrian || addr.neighbourhood || ''
+
+          const zip = addr.postcode || ''
 
           onChange({
             lat: latLng.lat,
@@ -215,6 +223,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
             city,
             state,
             country,
+            zip,
           })
         } else {
           // Fallback if address details not found
@@ -225,6 +234,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
             city: '',
             state: '',
             country: '',
+            zip: '',
           })
         }
       } catch (err) {
@@ -236,6 +246,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
           city: '',
           state: '',
           country: '',
+          zip: '',
         })
       }
     }
@@ -251,11 +262,14 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
       const data = await response.json()
 
       if (data && data.address) {
-        const addr = data.address
-        const street = addr.road || addr.suburb || addr.pedestrian || addr.neighbourhood || data.display_name.split(',')[0]
-        const city = addr.city || addr.town || addr.village || addr.county || ''
-        const state = addr.state || addr.region || ''
-        const country = addr.country || ''
+        const addr = data.address || {}
+        const parts = data.display_name ? data.display_name.split(',').map((p: any) => p.trim()) : []
+        const country = addr.country || (parts.length > 0 ? parts[parts.length - 1] : '')
+        const state = addr.state || addr.region || (parts.length > 1 ? parts[parts.length - 2] : '')
+        const city = addr.city || addr.town || addr.village || addr.county || (parts.length > 2 ? parts[parts.length - 3] : '')
+        const street = addr.road || addr.suburb || addr.pedestrian || addr.neighbourhood || ''
+
+        const zip = addr.postcode || ''
 
         onChange({
           lat,
@@ -264,6 +278,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
           city,
           state,
           country,
+          zip,
         })
       } else {
         onChange({
@@ -273,6 +288,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
           city: '',
           state: '',
           country: '',
+          zip: '',
         })
       }
     } catch (err) {
@@ -284,6 +300,7 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
         city: '',
         state: '',
         country: '',
+        zip: '',
       })
     }
   }
