@@ -59,3 +59,7 @@ playwright.config.ts
 
 # GeoIP Databases
 /data/*.mmdb
+
+# Migrations
+/src/migrations/*
+!/src/migrations/.gitkeep
