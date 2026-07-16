@@ -936,6 +936,17 @@ async function ensureMediaFile(
     return existing.docs[0].id as number
   }
 
+  // محاولة إعادة استخدام أي ميديا موجودة بالفعل في قاعدة البيانات لتفادي إنشاء صور جديدة
+  const anyExisting = await payload.find({
+    collection: 'media',
+    limit: 1,
+  })
+
+  if (anyExisting.docs.length > 0) {
+    return anyExisting.docs[0].id as number
+  }
+
+  // إذا لم يكن هناك أي ميديا على الإطلاق، يتم إنشاء صورة واحدة فقط كخيار بديل أخير
   const filePath = path.join(process.cwd(), 'public', filename)
   if (!fs.existsSync(filePath)) {
     throw new Error(`Required seed image not found at: ${filePath}`)
@@ -1763,20 +1774,8 @@ async function main() {
     `📊 Total properties prepared for seeding: ${finalPropertiesToSeed.length} (covers all 55 types, 2 per type)`,
   )
 
-  // 7. Ensure Media images exist in DB and retrieve IDs
-  console.log('🖼️ Setting up images in media database...')
-  const mediaMap: Record<string, number> = {}
-  const uniqueImages = Array.from(new Set(finalPropertiesToSeed.map((p) => p.imageFile)))
-  for (const imgName of uniqueImages) {
-    const mediaId = await ensureMediaFile(payload, imgName, `Seed image for ${imgName}`)
-    mediaMap[imgName] = mediaId
-  }
-  const projectMediaId = await ensureMediaFile(
-    payload,
-    'building-dreamy.jpg',
-    'Project Development Layout Plan',
-  )
-  console.log('✅ Media files ready.')
+  // 7. Ensure Media images exist in DB and retrieve IDs - BYPASSED (No images created or linked)
+  console.log('🖼️ Media setup bypassed (No images will be created or linked).')
 
   // 8. Properties Seeding Loop
   console.log('🏠 Seeding properties...')
@@ -1798,13 +1797,7 @@ async function main() {
           ? Object.keys(categoryMap).find((key) => categoryMap[key] === typeDoc.category)
           : ''
 
-    const imageMediaId = mediaMap[prop.imageFile]
-    if (!imageMediaId) {
-      console.warn(
-        `⚠️ Skipped seeding "${prop.title}": media not resolved for "${prop.imageFile}".`,
-      )
-      continue
-    }
+    // Media lookup bypassed (No images linked)
 
     // Determine category specific specs grouping to populate
     const specsData: Record<string, unknown> = {}
@@ -1856,9 +1849,8 @@ async function main() {
         constructionStatus: readyStatusId,
         seller: sellerId,
         features: featureIds,
-        photos: [imageMediaId],
+        photos: [],
         hasProject: true,
-        projectImage: projectMediaId,
         projectDescription: {
           root: {
             type: 'root',
