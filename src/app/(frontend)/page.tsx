@@ -12,6 +12,7 @@ import { FadeIn } from '@/components/animations/fade-in'
 // import { SearchFilters } from "@/components/home/search-filters"
 import Link from 'next/link'
 import { getCachedLatestBlogPosts } from '@/lib/cache/blog-posts'
+import { getCachedAboutPage } from '@/lib/cache/about-page'
 
 const propertyTypes = [
   {
@@ -54,34 +55,35 @@ const propertyTypes = [
 
 export default async function HomePage() {
   const latestPosts = await getCachedLatestBlogPosts(4)
+  const aboutPage = await getCachedAboutPage()
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1">
         <Hero />
 
         {/* About Section */}
-        <section className="py-16 bg-background text-foreground">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-6">Your Partner in Real Estate Investment</h2>
-              <p className="text-muted-foreground mb-6">
-                FIMAC (Financial Investment Management Advice Consultants) is a premier global
-                consultancy specializing in the sale and acquisition of hospitality properties. Our
-                exclusive platform and services are tailored for business owners, buyers, and
-                brokers in the hotel, motel, resort, and boutique hotel sectors. We provide a
-                sophisticated marketplace combined with expert advisory services, including
-                valuation, marketing, and negotiation. Our expertise ensures that every client
-                receives personalized attention and a strategic approach designed to maximize value.
-              </p>
-              <Button
-                className="bg-blue-brand-light text-white shadow-xs hover:bg-blue-brand-light/90 rounded-md px-6 py-2.5"
-                asChild
-              >
-                <Link href="/about">SHOW MORE</Link>
-              </Button>
+        {aboutPage?.heroDescription && (
+          <section className="py-16 bg-background text-foreground">
+            <div className="container mx-auto px-4">
+              <div className="max-w-3xl mx-auto text-center">
+                {aboutPage.heroTitle && (
+                  <h2 className="text-3xl font-bold mb-6">
+                    {aboutPage.heroTitle}
+                  </h2>
+                )}
+                <p className="text-muted-foreground mb-6">
+                  {aboutPage.heroDescription}
+                </p>
+                <Button
+                  className="bg-blue-brand-light text-white shadow-xs hover:bg-blue-brand-light/90 rounded-md px-6 py-2.5"
+                  asChild
+                >
+                  <Link href="/about">SHOW MORE</Link>
+                </Button>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* <SearchFilters /> */}
         <FeaturedProperties />

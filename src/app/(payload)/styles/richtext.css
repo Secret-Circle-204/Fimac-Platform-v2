@@ -20,19 +20,22 @@
 /* الحاوية الفعلية للمحرر (تتضمن شريط الأدوات وصندوق الكتابة) */
 .rich-text-lexical__wrap {
   border-radius: 10px !important;
-  border: 1px solid var(--theme-elevation-150, #e2e8f0) !important;
-  background-color: var(--theme-elevation-0, #ffffff) !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02) !important;
-  overflow: hidden !important;
+  border: 1px solid rgba(59, 130, 246, 0.4) !important; /* إطار أزرق شفاف واضح */
+  background-color: rgba(59, 130, 246, 0.1) !important; /* لون أزرق زجاجي شفاف واضح */
+  backdrop-filter: blur(8px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.04) !important;
+  overflow: visible !important; /* السماح بشريط الأدوات العائم بالظهور خارج الحدود دون اقتصاص */
   transition:
     border-color 0.2s ease,
+    background-color 0.2s ease,
     box-shadow 0.2s ease !important;
 }
 
 /* حالة التركيز (Focus state) للمحرر */
 .rich-text-lexical:focus-within .rich-text-lexical__wrap {
-  border-color: var(--theme-primary-500, #1d4ed8) !important;
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1) !important;
+  border-color: #2563eb !important; /* أزرق ملكي واضح عند التركيز */
+  background-color: rgba(59, 130, 246, 0.18) !important; /* زيادة وضوح الأزرق عند التركيز */
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15) !important;
 }
 
 /* شريط الأدوات العلوي للمحرر (Lexical Toolbar) */
@@ -69,6 +72,7 @@
 .rich-text-lexical .editor-input,
 .rich-text-lexical [class*='editorContent'],
 .rich-text-lexical [class*='ContentEditable'] {
+  background-color: transparent !important; /* لضمان ظهور اللون الزجاجي الأزرق للحاوية */
   padding: 18px 22px !important;
   min-height: 180px !important;
   outline: none !important;
@@ -393,4 +397,75 @@ html[data-theme] .inline-toolbar-popup .toolbar-popup__dropdown-item:hover,
 .inline-toolbar-popup .toolbar-popup__dropdown-item:hover {
   background-color: rgba(255, 255, 255, 0.15) !important;
   color: #ffffff !important;
+}
+
+/* =========================================================
+   تخصيص وتوسيط زر إضافة فقرة في الأسفل (Insert Paragraph at End)
+   ========================================================= */
+
+.insert-paragraph-at-end {
+  position: relative !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: calc(100% - 44px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  transform: none !important;
+  background-color: rgba(59, 130, 246, 0.12) !important; /* خلفية أزرق زجاجي شفاف */
+  border: 1px solid rgba(59, 130, 246, 0.3) !important; /* إطار أزرق خفيف ناعم */
+  border-radius: 8px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  opacity: 0.6 !important;
+  margin-top: 15px !important;
+  margin-bottom: 10px !important;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.02) !important;
+}
+
+.insert-paragraph-at-end:hover {
+  background-color: rgba(59, 130, 246, 0.25) !important; /* تعميق اللون عند تحويم الماوس */
+  border-color: rgba(59, 130, 246, 0.6) !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1) !important;
+}
+
+.insert-paragraph-at-end-inside {
+  background-color: transparent !important;
+  border: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.insert-paragraph-at-end-inside span,
+.insert-paragraph-at-end span {
+  color: #1d4ed8 !important; /* لون أزرق ملكي واضح جداً لعلامة الزائد */
+  font-weight: 700 !important;
+  font-size: 1.3rem !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* دعم الثيم الداكن لزر إضافة الفقرة */
+html[data-theme='dark'] .insert-paragraph-at-end {
+  background-color: rgba(56, 189, 248, 0.1) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+}
+
+html[data-theme='dark'] .insert-paragraph-at-end:hover {
+  background-color: rgba(56, 189, 248, 0.2) !important;
+  border-color: rgba(56, 189, 248, 0.5) !important;
+}
+
+html[data-theme='dark'] .insert-paragraph-at-end-inside span,
+html[data-theme='dark'] .insert-paragraph-at-end span {
+  color: #38bdf8 !important;
 }
