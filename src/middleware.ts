@@ -1,49 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCORSHeaders, getSecurityHeaders } from './lib/security/cors'
 import { checkRateLimit, RATE_LIMIT_PRESETS } from './lib/security/rate-limit'
-
-// التحقق من أن عنوان الـ IP محلي أو خاص
-function isPrivateIP(ip: string): boolean {
-  const cleanIp = ip.trim()
-  if (
-    cleanIp === '::1' ||
-    cleanIp === '127.0.0.1' ||
-    cleanIp === '::ffff:127.0.0.1' ||
-    cleanIp === 'localhost' ||
-    cleanIp === 'unknown'
-  ) {
-    return true
-  }
-
-  // 192.168.x.x
-  if (cleanIp.startsWith('192.168.')) return true
-
-  // 10.x.x.x
-  if (cleanIp.startsWith('10.')) return true
-
-  // 172.16.x.x - 172.31.x.x (فئة B الخاصة)
-  const parts = cleanIp.split('.')
-  if (parts.length === 4 && parts[0] === '172') {
-    const secondOctet = parseInt(parts[1], 10)
-    if (secondOctet >= 16 && secondOctet <= 31) {
-      return true
-    }
-  }
-
-  // معالجة عناوين IPv6 الماب للـ IPv4 المحلية (مثال: ::ffff:192.168.1.5)
-  if (cleanIp.startsWith('::ffff:')) {
-    const ipv4 = cleanIp.substring(7)
-    return isPrivateIP(ipv4)
-  }
-
-  return false
-}
+import { getClientIP, isPrivateIP } from './lib/security/ip-utils'
 
 export async function middleware(request: NextRequest) {
   // سجل أي طلب فوراً قبل أي شرط
   console.log(`[DEBUG] Incoming Request: ${request.method} ${request.nextUrl.pathname}`);
 
-  const ip = request.headers.get('x-forwarded-for') || 'unknown-ip';
+  const ip = getClientIP(request);
   console.log(`[MIDDLEWARE] ${request.method} ${request.nextUrl.pathname} | IP: ${ip} | Time: ${new Date().toISOString()}`);
 
   const pathname = request.nextUrl.pathname
@@ -54,12 +18,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // الحصول على معرف العميل (IP أو User ID)
-  const rawIp =
-    request.headers.get('x-forwarded-for') ||
-    request.headers.get('x-real-ip') ||
-    'unknown'
+  const clientId = ip
 
-  const clientId = rawIp.includes(',') ? rawIp.split(',')[0].trim() : rawIp.trim()
 
   // تحديد الحد المناسب والمفتاح الخاص به حسب المسار
   let limitPreset = RATE_LIMIT_PRESETS.API

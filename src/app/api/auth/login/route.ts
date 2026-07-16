@@ -3,13 +3,12 @@ import { getPayloadClient } from '@/db/client'
 import { cookies } from 'next/headers'
 import { AUTH_COOKIE_DOMAIN, NODE_ENV } from '@/env'
 import { checkRateLimit, RATE_LIMIT_PRESETS } from '@/lib/security/rate-limit'
+import { getClientIP } from '@/lib/security/ip-utils'
 
 export async function POST(request: NextRequest) {
   try {
     // الحصول على معرف العميل (IP)
-    const rawIp =
-      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
-    const clientId = rawIp.includes(',') ? rawIp.split(',')[0].trim() : rawIp.trim()
+    const clientId = getClientIP(request)
 
     // التحقق من Rate Limiting باستخدام مفتاح فريد ومستقل للمصادقة
     if (!checkRateLimit(`${clientId}:auth`, RATE_LIMIT_PRESETS.AUTH)) {

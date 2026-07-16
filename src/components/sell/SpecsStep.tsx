@@ -46,6 +46,12 @@ interface SpecsStepProps {
   selectedPropertyTypeId: string
   customSpecs: CustomSpec[]
   onCustomSpecsChange: (val: CustomSpec[]) => void
+  customInput: string
+  onCustomInputChange: (val: string) => void
+  customSpecLabel: string
+  onCustomSpecLabelChange: (val: string) => void
+  customSpecValue: string
+  onCustomSpecValueChange: (val: string) => void
 }
 
 function getSpecIcon(iconKey: string) {
@@ -130,12 +136,14 @@ export function SpecsStep({
   selectedPropertyTypeId,
   customSpecs,
   onCustomSpecsChange,
+  customInput,
+  onCustomInputChange,
+  customSpecLabel,
+  onCustomSpecLabelChange,
+  customSpecValue,
+  onCustomSpecValueChange,
 }: SpecsStepProps) {
-  const [customInput, setCustomInput] = useState('')
-
-  // Custom Specifications form states
-  const [customSpecLabel, setCustomSpecLabel] = useState('')
-  const [customSpecValue, setCustomSpecValue] = useState('')
+  // Custom Specifications error state
   const [customSpecErr, setCustomSpecErr] = useState('')
 
   const handleAddCustomSpec = () => {
@@ -154,8 +162,8 @@ export function SpecsStep({
     }
 
     onCustomSpecsChange([...customSpecs, newSpec])
-    setCustomSpecLabel('')
-    setCustomSpecValue('')
+    onCustomSpecLabelChange('')
+    onCustomSpecValueChange('')
     setCustomSpecErr('')
   }
 
@@ -214,7 +222,7 @@ export function SpecsStep({
     const trimmed = customInput.trim()
     if (trimmed && !customFeatures.includes(trimmed)) {
       onCustomFeaturesChange([...customFeatures, trimmed])
-      setCustomInput('')
+      onCustomInputChange('')
     }
   }
 
@@ -394,7 +402,7 @@ export function SpecsStep({
               </Label>
               <Input
                 value={customSpecLabel}
-                onChange={(e) => setCustomSpecLabel(e.target.value)}
+                onChange={(e) => onCustomSpecLabelChange(e.target.value)}
                 placeholder="e.g. Ceiling Height"
                 className="h-12 border-slate-200 focus:border-blue-900 rounded-xl bg-white text-sm font-semibold text-navy-deep px-4 w-full"
               />
@@ -409,7 +417,13 @@ export function SpecsStep({
                 <div className="flex-1">
                   <Input
                     value={customSpecValue}
-                    onChange={(e) => setCustomSpecValue(e.target.value)}
+                    onChange={(e) => onCustomSpecValueChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleAddCustomSpec()
+                      }
+                    }}
                     type="text"
                     placeholder="e.g. 4.2m, 3-Phase, Yes, Panoramic..."
                     className="h-12 border-slate-200 focus:border-blue-900 rounded-xl bg-white text-sm font-semibold text-navy-deep px-4 w-full"
@@ -505,7 +519,7 @@ export function SpecsStep({
             <Input
               id="custom_feature_input"
               value={customInput}
-              onChange={(e) => setCustomInput(e.target.value)}
+              onChange={(e) => onCustomInputChange(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault()

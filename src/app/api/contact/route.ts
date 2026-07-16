@@ -3,6 +3,7 @@ import { NextRequest, NextResponse, after } from 'next/server'
 import { getPayloadClient } from '@/db/client'
 import { ADMIN_NOTIFICATIONS_EMAIL, SERVER_URL } from '@/env'
 import { emailTemplates, sendEmail } from '@/lib/email/nodemailer'
+import { getClientIP } from '@/lib/security/ip-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,8 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get client IP and user agent
-    const ipAddress =
-      req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+    const ipAddress = getClientIP(req)
     const userAgent = req.headers.get('user-agent') || 'unknown'
 
     const payload = await getPayloadClient()

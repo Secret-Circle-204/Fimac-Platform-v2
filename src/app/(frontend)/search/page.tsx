@@ -8,6 +8,7 @@ import { getCachedPropertyTypes } from '@/lib/cache/property-types'
 import { getCachedListingStatuses } from '@/lib/cache/listing-statuses'
 import { getCachedSearchFilters } from '@/lib/cache/search-filters'
 import { getCachedSearchResults, buildSearchCacheKey } from '@/lib/cache/search-results'
+import { getCachedConstructionStatuses } from '@/lib/cache/construction-statuses'
 
 export const metadata = {
   title: 'Search Properties | Fimac Group',
@@ -37,8 +38,8 @@ export default async function SearchPage({
   const bedrooms = typeof resolvedParams.bedrooms === 'string' ? parseInt(resolvedParams.bedrooms) || 0 : 0
   const bathrooms = typeof resolvedParams.bathrooms === 'string' ? parseInt(resolvedParams.bathrooms) || 0 : 0
 
-  // Parallelize independent queries: location lookup + property types + listing statuses + search filters
-  const [locationIds, typesData, listingStatusesData, searchFilters] = await Promise.all([
+  // Parallelize independent queries: location lookup + property types + listing statuses + search filters + construction statuses
+  const [locationIds, typesData, listingStatusesData, searchFilters, constructionStatusesData] = await Promise.all([
     // Location lookup (returns empty array if no location filter)
     location
       ? local.location
@@ -61,6 +62,7 @@ export default async function SearchPage({
     getCachedPropertyTypes(),
     getCachedListingStatuses(),
     getCachedSearchFilters(),
+    getCachedConstructionStatuses(),
   ])
 
   const { countryOptions, cityOptions } = searchFilters
@@ -71,6 +73,11 @@ export default async function SearchPage({
       label: status.name,
       value: status.slug,
     }))
+
+  const constructionStatusOptions = constructionStatusesData.map((status) => ({
+    label: status.name,
+    value: status.slug,
+  }))
 
   const page = typeof resolvedParams.page === 'string' ? Math.max(1, parseInt(resolvedParams.page) || 1) : 1
 
@@ -149,6 +156,7 @@ export default async function SearchPage({
           <SearchHeader
             propertyTypeOptions={propertyTypeOptions}
             listingStatusOptions={listingStatusOptions}
+            constructionStatusOptions={constructionStatusOptions}
             cityOptions={cityOptions}
             countryOptions={countryOptions}
           />

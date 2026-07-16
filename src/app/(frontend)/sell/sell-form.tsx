@@ -111,6 +111,11 @@ export function SellForm({
   const [customFeatures, setCustomFeatures] = useState<string[]>([])
   const [customSpecs, setCustomSpecs] = useState<CustomSpec[]>([])
 
+  // Lifted custom features/specs input states for auto-commit on step navigation
+  const [customInput, setCustomInput] = useState('')
+  const [customSpecLabel, setCustomSpecLabel] = useState('')
+  const [customSpecValue, setCustomSpecValue] = useState('')
+
   // Fetch property types when category changes
   useEffect(() => {
     if (!selectedCategory) {
@@ -296,6 +301,31 @@ export function SellForm({
 
   const handleNext = () => {
     if (isStepValid(currentStep)) {
+      if (currentStep === 4) {
+        // Auto-commit any typed custom feature that wasn't added explicitly
+        const trimmedFeature = customInput.trim()
+        const updatedFeatures = [...customFeatures]
+        if (trimmedFeature && !updatedFeatures.includes(trimmedFeature)) {
+          updatedFeatures.push(trimmedFeature)
+          setCustomFeatures(updatedFeatures)
+          setCustomInput('')
+        }
+
+        // Auto-commit any typed custom spec that wasn't added explicitly
+        const trimmedLabel = customSpecLabel.trim()
+        const trimmedVal = customSpecValue.trim()
+        const updatedSpecs = [...customSpecs]
+        if (trimmedLabel && trimmedVal) {
+          updatedSpecs.push({
+            label: trimmedLabel,
+            valueType: 'text',
+            value: trimmedVal,
+          })
+          setCustomSpecs(updatedSpecs)
+          setCustomSpecLabel('')
+          setCustomSpecValue('')
+        }
+      }
       setCurrentStep((prev) => Math.min(prev + 1, 5))
       setError('')
       setTimeout(scrollToFormTop, 50)
@@ -520,6 +550,12 @@ export function SellForm({
               selectedPropertyTypeId={selectedPropertyTypeId}
               customSpecs={customSpecs}
               onCustomSpecsChange={setCustomSpecs}
+              customInput={customInput}
+              onCustomInputChange={setCustomInput}
+              customSpecLabel={customSpecLabel}
+              onCustomSpecLabelChange={setCustomSpecLabel}
+              customSpecValue={customSpecValue}
+              onCustomSpecValueChange={setCustomSpecValue}
             />
           )}
 

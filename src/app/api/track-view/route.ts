@@ -8,6 +8,8 @@ import fs from "fs"
 import path from "path"
 import maxmind, { CityResponse, Reader } from "maxmind"
 import { viewsMemoryCache } from "@/lib/cache/views-memory-cache"
+import { getClientIP, isPrivateIP } from "@/lib/security/ip-utils"
+import { ipLocationsCache } from "@/lib/cache/ip-locations-cache"
 
 // Global singleton GeoIP reader instance
 let geoipReader: Reader<CityResponse> | null = null
@@ -31,7 +33,7 @@ async function getGeoIPReader() {
 // Helper to generate visitor fingerprint
 function generateVisitorId(req: NextRequest, userId?: string): string {
   const userAgent = req.headers.get("user-agent") || ""
-  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown"
+  const ip = getClientIP(req)
 
   // If user is logged in (but not owner/admin), include userId for better uniqueness
   const fingerprint = userId ? `${ip}-${userAgent}-${userId}` : `${ip}-${userAgent}`
@@ -143,18 +145,7 @@ async function resolveIPLocation(ip: string): Promise<{ country: string; city: s
   const cleanIp = ip.trim()
   console.log(`🔍 [IP Lookup] Server-side resolveIPLocation requested for IP: "${cleanIp}"`)
   
-  // Detect local/private IP addresses
-  const isLocal = 
-    cleanIp === "::1" || 
-    cleanIp === "127.0.0.1" || 
-    cleanIp === "localhost" || 
-    cleanIp === "unknown" ||
-    cleanIp.startsWith("192.168.") || 
-    cleanIp.startsWith("10.") || 
-    cleanIp.startsWith("172.16.") || 
-    cleanIp.startsWith("172.31.")
-
-  if (isLocal) {
+  if (isPrivateIP(cleanIp)) {
     console.log(`🏠 [IP Lookup] Local/Private IP detected ("${cleanIp}"). Skipping GeoIP checks.`)
     return null
   }
@@ -330,9 +321,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. Register Unique View
-    let ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown"
-    if (ip && ip.includes(",")) {
-      ip = ip.split(",")[0].trim()
+    let ip = getClientIP(request)
+
+    // Detailed diagnostic logging if a private IP is encountered in production
+    if (isPrivateIP(ip) && process.env.NODE_ENV === "production") {
+      const allHeaders: Record<string, string> = {}
+      request.headers.forEach((value, key) => {
+        allHeaders[key] = value
+      })
+      console.warn(
+        `⚠️ [Track View] Private/local IP detected in production: "${ip}". ` +
+        `This usually indicates a reverse proxy configuration issue where headers are not being forwarded correctly. ` +
+        `Request headers for diagnostics:`,
+        JSON.stringify(allHeaders, null, 2)
+      )
     }
 
     const hashedIp = hashIP(ip)
@@ -371,41 +373,51 @@ export async function POST(request: NextRequest) {
         console.log(`🌍 [Track View] Overriding server IP with client IP: "${ip}"`)
       }
     } else {
-      // DB Cache Lookup: Find if we already cached this hashed IP
-      console.log(`🔍 [Track View] Checking database cache for hashed IP: "${hashedIp}"`)
-      const cachedLoc = await payload.find({
-        collection: "ip-locations",
-        where: {
-          hashedIp: { equals: hashedIp },
-        },
-        limit: 1,
-        depth: 0,
-      })
-
-      if (cachedLoc.docs.length > 0) {
-        const cached = cachedLoc.docs[0]
-        console.log("🌍 [Track View] DB Geolocation cache hit!", cached)
-        location = {
-          country: cached.country || "",
-          city: cached.city || "",
-          region: cached.region || "",
-        }
-        
-        // Update lastUsed timestamp in background
-        after(async () => {
-          try {
-            const backgroundPayload = await getPayloadClient()
-            await backgroundPayload.update({
-              collection: "ip-locations",
-              id: cached.id,
-              data: {
-                lastUsed: new Date().toISOString(),
-              },
-            })
-          } catch (e) {
-            console.warn("⚠️ Failed to update lastUsed in background:", e)
-          }
+      // 1. Check L1 Memory Cache
+      const memoryCached = ipLocationsCache.get(hashedIp)
+      if (memoryCached) {
+        console.log("🌍 [Track View] L1 Memory Geolocation cache hit!", memoryCached)
+        location = memoryCached
+      } else {
+        // 2. Check L2 Database Cache
+        console.log(`🔍 [Track View] Checking L2 database cache for hashed IP: "${hashedIp}"`)
+        const cachedLoc = await payload.find({
+          collection: "ip-locations",
+          where: {
+            hashedIp: { equals: hashedIp },
+          },
+          limit: 1,
+          depth: 0,
         })
+
+        if (cachedLoc.docs.length > 0) {
+          const cached = cachedLoc.docs[0]
+          console.log("🌍 [Track View] L2 Geolocation cache hit!", cached)
+          location = {
+            country: cached.country || "",
+            city: cached.city || "",
+            region: cached.region || "",
+          }
+          
+          // Write to L1 Memory Cache for future hits
+          ipLocationsCache.set(hashedIp, location)
+          
+          // Update lastUsed timestamp in background
+          after(async () => {
+            try {
+              const backgroundPayload = await getPayloadClient()
+              await backgroundPayload.update({
+                collection: "ip-locations",
+                id: cached.id,
+                data: {
+                  lastUsed: new Date().toISOString(),
+                },
+              })
+            } catch (e) {
+              console.warn("⚠️ Failed to update lastUsed in background:", e)
+            }
+          })
+        }
       }
     }
 
@@ -468,7 +480,14 @@ export async function POST(request: NextRequest) {
         const backgroundPayload = await getPayloadClient()
 
         if (location && isCdnOrClientResolved) {
-          // Resolved via CDN or Client, check if cached. If not, write it to database cache.
+          // Resolved via CDN or Client, write to L1 Cache
+          ipLocationsCache.set(hashedIp, {
+            country: location.country,
+            city: location.city,
+            region: location.region,
+          })
+
+          // Check if cached in L2 DB. If not, write it to database cache.
           const cached = await backgroundPayload.find({
             collection: "ip-locations",
             where: { hashedIp: { equals: hashedIp } },
@@ -504,7 +523,14 @@ export async function POST(request: NextRequest) {
           const resolved = await resolveIPLocation(ip)
 
           if (resolved) {
-            // Cache resolved location
+            // Write to L1 Memory Cache
+            ipLocationsCache.set(hashedIp, {
+              country: resolved.country,
+              city: resolved.city,
+              region: resolved.region,
+            })
+
+            // Cache resolved location in L2 DB
             await backgroundPayload.create({
               collection: "ip-locations",
               data: {
@@ -530,7 +556,14 @@ export async function POST(request: NextRequest) {
             })
             console.log(`🌍 [Track View Background] Cached and resolved location for ${hashedIp} -> ${resolved.city}, ${resolved.region}, ${resolved.country}`)
           } else {
-            // All options failed (or local IP in development). Cache as "Unknown" to avoid future lookups.
+            // Write "Unknown" to L1 Memory Cache
+            ipLocationsCache.set(hashedIp, {
+              country: "Unknown",
+              city: "Unknown",
+              region: "Unknown",
+            })
+
+            // All options failed (or local IP in development). Cache as "Unknown" in L2 DB to avoid future lookups.
             await backgroundPayload.create({
               collection: "ip-locations",
               data: {

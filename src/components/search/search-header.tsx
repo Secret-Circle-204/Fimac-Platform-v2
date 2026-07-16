@@ -24,6 +24,7 @@ import {
 interface SearchHeaderProps {
   propertyTypeOptions?: Array<{ label: string; value: string }>
   listingStatusOptions?: Array<{ label: string; value: string }>
+  constructionStatusOptions?: Array<{ label: string; value: string }>
   cityOptions?: Array<{ label: string; value: string }>
   countryOptions?: Array<{ label: string; value: string }>
 }
@@ -31,6 +32,7 @@ interface SearchHeaderProps {
 export function SearchHeader({
   propertyTypeOptions = [],
   listingStatusOptions = [],
+  constructionStatusOptions = [],
   cityOptions = [],
   countryOptions = [],
 }: SearchHeaderProps) {
@@ -84,14 +86,8 @@ export function SearchHeader({
     }
 
     if (constructionStatus && constructionStatus !== 'all') {
-      const constructionLabels: Record<string, string> = {
-        ready: 'Ready to Move In',
-        under_construction: 'Under Construction',
-        brand_new: 'Brand New',
-        off_plan: 'Off-Plan',
-        renovated: 'Fully Renovated',
-      }
-      parts.push(constructionLabels[constructionStatus] || constructionStatus)
+      const matchedOpt = constructionStatusOptions.find((o) => o.value === constructionStatus)
+      parts.push(matchedOpt ? matchedOpt.label : constructionStatus)
     }
 
     if (quickPrice && quickPrice !== 'all') {
@@ -387,11 +383,11 @@ export function SearchHeader({
                   </SelectTrigger>
                   <SelectContent className="select-smooth-content rounded-xl border-white/10 bg-[#09153d] text-white z-[10000]">
                     <SelectItem value="all">All Construction States</SelectItem>
-                    <SelectItem value="ready">Ready to Move In</SelectItem>
-                    <SelectItem value="under_construction">Under Construction</SelectItem>
-                    <SelectItem value="brand_new">Brand New</SelectItem>
-                    <SelectItem value="off_plan">Off-Plan</SelectItem>
-                    <SelectItem value="renovated">Fully Renovated</SelectItem>
+                    {constructionStatusOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -660,11 +656,11 @@ export function SearchHeader({
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-gold-royal/20">
                   <SelectItem value="all">All States</SelectItem>
-                  <SelectItem value="ready">Ready to Move In</SelectItem>
-                  <SelectItem value="under_construction">Under Construction</SelectItem>
-                  <SelectItem value="brand_new">Brand New</SelectItem>
-                  <SelectItem value="off_plan">Off-Plan</SelectItem>
-                  <SelectItem value="renovated">Fully Renovated</SelectItem>
+                  {constructionStatusOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
