@@ -13,6 +13,7 @@
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "seed": "npx tsx src/db/seed-db.ts",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start -p 8181",
     "save": "git add . && git commit -m \"Auto Save $(powershell -Command Get-Date -Format 'yyyy-MM-dd HH:mm:ss')\"",
     "test": "pnpm run test:int && pnpm run test:e2e",

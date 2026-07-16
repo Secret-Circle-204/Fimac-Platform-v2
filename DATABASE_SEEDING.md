@@ -47,12 +47,12 @@ graph TD
 
 ---
 
-### أمر تشغيل التسييد التلقائي بشكل منفصل (يدوي)
-إذا أردت تشغيل التسييد التلقائي يدوياً في أي وقت دون تشغيل الخادم بالكامل، يمكنك تشغيل سكربت التهيئة المستقل:
-* **الملف المستدعى**: [src/db/runSeeder.ts](file:///f:/new-websites/Fimac-Platform-v2/src/db/runSeeder.ts)
+### أمر تشغيل التسييد اليدوي
+إذا أردت تشغيل التسييد يدوياً في أي وقت، يمكنك تشغيل سكربت التهيئة المستقل:
+* **الملف المستدعى**: [scripts/seed-db.ts](file:///f:/new-websites/Fimac-Platform-v2/scripts/seed-db.ts)
 * **الأمر**:
   ```bash
-  npx tsx src/db/runSeeder.ts
+  pnpm seed
   ```
 
 ---

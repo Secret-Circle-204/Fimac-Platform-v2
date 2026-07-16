@@ -11,11 +11,6 @@ const dirname = path.dirname(filename)
 
 import { DATABASE_URL, SERVER_URL, PAYLOAD_SECRET } from '@/env'
 import { collections } from './collections'
-import { seedFeatures } from './db/seedFeatures'
-import { seedPropertyCategories } from './db/seedPropertyCategories'
-import { seedPropertyTypes } from './db/seedPropertyTypes'
-import { seedListingStatuses } from './db/seedListingStatuses'
-import { seedConstructionStatuses } from './db/seedConstructionStatuses'
 import { activeProvider } from './lib/storage'
 import { CompanySettings } from './globals/CompanySettings'
 import { AboutPage } from './globals/AboutPage'
@@ -74,11 +69,7 @@ export default buildConfig({
       )
     }
 
-    await seedPropertyCategories(payload)
-    await seedPropertyTypes(payload)
-    await seedFeatures(payload)
-    await seedListingStatuses(payload)
-    await seedConstructionStatuses(payload)
+    // Seeding has been moved to a dedicated CLI script: pnpm run seed
 
     if (process.env.NODE_ENV === 'production' && process.env.STORAGE_PROVIDER === 'local') {
       payload.logger.warn(
