@@ -11,12 +11,18 @@ interface RateLimitRecord {
 // تخزين مؤقت في الذاكرة (في الإنتاج استخدم Redis)
 const rateLimitStore = new Map<string, RateLimitRecord>()
 
-// تنظيف السجلات منتهية الصلاحية بشكل دوري (Lazy Cleanup) لتجنب استخدام setInterval في بيئة Edge
+let cleanupCounter = 0
+
+// تنظيف السجلات منتهية الصلاحية بشكل دوري (Amortized Lazy Cleanup) لتجنب العمليات المكثفة O(N) مع كل طلب
 function lazyCleanup() {
-  const now = Date.now()
-  for (const [key, record] of rateLimitStore.entries()) {
-    if (now > record.resetTime) {
-      rateLimitStore.delete(key)
+  cleanupCounter++
+  if (cleanupCounter % 500 === 0) {
+    cleanupCounter = 0
+    const now = Date.now()
+    for (const [key, record] of rateLimitStore.entries()) {
+      if (now > record.resetTime) {
+        rateLimitStore.delete(key)
+      }
     }
   }
 }
@@ -27,6 +33,11 @@ export interface RateLimitConfig {
 }
 
 export const RATE_LIMIT_PRESETS = {
+  // حدود صفحات العرض العامة (HTML)
+  PUBLIC_PAGE: {
+    windowMs: 15 * 60 * 1000, // 15 دقيقة
+    maxRequests: 5000, // 5000 طلب لمنع حظر المستخدمين الحقيقيين أثناء التصفح السريع
+  },
   // حدود صارمة للمصادقة
   AUTH: {
     windowMs: 15 * 60 * 1000, // 15 دقيقة
@@ -69,37 +80,26 @@ export function checkRateLimit(identifier: string, config: RateLimitConfig): boo
   lazyCleanup() // تنظيف كسول للسجلات المنتهية لمنع تسريب الذاكرة
   const now = Date.now()
   const record = rateLimitStore.get(identifier)
-  const storeSize = rateLimitStore.size
 
   // إذا لم تكن هناك سجلات أو انتهت الفترة الزمنية
   if (!record || now > record.resetTime) {
-    const resetTime = now + config.windowMs
     rateLimitStore.set(identifier, {
       count: 1,
-      resetTime,
+      resetTime: now + config.windowMs,
     })
-    console.log(
-      `[RATE LIMIT INITIALIZE] Key: "${identifier}" | Count: 1/${config.maxRequests} | Store Size: ${storeSize + 1} | Reset: ${new Date(resetTime).toISOString()}`
-    )
     return true
   }
-
-  const before = record.count
-  const resetTime = record.resetTime
 
   // إذا تم تجاوز الحد
   if (record.count >= config.maxRequests) {
     console.warn(
-      `⚠️ [RATE LIMIT BLOCKED] Key: "${identifier}" | Count: ${record.count}/${config.maxRequests} | Store Size: ${storeSize} | Reset: ${new Date(resetTime).toISOString()}`
+      `⚠️ [RATE LIMIT BLOCKED] Key: "${identifier}" | Count: ${record.count}/${config.maxRequests}`
     )
     return false
   }
 
   // زيادة العداد
   record.count++
-  console.log(
-    `[RATE LIMIT INCREMENT] Key: "${identifier}" | Count: ${before} -> ${record.count}/${config.maxRequests} | Store Size: ${storeSize} | Reset: ${new Date(resetTime).toISOString()}`
-  )
   return true
 }
 
