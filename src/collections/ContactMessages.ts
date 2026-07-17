@@ -1,4 +1,6 @@
 import type { CollectionConfig } from "payload"
+import { sendEmail, emailTemplates } from "@/lib/email/nodemailer"
+import { SERVER_URL } from "@/env"
 
 export const ContactMessages: CollectionConfig = {
   slug: "contact-messages",
@@ -17,6 +19,55 @@ export const ContactMessages: CollectionConfig = {
     create: () => true, // Anyone can submit a contact form
     update: ({ req: { user } }) => user?.collection === "users",
     delete: ({ req: { user } }) => user?.collection === "users",
+  },
+  hooks: {
+    afterChange: [
+      async ({ doc, previousDoc, req }) => {
+        const currentAssignedId = typeof doc.assignedTo === 'object' && doc.assignedTo !== null
+          ? doc.assignedTo.id
+          : doc.assignedTo;
+        const previousAssignedId = previousDoc
+          ? (typeof previousDoc.assignedTo === 'object' && previousDoc.assignedTo !== null
+            ? previousDoc.assignedTo.id
+            : previousDoc.assignedTo)
+          : null;
+
+        if (currentAssignedId && currentAssignedId !== previousAssignedId) {
+          try {
+            const teamMember = await req.payload.findByID({
+              collection: 'users',
+              id: currentAssignedId,
+              depth: 0,
+              req,
+            })
+
+            if (teamMember && teamMember.email) {
+              const adminUrl = `${SERVER_URL}/admin/collections/contact-messages/${doc.id}`
+              await sendEmail({
+                to: teamMember.email,
+                subject: `Assigned Inquiry: ${doc.subject}`,
+                html: emailTemplates.adminMessageAssigned({
+                  adminName: teamMember.email.split('@')[0] || 'Team Member',
+                  clientName: doc.fullName,
+                  subject: doc.subject,
+                  messageText: doc.message,
+                  adminUrl,
+                }).html,
+                text: emailTemplates.adminMessageAssigned({
+                  adminName: teamMember.email.split('@')[0] || 'Team Member',
+                  clientName: doc.fullName,
+                  subject: doc.subject,
+                  messageText: doc.message,
+                  adminUrl,
+                }).text,
+              })
+            }
+          } catch (err) {
+            req.payload.logger.error(`[ContactMessages:afterChange] Failed to send assignment email: ${err}`)
+          }
+        }
+      }
+    ]
   },
   fields: [
     {

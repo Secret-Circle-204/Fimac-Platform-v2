@@ -9,11 +9,12 @@ import sharp from 'sharp'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-import { DATABASE_URL, SERVER_URL, PAYLOAD_SECRET } from '@/env'
+import { DATABASE_URL, SERVER_URL, PAYLOAD_SECRET, EMAIL_FROM, SMTP_SETTINGS } from '@/env'
 import { collections } from './collections'
 import { activeProvider } from './lib/storage'
 import { CompanySettings } from './globals/CompanySettings'
 import { AboutPage } from './globals/AboutPage'
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 
 export default buildConfig({
   serverURL: SERVER_URL,
@@ -30,6 +31,11 @@ export default buildConfig({
   globals: [CompanySettings, AboutPage],
   editor: lexicalEditor(),
   secret: PAYLOAD_SECRET,
+  email: nodemailerAdapter({
+    defaultFromAddress: EMAIL_FROM,
+    defaultFromName: 'Fimac Platform Support',
+    transportOptions: SMTP_SETTINGS,
+  }),
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },

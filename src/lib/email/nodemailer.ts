@@ -81,6 +81,14 @@ type SellerPropertyPublishedArgs = {
   propertyUrl: string
 }
 
+type AdminMessageAssignedArgs = {
+  adminName: string
+  clientName: string
+  subject: string
+  messageText: string
+  adminUrl: string
+}
+
 
 const emailShell = ({
   title,
@@ -264,6 +272,39 @@ export const emailTemplates = {
       `You can view your live listing here: ${propertyUrl}`,
       `Best regards,`,
       `Fimac Group Team`,
+    ]),
+  }),
+
+  adminMessageAssigned: ({ adminName, clientName, subject, messageText, adminUrl }: AdminMessageAssignedArgs) => ({
+    subject: `Assigned Inquiry: ${subject}`,
+    html: emailShell({
+      title: 'Inquiry Assigned',
+      body: `
+        <p>Hi ${adminName},</p>
+        <p>You have been assigned a new contact message/inquiry to handle.</p>
+        <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #4f46e5;">
+          <p style="margin: 0; font-weight: bold; color: #1f2937;">Client Name: ${clientName}</p>
+          <p style="margin: 4px 0; font-weight: bold; color: #1f2937;">Subject: ${subject}</p>
+          <p style="margin: 8px 0 0 0; color: #4b5563; font-style: italic;">"${messageText}"</p>
+        </div>
+        <p>Please review and follow up with the client as soon as possible. Click the link below to view the full details and update the status in the Admin panel:</p>
+        <p style="margin: 24px 0; text-align: center;">
+          <a href="${adminUrl}" target="_blank" style="background-color: #4f46e5; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">View Inquiry in Admin</a>
+        </p>
+        <br/>
+        <p>Best regards,</p>
+        <p><strong>Fimac Platform System</strong></p>
+      `,
+    }),
+    text: plainText([
+      `Hi ${adminName},`,
+      `You have been assigned a new contact message/inquiry to handle.`,
+      `Client Name: ${clientName}`,
+      `Subject: ${subject}`,
+      `Message: "${messageText}"`,
+      `Click here to view details: ${adminUrl}`,
+      `Best regards,`,
+      `Fimac Platform System`,
     ]),
   }),
 
