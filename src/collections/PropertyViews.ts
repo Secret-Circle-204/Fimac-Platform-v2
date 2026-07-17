@@ -25,12 +25,12 @@ export const PropertyViews: CollectionConfig = {
     },
     create: () => true,
     update: ({ req: { user } }) => {
-      // Only admins can update
-      return user?.collection === "users"
+      // Only admins (and not moderators) can update
+      return user?.collection === "users" && user?.role === "admin"
     },
     delete: ({ req: { user } }) => {
-      // Only admins can delete
-      return user?.collection === "users"
+      // Only admins (and not moderators) can delete
+      return user?.collection === "users" && user?.role === "admin"
     },
   },
   fields: [

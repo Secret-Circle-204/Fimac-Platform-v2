@@ -133,9 +133,9 @@ export const Buyers: CollectionConfig = {
         },
       }
     },
-    // Only admins can delete
+    // Only admins (and not moderators) can delete
     delete: ({ req: { user } }) => {
-      return user?.collection === 'users'
+      return user?.collection === 'users' && user?.role === 'admin'
     },
   },
 }

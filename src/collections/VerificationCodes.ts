@@ -97,9 +97,8 @@ export const VerificationCodes: CollectionConfig = {
     read: ({ req: { user } }) => user?.collection === "users",
     // API can create codes
     create: () => true,
-    // Only admins can update
-    update: ({ req: { user } }) => user?.collection === "users",
-    // Only admins can delete
-    delete: ({ req: { user } }) => user?.collection === "users",
+    // Only admins (and not moderators) can update/delete
+    update: ({ req: { user } }) => user?.collection === "users" && user?.role === "admin",
+    delete: ({ req: { user } }) => user?.collection === "users" && user?.role === "admin",
   },
 }

@@ -11,9 +11,45 @@ export const Users: CollectionConfig = {
   auth: {
     tokenExpiration: 60 * 60 * 24 * 30, // 30 days in seconds
   },
+  access: {
+    read: ({ req: { user } }) => {
+      if (!user) return false
+      return user.collection === 'users'
+    },
+    create: ({ req: { user } }) => {
+      return user?.collection === 'users' && user?.role === 'admin'
+    },
+    update: ({ req: { user } }) => {
+      if (!user) return false
+      if (user.collection === 'users' && user.role === 'admin') return true
+      return {
+        id: {
+          equals: user.id,
+        },
+      }
+    },
+    delete: ({ req: { user } }) => {
+      return user?.collection === 'users' && user?.role === 'admin'
+    },
+  },
   fields: [
-    // Email added by default
-    // Add more fields as needed
+    {
+      name: 'role',
+      type: 'select',
+      required: true,
+      defaultValue: 'admin',
+      options: [
+        { label: 'Admin', value: 'admin' },
+        { label: 'Moderator', value: 'moderator' },
+      ],
+      access: {
+        create: ({ req: { user } }) => user?.collection === 'users' && user?.role === 'admin',
+        update: ({ req: { user } }) => user?.collection === 'users' && user?.role === 'admin',
+      },
+      admin: {
+        description: 'Set the permission role for this administrative user.',
+      },
+    },
   ],
   endpoints: [
     {
@@ -43,6 +79,7 @@ export const Users: CollectionConfig = {
               data: {
                 email,
                 password: newPassword,
+                role: 'admin',
               },
             })
             return Response.json({ message: 'User created successfully!' }, { status: 201 })

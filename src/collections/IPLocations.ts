@@ -18,10 +18,10 @@ export const IPLocations: CollectionConfig = {
     },
     create: () => true, // Allowed for backend geo resolution process
     update: ({ req: { user } }) => {
-      return user?.collection === "users"
+      return user?.collection === "users" && user?.role === "admin"
     },
     delete: ({ req: { user } }) => {
-      return user?.collection === "users"
+      return user?.collection === "users" && user?.role === "admin"
     },
   },
   fields: [

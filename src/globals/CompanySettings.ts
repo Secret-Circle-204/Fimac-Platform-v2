@@ -11,8 +11,8 @@ export const CompanySettings: GlobalConfig = {
   access: {
     // Anyone can read (so the frontend can display it)
     read: diagnosticAccessWrapper('read', () => true),
-    // Only logged in users (admins) can update
-    update: diagnosticAccessWrapper('update', ({ req }) => req.user?.collection === 'users'),
+    // Only logged in users with admin role can update
+    update: diagnosticAccessWrapper('update', ({ req }) => req.user?.collection === 'users' && req.user?.role === 'admin'),
   },
   hooks: {
     afterChange: [
