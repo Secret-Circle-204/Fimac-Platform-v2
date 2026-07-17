@@ -22,7 +22,8 @@ async function isValidSessionToken(
     const encoder = new TextEncoder()
     const { payload } = await jwtVerify(token, encoder.encode(PAYLOAD_SECRET))
     return payload && typeof payload === 'object' && payload.collection === expectedCollection
-  } catch (_err) {
+  } catch (err) {
+    console.error('❌ [isValidSessionToken Error]:', err)
     return false
   }
 }
@@ -57,9 +58,11 @@ export async function middleware(request: NextRequest) {
 
   // فحص حالة الجلسة قبل الدخول للـ Rate Limiter لمنع المسؤولين من استهلاك العداد العام للموقع
   if (!isBypassed && activeToken) {
+    console.log(`[MIDDLEWARE BYPASS CHECK] ActiveToken found. AdminToken present: ${!!adminToken}, SellerToken present: ${!!sellerToken}, Secret present: ${!!PAYLOAD_SECRET}`)
     const hasValidAdmin = adminToken && await isValidSessionToken(adminToken, 'users')
     const hasValidSeller = sellerToken && await isValidSessionToken(sellerToken, 'sellers')
     isBypassed = !!(hasValidAdmin || hasValidSeller)
+    console.log(`[MIDDLEWARE BYPASS CHECK] Result: isBypassed = ${isBypassed} | hasValidAdmin: ${hasValidAdmin} | hasValidSeller: ${hasValidSeller}`)
   }
 
   // تخطي تحديد معدل الطلبات تماماً للجلسات الموثقة
