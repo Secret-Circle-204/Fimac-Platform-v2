@@ -20,7 +20,14 @@ async function isValidSessionToken(
   if (!token) return false
   try {
     const encoder = new TextEncoder()
-    const { payload } = await jwtVerify(token, encoder.encode(PAYLOAD_SECRET))
+    const secretEncoded = encoder.encode(PAYLOAD_SECRET)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', secretEncoded)
+    const hashHex = Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+    const processedSecret = hashHex.slice(0, 32)
+
+    const { payload } = await jwtVerify(token, encoder.encode(processedSecret))
     return payload && typeof payload === 'object' && payload.collection === expectedCollection
   } catch (err) {
     console.error('❌ [isValidSessionToken Error]:', err)
