@@ -73,7 +73,6 @@ export const ContactMessages: CollectionConfig = {
     {
       name: "preferredContact",
       type: "select",
-      required: true,
       label: "Preferred Contact Method",
       options: [
         { label: "Email", value: "email" },
@@ -84,7 +83,6 @@ export const ContactMessages: CollectionConfig = {
     {
       name: "buyingTimeline",
       type: "select",
-      required: true,
       label: "Buying Timeline",
       options: [
         { label: "Immediately", value: "immediate" },

@@ -1291,8 +1291,8 @@ export interface ContactMessage {
    * The property this inquiry is about (if applicable)
    */
   property?: (string | null) | Property;
-  preferredContact: 'email' | 'phone' | 'whatsapp';
-  buyingTimeline: 'immediate' | 'later' | 'browsing';
+  preferredContact?: ('email' | 'phone' | 'whatsapp') | null;
+  buyingTimeline?: ('immediate' | 'later' | 'browsing') | null;
   budgetRange?: {
     min?: number | null;
     max?: number | null;
