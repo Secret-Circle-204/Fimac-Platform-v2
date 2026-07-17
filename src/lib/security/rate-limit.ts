@@ -69,23 +69,37 @@ export function checkRateLimit(identifier: string, config: RateLimitConfig): boo
   lazyCleanup() // تنظيف كسول للسجلات المنتهية لمنع تسريب الذاكرة
   const now = Date.now()
   const record = rateLimitStore.get(identifier)
+  const storeSize = rateLimitStore.size
 
   // إذا لم تكن هناك سجلات أو انتهت الفترة الزمنية
   if (!record || now > record.resetTime) {
+    const resetTime = now + config.windowMs
     rateLimitStore.set(identifier, {
       count: 1,
-      resetTime: now + config.windowMs,
+      resetTime,
     })
+    console.log(
+      `[RATE LIMIT INITIALIZE] Key: "${identifier}" | Count: 1/${config.maxRequests} | Store Size: ${storeSize + 1} | Reset: ${new Date(resetTime).toISOString()}`
+    )
     return true
   }
 
+  const before = record.count
+  const resetTime = record.resetTime
+
   // إذا تم تجاوز الحد
   if (record.count >= config.maxRequests) {
+    console.warn(
+      `⚠️ [RATE LIMIT BLOCKED] Key: "${identifier}" | Count: ${record.count}/${config.maxRequests} | Store Size: ${storeSize} | Reset: ${new Date(resetTime).toISOString()}`
+    )
     return false
   }
 
   // زيادة العداد
   record.count++
+  console.log(
+    `[RATE LIMIT INCREMENT] Key: "${identifier}" | Count: ${before} -> ${record.count}/${config.maxRequests} | Store Size: ${storeSize} | Reset: ${new Date(resetTime).toISOString()}`
+  )
   return true
 }
 

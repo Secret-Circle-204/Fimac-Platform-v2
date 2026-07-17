@@ -4,13 +4,11 @@ import { checkRateLimit, RATE_LIMIT_PRESETS } from './lib/security/rate-limit'
 import { getClientIP, isPrivateIP } from './lib/security/ip-utils'
 
 export async function middleware(request: NextRequest) {
-  // سجل أي طلب فوراً قبل أي شرط
-  console.log(`[DEBUG] Incoming Request: ${request.method} ${request.nextUrl.pathname}`);
-
-  const ip = getClientIP(request);
-  console.log(`[MIDDLEWARE] ${request.method} ${request.nextUrl.pathname} | IP: ${ip} | Time: ${new Date().toISOString()}`);
-
   const pathname = request.nextUrl.pathname
+  const ip = getClientIP(request)
+
+  // سجل فوري لجميع المسارات التي تمر عبر الـ Matcher للتدقيق والتشخيص
+  console.log(`[MIDDLEWARE EXECUTION] Path: ${pathname} | Method: ${request.method} | IP: ${ip}`);
 
   // تخطي الملفات الثابتة والـ public
   if (pathname.startsWith('/_next') || pathname.startsWith('/public')) {
