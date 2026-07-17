@@ -1291,20 +1291,26 @@ export interface ContactMessage {
    * The property this inquiry is about (if applicable)
    */
   property?: (string | null) | Property;
-  preferredContact?: ('email' | 'phone' | 'whatsapp') | null;
-  buyingTimeline?: ('immediate' | '1_to_3_months' | '3_to_6_months' | '6_plus_months' | 'browsing') | null;
+  preferredContact: 'email' | 'phone' | 'whatsapp';
+  buyingTimeline: 'immediate' | 'later' | 'browsing';
   budgetRange?: {
     min?: number | null;
     max?: number | null;
   };
+  /**
+   * Manage the status of this inquiry (e.g. New, In Progress, Resolved).
+   */
   status: 'new' | 'in-progress' | 'resolved' | 'archived';
+  /**
+   * Set the priority level for handling this inquiry.
+   */
   priority?: ('low' | 'normal' | 'high' | 'urgent') | null;
   /**
-   * Assign this message to a team member
+   * For internal admin use: Assign this message to a team member to handle.
    */
   assignedTo?: (number | null) | User;
   /**
-   * Internal notes for team (not visible to sender)
+   * Internal notes for the admin team (not visible to the sender).
    */
   notes?: string | null;
   ipAddress?: string | null;
@@ -2335,6 +2341,10 @@ export interface CompanySetting {
     badgeText?: string | null;
   };
   contactEmail: string;
+  /**
+   * The email address that receives notifications about new property inquiries and seller requests.
+   */
+  notificationEmail: string;
   contactPhone: string;
   contactOffice: string;
   updatedAt?: string | null;
@@ -2387,6 +2397,7 @@ export interface CompanySettingsSelect<T extends boolean = true> {
         badgeText?: T;
       };
   contactEmail?: T;
+  notificationEmail?: T;
   contactPhone?: T;
   contactOffice?: T;
   updatedAt?: T;

@@ -1,5 +1,7 @@
 import { EventEmitter } from 'node:events'
 import type { Property, SellerRequest } from '@/payload-types'
+import { sendEmail, emailTemplates } from '@/lib/email/nodemailer'
+import { SERVER_URL } from '@/env'
 
 // ── Event Payload Definitions ──────────────────────────────────────────────
 
@@ -64,4 +66,34 @@ propertyEvents.on('property:published', (event) => {
   console.info(
     `[PropertyPublished] Admin ${String(event.publishedBy)} published SellerRequest #${event.sellerRequest.id} → Property #${event.property.id} at ${event.publishedAt}`,
   )
+})
+
+/**
+ * Seller notification listener — sends a premium email notification to the seller
+ * once their property request is published and live.
+ */
+propertyEvents.on('property:published', (event) => {
+  const sellerEmail = event.sellerRequest.email
+  const sellerName = event.sellerRequest.full_name
+  const propertyTitle = event.sellerRequest.property_title
+  const propertyUrl = `${SERVER_URL}/property/${event.property.id}`
+
+  if (sellerEmail) {
+    sendEmail({
+      to: sellerEmail,
+      subject: `Your property is now live: ${propertyTitle}`,
+      html: emailTemplates.sellerPropertyPublished({
+        fullName: sellerName,
+        propertyTitle: propertyTitle,
+        propertyUrl: propertyUrl,
+      }).html,
+      text: emailTemplates.sellerPropertyPublished({
+        fullName: sellerName,
+        propertyTitle: propertyTitle,
+        propertyUrl: propertyUrl,
+      }).text,
+    }).catch((err) => {
+      console.error(`[PropertyPublished:Email] Failed to send publication email to ${sellerEmail}:`, err)
+    })
+  }
 })

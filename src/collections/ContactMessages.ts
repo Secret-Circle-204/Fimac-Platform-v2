@@ -73,6 +73,7 @@ export const ContactMessages: CollectionConfig = {
     {
       name: "preferredContact",
       type: "select",
+      required: true,
       label: "Preferred Contact Method",
       options: [
         { label: "Email", value: "email" },
@@ -83,12 +84,11 @@ export const ContactMessages: CollectionConfig = {
     {
       name: "buyingTimeline",
       type: "select",
+      required: true,
       label: "Buying Timeline",
       options: [
         { label: "Immediately", value: "immediate" },
-        { label: "1-3 Months", value: "1_to_3_months" },
-        { label: "3-6 Months", value: "3_to_6_months" },
-        { label: "6+ Months", value: "6_plus_months" },
+        { label: "Later / Future Planning", value: "later" },
         { label: "Just Browsing", value: "browsing" },
       ],
     },
@@ -96,6 +96,9 @@ export const ContactMessages: CollectionConfig = {
       name: "budgetRange",
       type: "group",
       label: "Budget Range",
+      admin: {
+        hidden: true,
+      },
       fields: [
         {
           name: "min",
@@ -122,6 +125,7 @@ export const ContactMessages: CollectionConfig = {
       ],
       admin: {
         position: "sidebar",
+        description: "Manage the status of this inquiry (e.g. New, In Progress, Resolved).",
       },
     },
     {
@@ -136,6 +140,7 @@ export const ContactMessages: CollectionConfig = {
       ],
       admin: {
         position: "sidebar",
+        description: "Set the priority level for handling this inquiry.",
       },
     },
     {
@@ -145,7 +150,7 @@ export const ContactMessages: CollectionConfig = {
       label: "Assigned To",
       admin: {
         position: "sidebar",
-        description: "Assign this message to a team member",
+        description: "For internal admin use: Assign this message to a team member to handle.",
       },
     },
     {
@@ -153,7 +158,7 @@ export const ContactMessages: CollectionConfig = {
       type: "textarea",
       label: "Internal Notes",
       admin: {
-        description: "Internal notes for team (not visible to sender)",
+        description: "Internal notes for the admin team (not visible to the sender).",
       },
     },
     {
@@ -182,6 +187,7 @@ export const ContactMessages: CollectionConfig = {
       admin: {
         position: "sidebar",
         readOnly: true,
+        condition: (data) => !!data?.confirmationToken,
       },
     },
     {
@@ -191,7 +197,7 @@ export const ContactMessages: CollectionConfig = {
       admin: {
         position: "sidebar",
         readOnly: true,
-        condition: (data) => data.doubleOptInConfirmed === true,
+        condition: (data) => !!data?.confirmationToken && data?.doubleOptInConfirmed === true,
       },
     },
     {
@@ -203,6 +209,7 @@ export const ContactMessages: CollectionConfig = {
         position: "sidebar",
         readOnly: true,
         description: "Auto-generated double opt-in token",
+        condition: (data) => !!data?.confirmationToken,
       },
     },
     {
@@ -213,6 +220,7 @@ export const ContactMessages: CollectionConfig = {
         position: "sidebar",
         readOnly: true,
         description: "Token expires after 24 hours",
+        condition: (data) => !!data?.confirmationToken,
       },
     },
   ],

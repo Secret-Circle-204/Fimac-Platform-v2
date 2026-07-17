@@ -3,6 +3,7 @@ import { NextRequest, NextResponse, after } from 'next/server'
 import { getPayloadClient } from '@/db/client'
 import { ADMIN_NOTIFICATIONS_EMAIL, SERVER_URL } from '@/env'
 import { emailTemplates, sendEmail } from '@/lib/email/nodemailer'
+import { getCachedCompanySettings } from '@/lib/cache/company-settings'
 import { getClientIP } from '@/lib/security/ip-utils'
 
 export async function POST(req: NextRequest) {
@@ -45,6 +46,16 @@ export async function POST(req: NextRequest) {
     const confirmationUrl = `${SERVER_URL}/api/contact/confirm?token=${confirmationToken}`
 
     after(async () => {
+      let adminEmail = ADMIN_NOTIFICATIONS_EMAIL
+      try {
+        const settings = await getCachedCompanySettings()
+        if (settings?.notificationEmail) {
+          adminEmail = settings.notificationEmail
+        }
+      } catch (err) {
+        console.error("Failed to fetch notification email from settings, falling back to env:", err)
+      }
+
       await Promise.all([
         sendEmail({
           to: email,
@@ -61,7 +72,7 @@ export async function POST(req: NextRequest) {
           }).text,
         }),
         sendEmail({
-          to: ADMIN_NOTIFICATIONS_EMAIL,
+          to: adminEmail,
           subject: `Pending contact request from ${fullName}`,
           html: emailTemplates.contactAdminNotification({
             fullName,

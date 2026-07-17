@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth/get-current-user'
 import { sendEmail, emailTemplates } from '@/lib/email/nodemailer'
 import { EMAIL_FROM, SERVER_URL } from '@/env'
 import slugify from 'slugify'
+import { getCachedCompanySettings } from '@/lib/cache/company-settings'
 
 export async function POST(request: NextRequest) {
   try {
@@ -237,6 +238,16 @@ export async function POST(request: NextRequest) {
       })
 
       // Dispatch emails concurrently (non-blocking)
+      let adminEmail = EMAIL_FROM
+      try {
+        const settings = await getCachedCompanySettings()
+        if (settings?.notificationEmail) {
+          adminEmail = settings.notificationEmail
+        }
+      } catch (err) {
+        console.error("Failed to fetch notification email from settings, falling back to env:", err)
+      }
+
       Promise.all([
         sendEmail({
           to: user.email,
@@ -245,7 +256,7 @@ export async function POST(request: NextRequest) {
           text: sellerMail.text,
         }),
         sendEmail({
-          to: EMAIL_FROM,
+          to: adminEmail,
           subject: adminMail.subject,
           html: adminMail.html,
           text: adminMail.text,

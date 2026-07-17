@@ -116,6 +116,16 @@ export const CompanySettings: GlobalConfig = {
               required: true,
             },
             {
+              name: 'notificationEmail',
+              label: 'Admin Notifications Email',
+              type: 'email',
+              defaultValue: 'info@fimacgroup.com',
+              required: true,
+              admin: {
+                description: 'The email address that receives notifications about new property inquiries and seller requests.',
+              },
+            },
+            {
               name: 'contactPhone',
               label: 'Contact Phone',
               type: 'text',

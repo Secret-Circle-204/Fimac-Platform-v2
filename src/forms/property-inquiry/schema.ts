@@ -10,6 +10,12 @@ export const schema = z.object({
     .string()
     .min(1, { message: "Please include a message" })
     .max(256, { message: "Message must be at most 256 characters long" }),
+  preferredContact: z.enum(["email", "phone", "whatsapp"], {
+    message: "Please select a preferred contact method",
+  }),
+  buyingTimeline: z.enum(["immediate", "later", "browsing"], {
+    message: "Please select a buying timeline",
+  }),
 })
 
 export type PropertyInquirySchema = z.infer<typeof schema>

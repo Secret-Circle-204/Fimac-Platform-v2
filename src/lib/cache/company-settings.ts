@@ -14,6 +14,7 @@ export interface CompanySettingsData {
     badgeText?: string | null
   }
   contactEmail?: string | null
+  notificationEmail?: string | null
   contactPhone?: string | null
   contactOffice?: string | null
   updatedAt?: string | null

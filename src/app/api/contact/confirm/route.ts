@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayloadClient } from '@/db/client'
 import { ADMIN_NOTIFICATIONS_EMAIL } from '@/env'
 import { emailTemplates, sendEmail } from '@/lib/email/nodemailer'
+import { getCachedCompanySettings } from '@/lib/cache/company-settings'
 import type { ContactMessage } from '@/payload-types'
 
 export async function GET(request: NextRequest) {
@@ -60,18 +61,29 @@ export async function GET(request: NextRequest) {
     userAgent: updatedMessage.userAgent || 'unknown',
   }
 
+  // Fetch dynamic admin notification email from Company Settings (fallback to env)
+  let adminEmail = ADMIN_NOTIFICATIONS_EMAIL
+  try {
+    const settings = await getCachedCompanySettings()
+    if (settings?.notificationEmail) {
+      adminEmail = settings.notificationEmail
+    }
+  } catch (err) {
+    console.error("Failed to fetch notification email from settings, falling back to env:", err)
+  }
+
   await Promise.all([
     sendEmail({
-      to: ADMIN_NOTIFICATIONS_EMAIL,
+      to: adminEmail,
       subject: `Confirmed contact request from ${normalized.fullName}`,
       html: emailTemplates.contactAdminNotification({
         ...normalized,
-        email: normalized.email || ADMIN_NOTIFICATIONS_EMAIL,
+        email: normalized.email || adminEmail,
         confirmed: true,
       }).html,
       text: emailTemplates.contactAdminNotification({
         ...normalized,
-        email: normalized.email || ADMIN_NOTIFICATIONS_EMAIL,
+        email: normalized.email || adminEmail,
         confirmed: true,
       }).text,
     }),

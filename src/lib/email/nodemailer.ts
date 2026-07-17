@@ -70,6 +70,17 @@ type ContactReceiptArgs = {
   subject: string
 }
 
+type PropertyInquiryReceiptArgs = {
+  fullName: string
+  propertyTitle: string
+}
+
+type SellerPropertyPublishedArgs = {
+  fullName: string
+  propertyTitle: string
+  propertyUrl: string
+}
+
 
 const emailShell = ({
   title,
@@ -201,6 +212,58 @@ export const emailTemplates = {
       `Hi ${fullName},`,
       `We've received your message about ${subject}.`,
       "We'll be in touch soon.",
+    ]),
+  }),
+
+  propertyInquiryReceipt: ({ fullName, propertyTitle }: PropertyInquiryReceiptArgs) => ({
+    subject: `Inquiry Received: ${propertyTitle}`,
+    html: emailShell({
+      title: 'Inquiry Received',
+      body: `
+        <p>Dear ${fullName},</p>
+        <p>Thank you for your interest in the property <strong>"${propertyTitle}"</strong>.</p>
+        <p>We have successfully received your inquiry. A dedicated member of our <strong>Fimac Group</strong> advisory team is currently reviewing your details and will contact you shortly using your preferred contact method to discuss your timeline and provide further assistance.</p>
+        <p>If you have any urgent questions in the meantime, please reply directly to this email or reach out to our support team.</p>
+        <br/>
+        <p>Best regards,</p>
+        <p><strong>Fimac Group Team</strong></p>
+      `,
+    }),
+    text: plainText([
+      `Dear ${fullName},`,
+      `Thank you for your interest in the property "${propertyTitle}".`,
+      `We have successfully received your inquiry. A dedicated member of our Fimac Group advisory team is currently reviewing your details and will contact you shortly using your preferred contact method to discuss your timeline and provide further assistance.`,
+      `If you have any urgent questions in the meantime, please reply directly to this email.`,
+      `Best regards,`,
+      `Fimac Group Team`,
+    ]),
+  }),
+
+  sellerPropertyPublished: ({ fullName, propertyTitle, propertyUrl }: SellerPropertyPublishedArgs) => ({
+    subject: `Your property is now live: ${propertyTitle}`,
+    html: emailShell({
+      title: 'Property Published!',
+      body: `
+        <p>Dear ${fullName},</p>
+        <p>We are pleased to inform you that your property request <strong>"${propertyTitle}"</strong> has been approved and published by our administrative team.</p>
+        <p>Your listing is now live on the <strong>Fimac Platform</strong> and is open for potential buyers to view and send inquiries.</p>
+        <p>You can view your live property listing by clicking the link below:</p>
+        <p style="margin: 24px 0; text-align: center;">
+          <a href="${propertyUrl}" target="_blank" style="background-color: #4f46e5; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">View Live Listing</a>
+        </p>
+        <p>If you need to make any updates to your property details or manage inquiries, please log in to your seller dashboard.</p>
+        <br/>
+        <p>Best regards,</p>
+        <p><strong>Fimac Group Team</strong></p>
+      `,
+    }),
+    text: plainText([
+      `Dear ${fullName},`,
+      `We are pleased to inform you that your property request "${propertyTitle}" has been approved and published by our administrative team.`,
+      `Your listing is now live on the Fimac Platform.`,
+      `You can view your live listing here: ${propertyUrl}`,
+      `Best regards,`,
+      `Fimac Group Team`,
     ]),
   }),
 
