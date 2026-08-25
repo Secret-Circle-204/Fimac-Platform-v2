@@ -1,4 +1,4 @@
-import { unstable_cache } from 'next/cache'
+import { cached } from './wrapper'
 import { getPayloadClient } from '@/db/client'
 
 export interface CachedConstructionStatus {
@@ -15,9 +15,8 @@ export interface CachedConstructionStatus {
 export const getCachedConstructionStatuses = async (): Promise<CachedConstructionStatus[]> => {
   const cacheKey = 'construction-statuses-all'
 
-  return await unstable_cache(
+  return await cached(
     async () => {
-      console.log(`⚡ [CACHE MISS]: construction-statuses-all (Querying PostgreSQL Remote DB...)`)
       const payload = await getPayloadClient()
       const data = await payload.find({
         collection: 'construction-statuses',
@@ -39,3 +38,4 @@ export const getCachedConstructionStatuses = async (): Promise<CachedConstructio
     }
   )()
 }
+

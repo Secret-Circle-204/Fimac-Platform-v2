@@ -1,10 +1,14 @@
 import { revalidateTag } from 'next/cache'
+import { cacheTelemetry } from './telemetry'
 
 /**
  * Triggers Next.js on-demand cache revalidation.
  * Safely bypasses execution during static build phases to avoid Next.js warnings/errors.
  */
 export const triggerRevalidate = (tag: string) => {
+  // Record invalidation in telemetry
+  cacheTelemetry.recordInvalidation(tag)
+
   // Prevent executing revalidation during the static generation phase of next build
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     return
@@ -21,3 +25,4 @@ export const triggerRevalidate = (tag: string) => {
     console.error(`[CacheRevalidation] Error during revalidation for tag: ${tag}`, err)
   }
 }
+

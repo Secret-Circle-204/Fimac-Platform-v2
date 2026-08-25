@@ -25,6 +25,7 @@ const REFERENCE_CONFIGS: ReferenceConfig[] = [
   { collection: 'blog-posts', field: 'featuredImage', titleField: 'title' },
   { collection: 'properties', field: 'photos', titleField: 'title' },
   { collection: 'buyers', field: 'proof_of_funds', titleField: 'full_name' },
+  { collection: 'seller-requests', field: 'photos', titleField: 'property_title' },
 ]
 
 /**

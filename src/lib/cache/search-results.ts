@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache"
+import { cached } from "./wrapper"
 import { local } from "@/repository"
 import { Property } from "@/payload-types"
 import type { Where } from "payload"
@@ -8,6 +8,25 @@ type SearchResultsResponse = {
   totalDocs: number
   totalPages: number
   page: number
+}
+
+/**
+ * Parses query parameters from the cacheKey to register granular tags.
+ */
+export function parseCacheKeyFilters(cacheKey: string): Record<string, string> {
+  const filters: Record<string, string> = {}
+  const part = cacheKey.split("search-results:")[1]
+  if (!part || part === "default") return filters
+
+  try {
+    const searchParams = new URLSearchParams(part)
+    searchParams.forEach((value, key) => {
+      filters[key] = value
+    })
+  } catch (err) {
+    console.error('[parseCacheKeyFilters] Error parsing query cache key:', err)
+  }
+  return filters
 }
 
 /**
@@ -52,9 +71,24 @@ export const getCachedSearchResults = async (
   const sortKey = Array.isArray(sort) ? sort.join(',') : sort
   const paginatedKey = `${cacheKey}:p${page}:s${sortKey}`
 
-  return await unstable_cache(
+  // Parse filters from the cacheKey
+  const filters = parseCacheKeyFilters(cacheKey)
+
+  // Build the list of granular tags
+  const tags = ["search-results"]
+  
+  if (Object.keys(filters).length === 0) {
+    tags.push("search-results:all")
+  } else {
+    if (filters.city) tags.push(`search-results:city:${filters.city.toLowerCase()}`)
+    if (filters.type) tags.push(`search-results:type:${filters.type.toLowerCase()}`)
+    if (filters.category) tags.push(`search-results:category:${filters.category.toLowerCase()}`)
+    if (filters.listingStatus) tags.push(`search-results:listing:${filters.listingStatus.toLowerCase()}`)
+    if (filters.constructionStatus) tags.push(`search-results:construction:${filters.constructionStatus.toLowerCase()}`)
+  }
+
+  return await cached(
     async () => {
-      console.log(`⚡ [CACHE MISS]: ${paginatedKey} (Querying PostgreSQL Remote DB...)`)
       const result = await local.property._getRawPaginatedInternal(
         where,
         {
@@ -88,7 +122,8 @@ export const getCachedSearchResults = async (
     [paginatedKey],
     {
       revalidate: 86400,
-      tags: ["search-results"],
+      tags,
     }
   )()
 }
+

@@ -332,6 +332,24 @@ export const SellerRequests: CollectionConfig = {
           ],
         },
         {
+          label: 'Photos',
+          fields: [
+            {
+              name: 'photos',
+              type: 'upload',
+              relationTo: 'media',
+              hasMany: true,
+              label: 'Property Photos',
+              admin: {
+                components: {
+                  Field: '@/components/admin/fields/CustomMediaField#CustomMediaField',
+                },
+                description: 'Property photos uploaded with this seller request.',
+              },
+            },
+          ],
+        },
+        {
           label: 'Seller Information',
           fields: [
             {
@@ -375,6 +393,7 @@ export const SellerRequests: CollectionConfig = {
       required: true,
       defaultValue: 'new',
       options: [
+        { label: 'Draft', value: 'draft' },
         { label: 'New', value: 'new' },
         { label: 'Under Review', value: 'reviewing' },
         { label: 'Approved', value: 'approved' },
@@ -383,6 +402,17 @@ export const SellerRequests: CollectionConfig = {
       ],
       admin: {
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'idempotencyKey',
+      type: 'text',
+      index: true,
+      unique: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Unique client submission key to prevent duplicate requests.',
       },
     },
     {

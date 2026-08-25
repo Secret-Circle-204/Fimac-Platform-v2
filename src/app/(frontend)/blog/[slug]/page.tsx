@@ -10,12 +10,12 @@ import { RichText } from '@/components/shared/rich-text'
 import { ShareButton } from '@/components/shared/share-button'
 import { SERVER_URL } from "@/env"
 
-import { unstable_cache } from "next/cache"
+import { cached } from "@/lib/cache/wrapper"
 import { cache } from "react"
 
 // Deduplicated and cached single post lookup (Server Caching Layer)
 const getPost = cache(async (slug: string) => {
-  return await unstable_cache(
+  return await cached(
     async () => {
       const payload = await getPayloadClient()
       const posts = await payload.find({
@@ -39,7 +39,7 @@ const getPost = cache(async (slug: string) => {
 
 // Deduplicated and cached related posts lookup
 const getRelatedPosts = cache(async (postId: string | number, categoryId: string | number) => {
-  return await unstable_cache(
+  return await cached(
     async () => {
       const payload = await getPayloadClient()
       const relatedPosts = await payload.find({
@@ -63,6 +63,7 @@ const getRelatedPosts = cache(async (postId: string | number, categoryId: string
     }
   )()
 })
+
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params

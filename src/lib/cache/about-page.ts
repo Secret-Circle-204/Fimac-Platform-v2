@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache"
+import { cached } from "./wrapper"
 import { getPayloadClient } from "@/db/client"
 import type { Media } from "@/payload-types"
 
@@ -38,9 +38,8 @@ export interface AboutPageData {
 export const getCachedAboutPage = async (): Promise<AboutPageData | null> => {
   const cacheKey = `about-page-data-v2`
 
-  const rawDoc = await unstable_cache(
+  const rawDoc = await cached(
     async () => {
-      console.log(`⚡ [CACHE MISS]: about-page-data-v2 (Querying PostgreSQL Remote DB...)`)
       const payload = await getPayloadClient()
       const settings = await payload.findGlobal({
         slug: 'about-page' as never,
@@ -57,3 +56,4 @@ export const getCachedAboutPage = async (): Promise<AboutPageData | null> => {
 
   return rawDoc as unknown as AboutPageData | null
 }
+

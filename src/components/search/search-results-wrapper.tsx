@@ -96,11 +96,11 @@ export function SearchResultsWrapper({ properties, totalCount, currentPage }: Se
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row h-full lg:min-h-[calc(100vh-160px)]">
-        {/* Left Side: Search Controls & Results (Scrollable on Desktop) */}
+      <div className="flex flex-col lg:flex-row h-full">
+        {/* Left Side: Search Controls & Results (Scrolls naturally on Desktop) */}
         {/* On Mobile: Hidden if Map view is active */}
         <div
-          className={`w-full lg:w-[55%] flex-col h-auto lg:h-[calc(100vh-160px)] lg:overflow-y-auto lg:border-r border-navy-deep/5 bg-[#FDFCFB] z-10 ${
+          className={`w-full lg:w-[55%] flex-col h-auto lg:rounded-l-3xl lg:border-r border-navy-deep/5 bg-[#FDFCFB] z-10 ${
             activeView === "list" ? "flex" : "hidden lg:flex"
           }`}
         >
@@ -113,14 +113,14 @@ export function SearchResultsWrapper({ properties, totalCount, currentPage }: Se
           </div>
         </div>
 
-        {/* Right Side: Interactive Map (Fixed) */}
+        {/* Right Side: Interactive Map Container (Sticky inner container on Desktop) */}
         {/* On Mobile: Hidden if List view is active */}
         <div
-          className={`w-full lg:w-[45%] h-[calc(100vh-160px)] lg:sticky lg:top-[120px] bg-navy-deep ${
+          className={`w-full lg:w-[45%] ${
             activeView === "map" ? "block" : "hidden lg:block"
           }`}
         >
-          <div className="w-full h-full relative">
+          <div className="w-full h-[calc(100vh-160px)] lg:h-[calc(100vh-120px)] lg:sticky lg:top-[100px] bg-navy-deep lg:rounded-r-3xl overflow-hidden relative">
             {(isDesktop || activeView === "map") && (
               <AnimatedGlobe properties={properties} variant="minimal" />
             )}

@@ -4,7 +4,7 @@ import { resolveSearchIntent } from '@/repository/property/search/search-intent-
 // geocodeSearch removed to prevent rate limiting
 import { SearchHeader } from '@/components/search/search-header'
 import { SearchResultsWrapper } from '@/components/search/search-results-wrapper'
-import { getCachedPropertyTypes } from '@/lib/cache/property-types'
+import { getCachedActivePropertyTypes } from '@/lib/cache/property-types'
 import { getCachedListingStatuses } from '@/lib/cache/listing-statuses'
 import { getCachedSearchFilters } from '@/lib/cache/search-filters'
 import { getCachedSearchResults, buildSearchCacheKey } from '@/lib/cache/search-results'
@@ -107,7 +107,7 @@ export default async function SearchPage({
           )
           .then((locs) => locs.map((l) => l.id))
       : Promise.resolve([] as (string | number)[]),
-    getCachedPropertyTypes(),
+    getCachedActivePropertyTypes(),
     getCachedListingStatuses(),
     getCachedSearchFilters(),
     getCachedConstructionStatuses(),
@@ -213,7 +213,7 @@ export default async function SearchPage({
         {/* Main Content Grid - Contained for Elite Alignment */}
         <section className="flex-1 w-full bg-[#FDFCFB] py-10">
           <div className="container mx-auto px-4 h-full">
-            <div className="w-full lg:rounded-3xl lg:overflow-hidden lg:border lg:border-navy-deep/5 lg:shadow-2xl lg:bg-white h-full">
+            <div className="w-full lg:rounded-3xl lg:overflow-visible lg:border lg:border-navy-deep/5 lg:shadow-2xl lg:bg-white h-full">
               <SearchResultsWrapper
                 properties={properties}
                 totalCount={totalCount}

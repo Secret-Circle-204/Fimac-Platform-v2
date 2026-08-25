@@ -935,6 +935,10 @@ export interface SellerRequest {
       }[]
     | null;
   /**
+   * Property photos uploaded with this seller request.
+   */
+  photos?: (number | Media)[] | null;
+  /**
    * Registered name of the seller at submission time.
    */
   full_name: string;
@@ -946,7 +950,11 @@ export interface SellerRequest {
    * Registered phone number of the seller at submission time.
    */
   phone: string;
-  status: 'new' | 'reviewing' | 'approved' | 'rejected' | 'listed';
+  status: 'draft' | 'new' | 'reviewing' | 'approved' | 'rejected' | 'listed';
+  /**
+   * Unique client submission key to prevent duplicate requests.
+   */
+  idempotencyKey?: string | null;
   referenceNumber?: string | null;
   /**
    * Auto-linked seller account record
@@ -2207,10 +2215,12 @@ export interface SellerRequestsSelect<T extends boolean = true> {
         value?: T;
         id?: T;
       };
+  photos?: T;
   full_name?: T;
   email?: T;
   phone?: T;
   status?: T;
+  idempotencyKey?: T;
   referenceNumber?: T;
   seller?: T;
   publishedProperty?: T;

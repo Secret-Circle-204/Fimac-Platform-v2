@@ -14,6 +14,9 @@ export const metadata = {
   },
   description: "FIMAC is a premier real estate platform offering global properties, luxury hotels, residential real estate, commercial assets, and expert consulting. Find your dream property with us.",
   keywords: ["real estate", "hospitality investment", "luxury hotels for sale", "commercial real estate", "property advisors", "FIMAC", "Fimac Group"],
+  icons: {
+    icon: '/logo.svg',
+  },
   alternates: {
     canonical: "./",
   },

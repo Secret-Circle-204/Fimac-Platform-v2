@@ -197,6 +197,9 @@ export class PropertyPublishingService {
               value: spec.value,
             }))
           : undefined,
+        photos: Array.isArray((sellerRequest as unknown as { photos?: unknown[] }).photos) && (sellerRequest as unknown as { photos: unknown[] }).photos.length > 0
+          ? (sellerRequest as unknown as { photos: Array<number | string | { id: number | string }> }).photos.map((p) => (typeof p === 'object' && p !== null ? Number(p.id) : Number(p)))
+          : undefined,
         // Do not pass mapsUrlInput to avoid triggering redundant reverse-geocoding
         // which overwrites the seller's valid, pre-resolved address components.
         mapsUrlInput: undefined,

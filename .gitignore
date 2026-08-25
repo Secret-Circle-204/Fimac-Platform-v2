@@ -60,6 +60,11 @@ playwright.config.ts
 # GeoIP Databases
 /data/*.mmdb
 
-# Migrations
-/src/migrations/*
-!/src/migrations/.gitkeep
+# Uploaded Media (Prevent committing uploaded photos/files to Git)
+/public/media/*
+!/public/media/.gitkeep
+
+# Temporary & Test Scripts
+scratch/
+scripts/test-*
+

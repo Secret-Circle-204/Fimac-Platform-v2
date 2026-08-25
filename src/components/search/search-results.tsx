@@ -5,7 +5,7 @@ import { PropertySearchCardSkeleton } from "./property-search-card-skeleton"
 import { Property } from "@/payload-types"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, SearchX } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
@@ -20,18 +20,33 @@ export function SearchResults({ properties, totalCount, currentPage, isLoading =
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const resultsPerPage = 24
   const totalPages = Math.ceil(totalCount / resultsPerPage)
 
   const currentResults = properties
 
+  const isMountedRef = useRef(false)
+  const searchParamsString = searchParams.toString()
+
   const handlePageChange = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParamsString)
     params.set("page", page.toString())
-    router.push(`${pathname}?${params.toString()}`)
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
+
+  // Smoothly scroll to top of search results when pagination or filters change
+  useEffect(() => {
+    if (isMountedRef.current) {
+      const timer = setTimeout(() => {
+        containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 100)
+      return () => clearTimeout(timer)
+    } else {
+      isMountedRef.current = true
+    }
+  }, [searchParamsString])
 
   useEffect(() => {
     const handleGlobeClick = (e: Event) => {
@@ -109,7 +124,7 @@ export function SearchResults({ properties, totalCount, currentPage, isLoading =
   }
 
   return (
-    <div className="space-y-10 pb-12">
+    <div ref={containerRef} className="space-y-10 pb-12 scroll-mt-28">
       {/* Results Header */}
       <div className="flex flex-col sm:flex-row justify-between items-end gap-4 px-4">
         <div className="space-y-1">

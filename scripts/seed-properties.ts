@@ -1779,13 +1779,24 @@ async function main() {
     `📊 Total properties prepared for seeding: ${finalPropertiesToSeed.length} (covers all 55 types, 2 per type)`,
   )
 
+  const validProperties = finalPropertiesToSeed.filter((prop) => {
+    const typeDoc = typeDocsMap[prop.typeSlug]
+    return !!typeDoc
+  })
+
+  const seedLimit = process.env.SEED_LIMIT ? parseInt(process.env.SEED_LIMIT, 10) : undefined
+  const propertiesToCreate = seedLimit ? validProperties.slice(0, seedLimit) : validProperties
+  if (seedLimit) {
+    console.log(`⚠️ Limit applied: Seeding only the first ${seedLimit} valid properties out of ${validProperties.length}.`)
+  }
+
   // 7. Ensure Media images exist in DB and retrieve IDs - BYPASSED (No images created or linked)
   console.log('🖼️ Media setup bypassed (No images will be created or linked).')
 
   // 8. Properties Seeding Loop
   console.log('🏠 Seeding properties...')
   let seedCount = 0
-  for (const prop of finalPropertiesToSeed) {
+  for (const prop of propertiesToCreate) {
     const typeDoc = typeDocsMap[prop.typeSlug]
     if (!typeDoc) {
       console.warn(

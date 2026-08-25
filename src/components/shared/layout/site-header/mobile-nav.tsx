@@ -139,10 +139,10 @@ export function MobileNav({ user }: { user?: CurrentUser | null }) {
           ) : (
             <div className="flex flex-col gap-3">
               <Button asChild className="w-full bg-gold-royal hover:bg-navy-deep text-white font-bold tracking-widest h-14 rounded-xl transition-all shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95">
-                <Link href="/auth/register" onClick={handleClose}>GET STARTED</Link>
+                <Link href="/auth/register" onClick={handleClose}>CREATE ACCOUNT</Link>
               </Button>
               <Button asChild variant="outline" className="w-full border-gray-200 bg-gray-50 text-primary hover:bg-white hover:text-gold-royal hover:border-gold-royal/30 font-bold tracking-widest h-14 rounded-xl transition-all shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95">
-                <Link href="/auth/login" onClick={handleClose}>SIGN IN</Link>
+                <Link href="/auth/login" onClick={handleClose}>LOG IN</Link>
               </Button>
             </div>
           )}

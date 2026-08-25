@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache"
+import { cached } from "./wrapper"
 import { local } from "@/repository"
 
 /**
@@ -12,10 +12,10 @@ import { local } from "@/repository"
  */
 export const getCachedFeaturedProperties = async () => {
   const cacheKey = "featured-properties-list"
+  const tags = ["featured-properties"]
 
-  const rawData = await unstable_cache(
+  const rawData = await cached(
     async () => {
-      console.log(`⚡ [CACHE MISS]: featured-properties-list (Querying PostgreSQL Remote DB...)`)
       const data = await local.property._getRawInternal(
         {
           'listingStatus.slug': {
@@ -51,10 +51,12 @@ export const getCachedFeaturedProperties = async () => {
     [cacheKey],
     {
       revalidate: 86400,
-      tags: ["featured-properties"],
+      tags,
     }
   )()
 
   // Rehydrate decorator instances with prototype methods intact
   return local.property.decorateMany(rawData)
 }
+
+

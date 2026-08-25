@@ -15,6 +15,12 @@
 /** Maximum file size in bytes for image uploads (8 MB) */
 export const MAX_IMAGE_FILE_SIZE_BYTES = 8 * 1024 * 1024
 
+/** Maximum number of photos allowed per seller request */
+export const MAX_PHOTOS_PER_SELLER_REQUEST = 10
+
+/** Maximum concurrent image processing tasks during seller request uploads to preserve CPU/RAM */
+export const UPLOAD_CONCURRENCY = 2
+
 /** Maximum file size in bytes for document uploads (20 MB) — future use */
 export const MAX_DOCUMENT_FILE_SIZE_BYTES = 20 * 1024 * 1024
 

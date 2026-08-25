@@ -22,6 +22,16 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    meta: {
+      titleSuffix: '- FIMAC Admin',
+      icons: [
+        {
+          rel: 'icon',
+          type: 'image/svg+xml',
+          url: '/logo.svg',
+        },
+      ],
+    },
     components: {
       beforeNavLinks: ['@/components/admin/Nav/CustomBeforeNav#CustomBeforeNav'],
     },

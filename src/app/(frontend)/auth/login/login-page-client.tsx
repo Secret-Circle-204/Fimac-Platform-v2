@@ -1,29 +1,29 @@
-"use client"
+'use client'
 
-import { useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, Loader2, TrendingUp } from "lucide-react"
-import Link from "next/link"
-import { toast } from "sonner"
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertCircle, Loader2, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
+import { toast } from 'sonner'
 
 function LoginPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const queryEmail = searchParams.get("email") || ""
-  const queryUserType = searchParams.get("user_type")
+  const queryEmail = searchParams.get('email') || ''
+  const queryUserType = searchParams.get('user_type')
 
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [userType, setUserType] = useState<"buyers" | "sellers">("buyers")
+  const [error, setError] = useState('')
+  const [userType, setUserType] = useState<'buyers' | 'sellers'>('buyers')
 
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
   })
 
   // Sync params from query string if present
@@ -31,20 +31,20 @@ function LoginPageContent() {
     if (queryEmail) {
       setFormData((prev) => ({ ...prev, email: queryEmail }))
     }
-    if (queryUserType === "sellers" || queryUserType === "buyers") {
+    if (queryUserType === 'sellers' || queryUserType === 'buyers') {
       setUserType(queryUserType)
     }
   }, [queryEmail, queryUserType])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
+    setError('')
     setLoading(true)
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           user_type: userType,
@@ -55,24 +55,26 @@ function LoginPageContent() {
 
       if (!response.ok) {
         // Handle email not verified
-        if (data.code === "EMAIL_NOT_VERIFIED") {
-          toast.error("Please verify your email first")
-          router.push(`/auth/verify?email=${encodeURIComponent(formData.email)}&user_type=${userType}`)
+        if (data.code === 'EMAIL_NOT_VERIFIED') {
+          toast.error('Please verify your email first')
+          router.push(
+            `/auth/verify?email=${encodeURIComponent(formData.email)}&user_type=${userType}`,
+          )
           return
         }
-        throw new Error(data.error || "Login failed")
+        throw new Error(data.error || 'Login failed')
       }
 
-      toast.success("Login successful!")
+      toast.success('Login successful!')
 
       // Redirect depending on user type
-      if (userType === "sellers") {
-        window.location.href = "/dashboard/seller"
+      if (userType === 'sellers') {
+        window.location.href = '/dashboard/seller'
       } else {
-        window.location.href = "/"
+        window.location.href = '/'
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "An unexpected error occurred"
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred'
       setError(message)
       toast.error(message)
     } finally {
@@ -86,17 +88,19 @@ function LoginPageContent() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to your FIMAC account</p>
+          <p className="text-gray-600">Log in to your FIMAC account</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-blue-600" />
-              {userType === "buyers" ? "Buyer Sign In" : "Seller Sign In"}
+              {userType === 'buyers' ? 'Buyer Log In' : 'Seller Log In'}
             </CardTitle>
             <CardDescription>
-              {userType === "buyers" ? "Access your buyer dashboard" : "Access your property portfolio dashboard"}
+              {userType === 'buyers'
+                ? 'Access your buyer dashboard'
+                : 'Access your property portfolio dashboard'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -105,35 +109,35 @@ function LoginPageContent() {
               <button
                 type="button"
                 className={`py-3 px-4 rounded-xl text-sm font-semibold tracking-wide transition-all duration-300 ${
-                  userType === "buyers"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "text-gray-500 hover:text-blue-600"
+                  userType === 'buyers'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-500 hover:text-blue-600'
                 }`}
-                onClick={() => setUserType("buyers")}
+                onClick={() => setUserType('buyers')}
               >
                 Buyer
               </button>
               <button
                 type="button"
                 className={`py-3 px-4 rounded-xl text-sm font-semibold tracking-wide transition-all duration-300 ${
-                  userType === "sellers"
-                    ? "bg-blue-600 text-white shadow-lg"
-                    : "text-gray-500 hover:text-blue-600"
+                  userType === 'sellers'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-500 hover:text-blue-600'
                 }`}
-                onClick={() => setUserType("sellers")}
+                onClick={() => setUserType('sellers')}
               >
                 Seller
               </button>
             </div>
 
-            {userType === "buyers" && (
+            {userType === 'buyers' && (
               <>
                 {/* Google Sign-In */}
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full mb-4 h-11"
-                  onClick={() => (window.location.href = "/api/auth/google")}
+                  onClick={() => (window.location.href = '/api/auth/google')}
                 >
                   <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                     <path
@@ -153,7 +157,7 @@ function LoginPageContent() {
                       fill="#EA4335"
                     />
                   </svg>
-                  Sign in with Google
+                  Log in with Google
                 </Button>
 
                 <div className="relative mb-4">
@@ -215,16 +219,16 @@ function LoginPageContent() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    Logging in...
                   </>
                 ) : (
-                  "Sign In"
+                  'Log In'
                 )}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
+              Don&apos;t have an account?{' '}
               <Link href="/auth/register" className="text-blue-600 hover:underline font-medium">
                 Register now
               </Link>
@@ -238,14 +242,16 @@ function LoginPageContent() {
 
 export default function LoginPageClient() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-sm text-muted-foreground">Loading login...</p>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <p className="text-sm text-muted-foreground">Loading login...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <LoginPageContent />
     </Suspense>
   )

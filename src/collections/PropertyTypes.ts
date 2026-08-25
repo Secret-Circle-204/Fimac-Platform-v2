@@ -20,6 +20,7 @@ export const PropertyTypes: CollectionConfig = {
       ({ context }) => {
         if (!context?.skipCacheInvalidation) {
           triggerRevalidate('property-types')
+          triggerRevalidate('property-types-active')
         }
       }
     ],
@@ -27,6 +28,7 @@ export const PropertyTypes: CollectionConfig = {
       ({ context }) => {
         if (!context?.skipCacheInvalidation) {
           triggerRevalidate('property-types')
+          triggerRevalidate('property-types-active')
         }
       }
     ]

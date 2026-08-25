@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache"
+import { cached } from "./wrapper"
 import { local } from "@/repository"
 import { Property } from "@/payload-types"
 
@@ -17,9 +17,8 @@ export const getCachedPropertyDetail = async (id: string | number) => {
   const normalizedId = String(id)
   const cacheKey = `property-detail-${normalizedId}`
 
-  const rawDoc = await unstable_cache(
+  const rawDoc = await cached(
     async () => {
-      console.log(`⚡ [CACHE MISS]: property-detail-${normalizedId} (Querying PostgreSQL Remote DB...)`)
       const docs = await local.property._getRawInternal(
         { id: { equals: id } },
         {
@@ -68,3 +67,4 @@ export const getCachedPropertyDetail = async (id: string | number) => {
   // Rehydrate decorator instance with prototype methods/getters intact
   return local.property.decorateMany([rawDoc as Property])[0]
 }
+

@@ -3,8 +3,8 @@ import { redirect } from "next/navigation"
 import LoginPageClient from "./login-page-client"
 
 export const metadata = {
-  title: "Sign In | FIMAC PLATFORM",
-  description: "Sign in to your FIMAC account",
+  title: "Log In | FIMAC PLATFORM",
+  description: "Log in to your FIMAC account",
 }
 
 export default async function LoginPage() {

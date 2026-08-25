@@ -11,6 +11,7 @@ import { ClassificationStep } from '@/components/sell/ClassificationStep'
 import { PricingStep } from '@/components/sell/PricingStep'
 import { LocationStep } from '@/components/sell/LocationStep'
 import { SpecsStep } from '@/components/sell/SpecsStep'
+import { PhotosStep, type SelectedPhoto } from '@/components/sell/PhotosStep'
 import { ReviewStep } from '@/components/sell/ReviewStep'
 import { ALL_SPEC_FIELDS, PROFILES, PROFILE_MAP } from '@/collections/Properties/specs-registry'
 
@@ -116,6 +117,17 @@ export function SellForm({
   const [customSpecLabel, setCustomSpecLabel] = useState('')
   const [customSpecValue, setCustomSpecValue] = useState('')
 
+  // Step 5: Photos State
+  const [photos, setPhotos] = useState<SelectedPhoto[]>([])
+
+  // Idempotency Key (Generated on client session per form fill)
+  const [idempotencyKey, setIdempotencyKey] = useState<string>('')
+
+  useEffect(() => {
+    // Generate unique idempotency key on mount
+    setIdempotencyKey(crypto.randomUUID())
+  }, [])
+
   // Fetch property types when category changes
   useEffect(() => {
     if (!selectedCategory) {
@@ -125,11 +137,9 @@ export function SellForm({
 
     const fetchPropertyTypes = async () => {
       try {
-        console.log(`🌐 [SellForm Client] Fetching property types for category: "${selectedCategory}"...`)
         const res = await fetch(`/api/sell/property-types?category=${selectedCategory}`)
         if (res.ok) {
           const data = await res.json()
-          console.log(`✅ [SellForm Client] Loaded ${data.length} property types successfully.`)
           setPropertyTypeOptions(data)
         }
       } catch (err) {
@@ -149,13 +159,11 @@ export function SellForm({
 
     const fetchFeatures = async () => {
       try {
-        console.log(`🌐 [SellForm Client] Fetching features for category: "${selectedCategory}", propertyTypeId: "${selectedPropertyTypeId}"...`)
         const res = await fetch(
-          `/api/sell/features?category=${selectedCategory}&propertyTypeId=${selectedPropertyTypeId}`
+          `/api/sell/features?category=${selectedCategory}&propertyTypeId=${selectedPropertyTypeId}`,
         )
         if (res.ok) {
           const data = await res.json()
-          console.log(`✅ [SellForm Client] Loaded ${data.length} features successfully.`)
           setFeatureOptions(data)
         }
       } catch (err) {
@@ -167,48 +175,33 @@ export function SellForm({
   }, [selectedCategory, selectedPropertyTypeId])
 
   const selectedCategoryName = categoryOptions.find((o) => o.value === selectedCategory)?.label || ''
-  const selectedPropertyTypeName = propertyTypeOptions.find(
-    (opt) => opt.value.toString() === selectedPropertyTypeId
-  )?.label || ''
+  const selectedPropertyTypeName =
+    propertyTypeOptions.find((opt) => opt.value.toString() === selectedPropertyTypeId)?.label || ''
 
   const selectedType = propertyTypeOptions.find(
-    (opt) => opt.value.toString() === selectedPropertyTypeId
+    (opt) => opt.value.toString() === selectedPropertyTypeId,
   )
 
   const activeSpecs = (() => {
     if (!selectedType) return []
     const category = selectedType.categorySlug as 'residential' | 'commercial' | 'hospitality' | 'land'
-    
-    // Resolve profile using static mapping to ensure absolute consistency with Payload schema
     const profile = PROFILE_MAP[selectedType.slug] || 'none'
 
-    // 1. Common specs for the category
     const commonSpecs = Object.values(ALL_SPEC_FIELDS).filter(
-      (spec) => spec.category === category && spec.subGroup === 'common'
+      (spec) => spec.category === category && spec.subGroup === 'common',
     )
 
-    // 2. Profile-specific specs
     const profilePaths = PROFILES[profile] || []
-    const profileSpecs = Object.values(ALL_SPEC_FIELDS).filter(
-      (spec) => profilePaths.includes(spec.path)
+    const profileSpecs = Object.values(ALL_SPEC_FIELDS).filter((spec) =>
+      profilePaths.includes(spec.path),
     )
 
-    // Deduplicate by path
-    const uniqueSpecsMap = new Map<string, typeof ALL_SPEC_FIELDS[keyof typeof ALL_SPEC_FIELDS]>()
+    const uniqueSpecsMap = new Map<string, (typeof ALL_SPEC_FIELDS)[keyof typeof ALL_SPEC_FIELDS]>()
     commonSpecs.forEach((spec) => uniqueSpecsMap.set(spec.path, spec))
     profileSpecs.forEach((spec) => uniqueSpecsMap.set(spec.path, spec))
 
-    const specs = Array.from(uniqueSpecsMap.values())
-    return specs
+    return Array.from(uniqueSpecsMap.values())
   })()
-
-  useEffect(() => {
-    console.log("🔍 [SellForm Client State]:", {
-      selectedPropertyTypeId,
-      selectedType,
-      activeSpecs: activeSpecs.map((s) => s.path),
-    })
-  }, [selectedPropertyTypeId, selectedType, activeSpecs])
 
   const handleCategoryChange = (val: string) => {
     setSelectedCategory(val)
@@ -258,6 +251,7 @@ export function SellForm({
     { label: 'Pricing', desc: 'Price & Size' },
     { label: 'Location', desc: 'Coordinates & Address' },
     { label: 'Specifications', desc: 'Details & Description' },
+    { label: 'Photos', desc: 'Property Photos' },
     { label: 'Review', desc: 'Review & Submit' },
   ]
 
@@ -283,6 +277,8 @@ export function SellForm({
         )
       case 4:
         return !!description.trim()
+      case 5:
+        return true // Photos are optional (validated on selection)
       default:
         return true
     }
@@ -291,7 +287,7 @@ export function SellForm({
   const scrollToFormTop = () => {
     if (formRef.current) {
       const elementPosition = formRef.current.getBoundingClientRect().top + window.scrollY
-      const offsetPosition = elementPosition - 120 // Offset for sticky navbar
+      const offsetPosition = elementPosition - 120
       window.scrollTo({
         top: offsetPosition,
         behavior: 'smooth',
@@ -326,7 +322,7 @@ export function SellForm({
           setCustomSpecValue('')
         }
       }
-      setCurrentStep((prev) => Math.min(prev + 1, 5))
+      setCurrentStep((prev) => Math.min(prev + 1, 6))
       setError('')
       setTimeout(scrollToFormTop, 50)
     } else {
@@ -352,8 +348,7 @@ export function SellForm({
     const finalSpecsFlat: Record<string, unknown> = {}
     activeSpecs.forEach((spec) => {
       const val = specValues[spec.path]
-      
-      // If not specified, or if negative selection ("No", false), do NOT send it!
+
       if (
         val === undefined ||
         val === null ||
@@ -377,7 +372,7 @@ export function SellForm({
 
     const inflatedSpecs = inflateNestedObject(finalSpecsFlat)
 
-    const data = {
+    const payloadData = {
       property_type: selectedPropertyTypeId,
       category: selectedCategory,
       property_title: propertyTitle,
@@ -398,26 +393,44 @@ export function SellForm({
       features: selectedFeatures,
       customFeatures: customFeatures,
       customSpecifications: customSpecs,
+      idempotencyKey,
       ...inflatedSpecs,
     }
 
     try {
+      console.log('🚀 [SellForm] Submitting property listing request...')
+      const formData = new FormData()
+      formData.append('data', JSON.stringify(payloadData))
+
+      console.log(`📦 [SellForm] Appending ${photos.length} photo(s) to FormData...`)
+      photos.forEach((photo, idx) => {
+        console.log(`  ↳ Photo [${idx + 1}/${photos.length}]: "${photo.file.name}" (${(photo.file.size / 1024).toFixed(1)} KB)`)
+        formData.append('photos', photo.file)
+      })
+
+      console.log(`⏳ [SellForm] Sending multipart POST to /api/seller-request (IdempotencyKey: "${idempotencyKey}")...`)
       const res = await fetch('/api/seller-request', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: formData,
       })
 
       const result = await res.json()
 
       if (!res.ok) {
+        console.error(`❌ [SellForm] Server rejected request (${res.status}):`, result)
         setError(result.error || 'Something went wrong')
         submitLock.current = false
         return
       }
 
+      console.log(`✅ [SellForm] Submission succeeded! Request ID: ${result.requestId}, Photos Uploaded: ${result.photosCount}`)
+
+      // Cleanup object URLs to avoid memory leaks
+      photos.forEach((p) => URL.revokeObjectURL(p.previewUrl))
+
       setIsSuccess(true)
-    } catch (_err) {
+    } catch (err) {
+      console.error('❌ [SellForm] Network or unexpected submission error:', err)
       setError('Failed to submit request. Please try again.')
       submitLock.current = false
     } finally {
@@ -449,6 +462,8 @@ export function SellForm({
                 setPropertySize('')
                 setDescription('')
                 setSpecValues({})
+                setPhotos([])
+                setIdempotencyKey(crypto.randomUUID())
                 setCoords({ lat: 27.9158, lng: 34.3300 })
                 setAddressDetails({
                   address: '',
@@ -560,6 +575,15 @@ export function SellForm({
           )}
 
           {currentStep === 5 && (
+            <PhotosStep
+              photos={photos}
+              onPhotosChange={setPhotos}
+              error={error}
+              onErrorClear={() => setError('')}
+            />
+          )}
+
+          {currentStep === 6 && (
             <ReviewStep
               selectedCategoryName={selectedCategoryName}
               selectedPropertyTypeName={selectedPropertyTypeName}
@@ -577,6 +601,7 @@ export function SellForm({
               selectedFeatures={selectedFeatures}
               customFeatures={customFeatures}
               customSpecs={customSpecs}
+              photos={photos}
             />
           )}
 
@@ -596,7 +621,7 @@ export function SellForm({
               <div />
             )}
 
-            {currentStep < 5 ? (
+            {currentStep < 6 ? (
               <Button
                 type="button"
                 onClick={handleNext}

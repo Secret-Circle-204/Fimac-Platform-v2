@@ -1,4 +1,4 @@
-import { unstable_cache } from 'next/cache'
+import { cached } from './wrapper'
 import { getPayloadClient } from '@/db/client'
 
 /**
@@ -11,9 +11,8 @@ import { getPayloadClient } from '@/db/client'
 export const getCachedListingStatuses = async () => {
   const cacheKey = 'listing-statuses-all'
   
-  return await unstable_cache(
+  return await cached(
     async () => {
-      console.log(`⚡ [CACHE MISS]: listing-statuses-all (Querying PostgreSQL Remote DB...)`)
       const payload = await getPayloadClient()
       const data = await payload.find({
         collection: 'listing-statuses',
@@ -29,3 +28,4 @@ export const getCachedListingStatuses = async () => {
     }
   )()
 }
+

@@ -15,6 +15,12 @@ interface CustomSpec {
   value: string
 }
 
+interface ReviewPhoto {
+  id: string
+  previewUrl: string
+  file: File
+}
+
 interface ReviewStepProps {
   selectedCategoryName: string
   selectedPropertyTypeName: string
@@ -37,6 +43,7 @@ interface ReviewStepProps {
   selectedFeatures: Array<number | string>
   customFeatures: string[]
   customSpecs?: CustomSpec[]
+  photos?: ReviewPhoto[]
 }
 
 export function ReviewStep({
@@ -56,6 +63,7 @@ export function ReviewStep({
   selectedFeatures,
   customFeatures,
   customSpecs = [],
+  photos = [],
 }: ReviewStepProps) {
   const formattedConstructionStatus = () => {
     switch (constructionStatus) {
@@ -261,6 +269,35 @@ export function ReviewStep({
                 >
                   {feat} (Custom)
                 </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Selected Photos Summary */}
+        {photos && photos.length > 0 && (
+          <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100/80 space-y-4 md:col-span-2 shadow-sm">
+            <h4 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+              Uploaded Photos ({photos.length})
+            </h4>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+              {photos.map((photo, idx) => (
+                <div
+                  key={photo.id}
+                  className="relative rounded-xl overflow-hidden aspect-[4/3] border border-slate-200 shadow-sm bg-white"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo.previewUrl}
+                    alt={`Review photo ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {idx === 0 && (
+                    <span className="absolute bottom-1 left-1 bg-blue-900 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                      Cover
+                    </span>
+                  )}
+                </div>
               ))}
             </div>
           </div>

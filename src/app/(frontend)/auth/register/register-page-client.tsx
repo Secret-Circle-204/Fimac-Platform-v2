@@ -357,7 +357,7 @@ export default function RegisterPageClient() {
                 <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{" "}
                   <Link href="/auth/login" className="text-blue-600 hover:underline">
-                    Sign in
+                    Log in
                   </Link>
                 </p>
               </div>

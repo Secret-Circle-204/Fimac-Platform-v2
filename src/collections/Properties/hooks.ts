@@ -5,7 +5,7 @@ import type {
   CollectionAfterDeleteHook,
   CollectionBeforeDeleteHook,
 } from 'payload'
-import type { Property, PropertyType } from '@/payload-types'
+import type { Property, PropertyType, ListingStatus } from '@/payload-types'
 import { triggerRevalidate } from '@/lib/cache/revalidate'
 import { service } from '@/services'
 
@@ -292,6 +292,39 @@ export const syncLocationHook: CollectionBeforeChangeHook<Property> = measureBef
   },
 )
 
+import { didFeaturedPresentationChange, didFilterUniverseChange, getRelationSlug } from './diff'
+import { getCachedListingStatuses } from '@/lib/cache/listing-statuses'
+import { getCachedConstructionStatuses } from '@/lib/cache/construction-statuses'
+
+const isActiveSearchable = (
+  doc: Partial<Property> | undefined | null,
+  listingStatuses: ListingStatus[]
+): boolean => {
+  if (!doc) return false
+  const statusField = doc.listingStatus
+  if (!statusField) return false
+
+  if (typeof statusField === 'object' && statusField !== null && 'slug' in statusField) {
+    const obj = statusField as { slug: unknown }
+    return typeof obj.slug === 'string' && obj.slug !== 'draft'
+  }
+
+  const status = listingStatuses.find((s) => {
+    if (s && typeof s === 'object' && 'id' in s) {
+      const obj = s as { id: unknown }
+      return String(obj.id) === String(statusField)
+    }
+    return false
+  })
+
+  if (status && typeof status === 'object' && 'slug' in status) {
+    const obj = status as { slug: unknown }
+    return typeof obj.slug === 'string' && obj.slug !== 'draft'
+  }
+
+  return false
+}
+
 export const revalidatePropertyCache: CollectionAfterChangeHook<Property> = async ({
   doc,
   previousDoc,
@@ -302,10 +335,132 @@ export const revalidatePropertyCache: CollectionAfterChangeHook<Property> = asyn
   try {
     const id = doc?.id || previousDoc?.id
     if (id) {
+      // 1. Always invalidate the specific property cache tag.
+      // This will instantly evict the detail page AND any cached search page containing this property!
       triggerRevalidate(`property:${id}`)
-      triggerRevalidate('featured-properties')
-      triggerRevalidate('search-filters')
-      triggerRevalidate('search-results')
+
+      // 2. Fetch the listing/construction status arrays to map relationship IDs to slugs
+      const [listingStatuses, constructionStatuses] = await Promise.all([
+        getCachedListingStatuses().catch(() => []),
+        getCachedConstructionStatuses().catch(() => []),
+      ])
+
+      const getListingStatusSlug = (idOrObj: unknown): string | null => {
+        if (!idOrObj) return null
+        if (typeof idOrObj === 'object' && idOrObj !== null && 'slug' in idOrObj) {
+          const obj = idOrObj as { slug: unknown }
+          return typeof obj.slug === 'string' ? obj.slug : null
+        }
+        const status = listingStatuses.find((s) => {
+          if (s && typeof s === 'object' && 'id' in s) {
+            const obj = s as { id: unknown }
+            return String(obj.id) === String(idOrObj)
+          }
+          return false
+        })
+        if (status && typeof status === 'object' && 'slug' in status) {
+          const obj = status as { slug: unknown }
+          return typeof obj.slug === 'string' ? obj.slug : null
+        }
+        return null
+      }
+
+      const getConstructionStatusSlug = (idOrObj: unknown): string | null => {
+        if (!idOrObj) return null
+        if (typeof idOrObj === 'object' && idOrObj !== null && 'slug' in idOrObj) {
+          const obj = idOrObj as { slug: unknown }
+          return typeof obj.slug === 'string' ? obj.slug : null
+        }
+        const status = constructionStatuses.find((s) => {
+          if (s && typeof s === 'object' && 'id' in s) {
+            const obj = s as { id: unknown }
+            return String(obj.id) === String(idOrObj)
+          }
+          return false
+        })
+        if (status && typeof status === 'object' && 'slug' in status) {
+          const obj = status as { slug: unknown }
+          return typeof obj.slug === 'string' ? obj.slug : null
+        }
+        return null
+      }
+
+      const getCity = (d: Partial<Property> | undefined | null) => d?.location?.address?.city || null
+      const getCategory = (d: Partial<Property> | undefined | null) => d?.category || null
+      const getPropertyTypeSlug = (d: Partial<Property> | undefined | null) => getRelationSlug(d?.propertyType) || d?.propertyTypeSlug || null
+
+      // 3. Diff check for Featured Properties
+      if (didFeaturedPresentationChange(previousDoc, doc)) {
+        triggerRevalidate('featured-properties')
+      }
+
+      // 4. Diff check for Search Filters
+      if (didFilterUniverseChange(previousDoc, doc)) {
+        triggerRevalidate('search-filters')
+      }
+
+      // 5. Invalidate property types cache only if the property transitions between active/inactive
+      // or if it remains active but its property type changes.
+      const wasActive = isActiveSearchable(previousDoc, listingStatuses)
+      const isActive = isActiveSearchable(doc, listingStatuses)
+
+      const activeStatusShifted = wasActive !== isActive
+      const activePropertyTypeChanged = wasActive && isActive && (getPropertyTypeSlug(previousDoc) !== getPropertyTypeSlug(doc))
+
+      if (activeStatusShifted || activePropertyTypeChanged) {
+        triggerRevalidate('property-types-active')
+      }
+
+      // 6. Granular Search Results Invalidation
+      // We always trigger broad 'search-results:all' to refresh unfiltered queries.
+      triggerRevalidate('search-results:all')
+
+      // If it's a create, delete, or critical search parameters changed, we invalidate specific tags:
+      const isCreateOrDelete = !previousDoc || !doc
+      const criticalFilterChanged = didFilterUniverseChange(previousDoc, doc) || 
+                                    getPropertyTypeSlug(previousDoc) !== getPropertyTypeSlug(doc)
+
+      if (isCreateOrDelete || criticalFilterChanged) {
+        // Collect all distinct cities/types/categories/listing statuses/construction statuses affected
+        const affectedCities = new Set<string>()
+        const affectedTypes = new Set<string>()
+        const affectedCategories = new Set<string>()
+        const affectedListings = new Set<string>()
+        const affectedConstructions = new Set<string>()
+
+        if (previousDoc) {
+          const city = getCity(previousDoc)
+          if (city) affectedCities.add(city.toLowerCase())
+          const type = getPropertyTypeSlug(previousDoc)
+          if (type) affectedTypes.add(type.toLowerCase())
+          const cat = getCategory(previousDoc)
+          if (cat) affectedCategories.add(cat.toLowerCase())
+          const list = getListingStatusSlug(previousDoc.listingStatus)
+          if (list) affectedListings.add(list.toLowerCase())
+          const cons = getConstructionStatusSlug(previousDoc.constructionStatus)
+          if (cons) affectedConstructions.add(cons.toLowerCase())
+        }
+
+        if (doc) {
+          const city = getCity(doc)
+          if (city) affectedCities.add(city.toLowerCase())
+          const type = getPropertyTypeSlug(doc)
+          if (type) affectedTypes.add(type.toLowerCase())
+          const cat = getCategory(doc)
+          if (cat) affectedCategories.add(cat.toLowerCase())
+          const list = getListingStatusSlug(doc.listingStatus)
+          if (list) affectedListings.add(list.toLowerCase())
+          const cons = getConstructionStatusSlug(doc.constructionStatus)
+          if (cons) affectedConstructions.add(cons.toLowerCase())
+        }
+
+        // Trigger granular invalidation for all affected tags
+        affectedCities.forEach(city => triggerRevalidate(`search-results:city:${city}`))
+        affectedTypes.forEach(type => triggerRevalidate(`search-results:type:${type}`))
+        affectedCategories.forEach(cat => triggerRevalidate(`search-results:category:${cat}`))
+        affectedListings.forEach(list => triggerRevalidate(`search-results:listing:${list}`))
+        affectedConstructions.forEach(cons => triggerRevalidate(`search-results:construction:${cons}`))
+      }
     }
 
     const getSellerId = (seller: unknown) => {
@@ -348,9 +503,76 @@ export const revalidatePropertyDeleteCache: CollectionAfterDeleteHook<Property> 
     const id = doc?.id
     if (id) {
       triggerRevalidate(`property:${id}`)
+
+      const [listingStatuses, constructionStatuses] = await Promise.all([
+        getCachedListingStatuses().catch(() => []),
+        getCachedConstructionStatuses().catch(() => []),
+      ])
+
+      const getListingStatusSlug = (idOrObj: unknown): string | null => {
+        if (!idOrObj) return null
+        if (typeof idOrObj === 'object' && idOrObj !== null && 'slug' in idOrObj) {
+          const obj = idOrObj as { slug: unknown }
+          return typeof obj.slug === 'string' ? obj.slug : null
+        }
+        const status = listingStatuses.find((s) => {
+          if (s && typeof s === 'object' && 'id' in s) {
+            const obj = s as { id: unknown }
+            return String(obj.id) === String(idOrObj)
+          }
+          return false
+        })
+        if (status && typeof status === 'object' && 'slug' in status) {
+          const obj = status as { slug: unknown }
+          return typeof obj.slug === 'string' ? obj.slug : null
+        }
+        return null
+      }
+
+      const getConstructionStatusSlug = (idOrObj: unknown): string | null => {
+        if (!idOrObj) return null
+        if (typeof idOrObj === 'object' && idOrObj !== null && 'slug' in idOrObj) {
+          const obj = idOrObj as { slug: unknown }
+          return typeof obj.slug === 'string' ? obj.slug : null
+        }
+        const status = constructionStatuses.find((s) => {
+          if (s && typeof s === 'object' && 'id' in s) {
+            const obj = s as { id: unknown }
+            return String(obj.id) === String(idOrObj)
+          }
+          return false
+        })
+        if (status && typeof status === 'object' && 'slug' in status) {
+          const obj = status as { slug: unknown }
+          return typeof obj.slug === 'string' ? obj.slug : null
+        }
+        return null
+      }
+
+      const getCity = (d: Partial<Property> | undefined | null) => d?.location?.address?.city || null
+      const getCategory = (d: Partial<Property> | undefined | null) => d?.category || null
+      const getPropertyTypeSlug = (d: Partial<Property> | undefined | null) => getRelationSlug(d?.propertyType) || d?.propertyTypeSlug || null
+
       triggerRevalidate('featured-properties')
       triggerRevalidate('search-filters')
-      triggerRevalidate('search-results')
+      triggerRevalidate('search-results:all')
+
+      // Invalidate property types only if the deleted property was active/searchable
+      if (isActiveSearchable(doc, listingStatuses)) {
+        triggerRevalidate('property-types-active')
+      }
+
+      const city = getCity(doc)
+      const type = getPropertyTypeSlug(doc)
+      const cat = getCategory(doc)
+      const list = getListingStatusSlug(doc.listingStatus)
+      const cons = getConstructionStatusSlug(doc.constructionStatus)
+
+      if (city) triggerRevalidate(`search-results:city:${city.toLowerCase()}`)
+      if (type) triggerRevalidate(`search-results:type:${type.toLowerCase()}`)
+      if (cat) triggerRevalidate(`search-results:category:${cat.toLowerCase()}`)
+      if (list) triggerRevalidate(`search-results:listing:${list.toLowerCase()}`)
+      if (cons) triggerRevalidate(`search-results:construction:${cons.toLowerCase()}`)
     }
 
     const getSellerId = (seller: unknown) => {
@@ -368,6 +590,7 @@ export const revalidatePropertyDeleteCache: CollectionAfterDeleteHook<Property> 
     console.error('[CacheRevalidation] Error during delete revalidation:', err)
   }
 }
+
 
 export const deleteAssociatedPropertyData: CollectionBeforeDeleteHook = async ({ req, id }) => {
   try {

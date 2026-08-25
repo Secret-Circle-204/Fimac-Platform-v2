@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache"
+import { cached } from "./wrapper"
 import { getPayloadClient } from "@/db/client"
 import type { Media } from "@/payload-types"
 
@@ -22,9 +22,8 @@ export interface BlogPostData {
 export const getCachedLatestBlogPosts = async (limit: number = 4): Promise<BlogPostData[]> => {
   const cacheKey = `latest-blog-posts-v2-${limit}`
 
-  const rawDoc = await unstable_cache(
+  const rawDoc = await cached(
     async () => {
-      console.log(`⚡ [CACHE MISS]: latest-blog-posts-v2-${limit} (Querying PostgreSQL Remote DB...)`)
       const payload = await getPayloadClient()
       const res = await payload.find({
         collection: 'blog-posts' as never,
@@ -48,3 +47,4 @@ export const getCachedLatestBlogPosts = async (limit: number = 4): Promise<BlogP
 
   return rawDoc as unknown as BlogPostData[]
 }
+

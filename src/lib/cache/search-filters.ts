@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache"
+import { cached } from "./wrapper"
 import { getPayloadClient } from "@/db/client"
 import { sql } from "@payloadcms/db-postgres"
 
@@ -33,9 +33,8 @@ function toTitleCase(str: string): string {
  * Tags: 'search-filters' — revalidated on-demand when properties are created/updated/deleted
  */
 export const getCachedSearchFilters = async (): Promise<SearchFilters> => {
-  return await unstable_cache(
+  return await cached(
     async () => {
-      console.log(`⚡ [CACHE MISS]: search-filters (Querying PostgreSQL Remote DB...)`)
       const payload = await getPayloadClient()
       const db = payload.db.drizzle
 
@@ -98,3 +97,4 @@ export const getCachedSearchFilters = async (): Promise<SearchFilters> => {
     }
   )()
 }
+

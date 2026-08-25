@@ -10,10 +10,10 @@ export async function UserNav() {
     return (
       <div className="flex items-center gap-2">
         <Button variant="ghost" asChild>
-          <Link href="/auth/login">Sign In</Link>
+          <Link href="/auth/login">Log In</Link>
         </Button>
         <Button asChild>
-          <Link href="/auth/register">Get Started</Link>
+          <Link href="/auth/register">Create Account</Link>
         </Button>
       </div>
     )
