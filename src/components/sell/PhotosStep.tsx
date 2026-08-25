@@ -5,7 +5,7 @@ import { Upload, X, Image as ImageIcon, AlertCircle } from 'lucide-react'
 import {
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_IMAGE_FILE_SIZE_BYTES,
-  MAX_PHOTOS_PER_SELLER_REQUEST,
+  getMaxPhotosForCategory,
   formatFileSize,
 } from '@/lib/media/config'
 
@@ -18,6 +18,7 @@ export interface SelectedPhoto {
 interface PhotosStepProps {
   photos: SelectedPhoto[]
   onPhotosChange: (photos: SelectedPhoto[]) => void
+  category?: string
   error?: string
   onErrorClear?: () => void
 }
@@ -25,23 +26,25 @@ interface PhotosStepProps {
 export function PhotosStep({
   photos,
   onPhotosChange,
+  category,
   error,
   onErrorClear,
 }: PhotosStepProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const maxPhotos = getMaxPhotosForCategory(category)
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return
     if (onErrorClear) onErrorClear()
 
-    console.log(`📸 [PhotosStep] File selection event triggered. Received ${files.length} raw file(s).`)
+    console.log(`📸 [PhotosStep] File selection event triggered. Received ${files.length} raw file(s). Category: "${category || 'default'}" (Max: ${maxPhotos})`)
 
     const newPhotos: SelectedPhoto[] = [...photos]
-    const remainingSlots = MAX_PHOTOS_PER_SELLER_REQUEST - newPhotos.length
+    const remainingSlots = maxPhotos - newPhotos.length
 
     if (remainingSlots <= 0) {
-      console.warn(`⚠️ [PhotosStep] Upload limit reached (${MAX_PHOTOS_PER_SELLER_REQUEST} max). Rejecting new selections.`)
-      alert(`You can only upload a maximum of ${MAX_PHOTOS_PER_SELLER_REQUEST} photos.`)
+      console.warn(`⚠️ [PhotosStep] Upload limit reached (${maxPhotos} max for ${category || 'category'}). Rejecting new selections.`)
+      alert(`You can only upload a maximum of ${maxPhotos} photos for this property category.`)
       return
     }
 
@@ -79,7 +82,7 @@ export function PhotosStep({
       })
     }
 
-    console.log(`📊 [PhotosStep] Total photos now selected: ${newPhotos.length}/${MAX_PHOTOS_PER_SELLER_REQUEST}`)
+    console.log(`📊 [PhotosStep] Total photos now selected: ${newPhotos.length}/${maxPhotos}`)
     onPhotosChange(newPhotos)
 
     // Reset file input value so selecting the same file again triggers change
@@ -95,7 +98,7 @@ export function PhotosStep({
       URL.revokeObjectURL(photoToRemove.previewUrl)
     }
     const updated = photos.filter((p) => p.id !== id)
-    console.log(`📊 [PhotosStep] Total photos remaining: ${updated.length}/${MAX_PHOTOS_PER_SELLER_REQUEST}`)
+    console.log(`📊 [PhotosStep] Total photos remaining: ${updated.length}/${maxPhotos}`)
     onPhotosChange(updated)
   }
 
@@ -117,7 +120,7 @@ export function PhotosStep({
       <div className="border-b pb-4">
         <h3 className="text-xl font-bold text-navy-deep">Property Photos</h3>
         <p className="text-sm text-gray-500 mt-1">
-          Upload up to {MAX_PHOTOS_PER_SELLER_REQUEST} photos of your property.
+          Upload up to {maxPhotos} photos of your property.
           High-quality photos increase buyer interest and accelerate review.
         </p>
       </div>
@@ -154,10 +157,10 @@ export function PhotosStep({
         </p>
         <p className="text-xs text-slate-500 mt-1">
           JPEG, PNG, WebP, AVIF up to {formatFileSize(MAX_IMAGE_FILE_SIZE_BYTES)}{' '}
-          each (Max {MAX_PHOTOS_PER_SELLER_REQUEST} photos)
+          each (Max {maxPhotos} photos)
         </p>
         <p className="text-xs font-semibold text-blue-800 mt-2">
-          {photos.length} of {MAX_PHOTOS_PER_SELLER_REQUEST} photos selected
+          {photos.length} of {maxPhotos} photos selected
         </p>
       </div>
 

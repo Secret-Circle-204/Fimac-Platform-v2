@@ -9,7 +9,7 @@ import { getCachedCompanySettings } from '@/lib/cache/company-settings'
 import {
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_IMAGE_FILE_SIZE_BYTES,
-  MAX_PHOTOS_PER_SELLER_REQUEST,
+  getMaxPhotosForCategory,
   UPLOAD_CONCURRENCY,
   formatFileSize,
 } from '@/lib/media/config'
@@ -212,11 +212,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. File Count & Pre-Validation Checks
-    if (files.length > MAX_PHOTOS_PER_SELLER_REQUEST) {
-      console.warn(`⚠️ [SellerRequest API] Too many photos: ${files.length} > ${MAX_PHOTOS_PER_SELLER_REQUEST}`)
+    const maxAllowedPhotos = getMaxPhotosForCategory(typeof category === 'string' ? category : null)
+    if (files.length > maxAllowedPhotos) {
+      console.warn(`⚠️ [SellerRequest API] Too many photos for category "${category || 'default'}": ${files.length} > ${maxAllowedPhotos}`)
       return NextResponse.json(
         {
-          error: `Maximum ${MAX_PHOTOS_PER_SELLER_REQUEST} photos allowed per request. Received ${files.length}.`,
+          error: `Maximum ${maxAllowedPhotos} photos allowed for ${category || 'this'} property. Received ${files.length}.`,
         },
         { status: 400 },
       )

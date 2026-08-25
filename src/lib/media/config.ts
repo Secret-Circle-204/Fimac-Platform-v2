@@ -12,11 +12,31 @@
 // File Size Limits
 // ---------------------------------------------------------------------------
 
-/** Maximum file size in bytes for image uploads (8 MB) */
-export const MAX_IMAGE_FILE_SIZE_BYTES = 8 * 1024 * 1024
+/** Maximum file size in bytes for image uploads (6 MB) */
+export const MAX_IMAGE_FILE_SIZE_BYTES = 6 * 1024 * 1024
 
-/** Maximum number of photos allowed per seller request */
-export const MAX_PHOTOS_PER_SELLER_REQUEST = 10
+/** Category-specific photo limits */
+export type PropertyCategorySlug = 'residential' | 'commercial' | 'hospitality' | 'land'
+
+export const MAX_PHOTOS_BY_CATEGORY: Record<PropertyCategorySlug, number> = {
+  hospitality: 30,
+  commercial: 30,
+  residential: 15,
+  land: 15,
+}
+
+export const DEFAULT_MAX_PHOTOS_PER_SELLER_REQUEST = 15
+
+/**
+ * Returns the maximum number of photos allowed for a given property category.
+ */
+export function getMaxPhotosForCategory(category?: string | null): number {
+  if (!category) return DEFAULT_MAX_PHOTOS_PER_SELLER_REQUEST
+  return MAX_PHOTOS_BY_CATEGORY[category as PropertyCategorySlug] || DEFAULT_MAX_PHOTOS_PER_SELLER_REQUEST
+}
+
+/** Fallback maximum number of photos allowed per seller request */
+export const MAX_PHOTOS_PER_SELLER_REQUEST = 30
 
 /** Maximum concurrent image processing tasks during seller request uploads to preserve CPU/RAM */
 export const UPLOAD_CONCURRENCY = 2

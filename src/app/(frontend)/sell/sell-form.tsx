@@ -578,6 +578,7 @@ export function SellForm({
             <PhotosStep
               photos={photos}
               onPhotosChange={setPhotos}
+              category={selectedCategory}
               error={error}
               onErrorClear={() => setError('')}
             />
