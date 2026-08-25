@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { MessageCircle, Phone, Mail } from "lucide-react"
 import Link from "next/link"
 import { getCachedCompanySettings } from "@/lib/cache/company-settings"
+import { getPrimaryPhoneNumber } from "@/lib/phone"
 
 export const metadata = {
   title: "Frequently Asked Questions | Fimac Group",
@@ -23,6 +24,7 @@ export default async function FAQPage() {
   const settings = await getCachedCompanySettings()
   const contactEmail = settings.contactEmail || ""
   const contactPhone = settings.contactPhone || ""
+  const primaryPhone = getPrimaryPhoneNumber(contactPhone)
   const schemaFaqs = [
     {
       question: "What is Fimac Group?",
@@ -222,9 +224,9 @@ export default async function FAQPage() {
                       Contact Support
                     </Link>
                   </Button>
-                  {contactPhone && (
+                  {primaryPhone && (
                     <Button asChild size="lg" variant="outline">
-                      <a href={`tel:${contactPhone.replace(/[^+\d]/g, "")}`}>
+                      <a href={`tel:${primaryPhone.telUri}`}>
                         <Phone className="mr-2 h-5 w-5" />
                         Call Us
                       </a>

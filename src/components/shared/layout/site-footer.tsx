@@ -69,22 +69,27 @@ export const Footer = ({ user }: { user?: CurrentUser | null }) => {
               <h3 className="text-lg font-semibold mb-4">Real Estate</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-primary">
+                  <Link href="/search?category=residential" className="text-muted-foreground hover:text-primary">
+                    Elite Real Estate
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/search?category=hospitality" className="text-muted-foreground hover:text-primary">
                     Hotels
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-primary">
+                  <Link href="/search?category=hospitality&type=resort" className="text-muted-foreground hover:text-primary">
                     Resorts
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-primary">
+                  <Link href="/search?category=hospitality&type=motel" className="text-muted-foreground hover:text-primary">
                     Motels
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-primary">
+                  <Link href="/search?category=land" className="text-muted-foreground hover:text-primary">
                     Land
                   </Link>
                 </li>
@@ -107,7 +112,7 @@ export const Footer = ({ user }: { user?: CurrentUser | null }) => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-muted-foreground hover:text-primary">
+                  <Link href="/faq" className="text-muted-foreground hover:text-primary">
                     FAQ
                   </Link>
                 </li>

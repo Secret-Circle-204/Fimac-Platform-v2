@@ -86,7 +86,7 @@ export function ReviewStep({
     <div className="space-y-8 animate-fadeIn">
       <div className="border-b pb-3 border-slate-100">
         <h3 className="text-xl font-bold text-navy-deep">Review Listing Details</h3>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-sm text-slate-500 mt-1">
           Review all information below before submitting your property request.
         </p>
       </div>
@@ -94,24 +94,24 @@ export function ReviewStep({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-navy-deep">
         {/* Core Details Card */}
         <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100/80 space-y-4 shadow-sm">
-          <h4 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+          <h4 className="text-xs font-bold tracking-wider text-slate-700 uppercase">
             Asset Information
           </h4>
           <div className="space-y-3">
             <div className="flex justify-between border-b border-slate-100 pb-2 text-sm">
-              <span className="text-slate-500 font-medium">Category</span>
+              <span className="text-slate-600 font-medium">Category</span>
               <span className="font-semibold">{selectedCategoryName}</span>
             </div>
             <div className="flex justify-between border-b border-slate-100 pb-2 text-sm">
-              <span className="text-slate-500 font-medium">Property Type</span>
+              <span className="text-slate-600 font-medium">Property Type</span>
               <span className="font-semibold">{selectedPropertyTypeName}</span>
             </div>
             <div className="flex justify-between border-b border-slate-100 pb-2 text-sm">
-              <span className="text-slate-500 font-medium">Title</span>
+              <span className="text-slate-600 font-medium">Title</span>
               <span className="font-semibold text-right">{propertyTitle}</span>
             </div>
             <div className="flex justify-between pb-1 text-sm">
-              <span className="text-slate-500 font-medium">Construction Status</span>
+              <span className="text-slate-600 font-medium">Construction Status</span>
               <span className="font-semibold">{formattedConstructionStatus()}</span>
             </div>
           </div>
@@ -119,18 +119,18 @@ export function ReviewStep({
 
         {/* Financial & Dimension Card */}
         <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100/80 space-y-4 shadow-sm">
-          <h4 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+          <h4 className="text-xs font-bold tracking-wider text-slate-700 uppercase">
             Pricing & Size
           </h4>
           <div className="space-y-4">
             <div className="flex justify-between border-b border-slate-100 pb-3 text-sm">
-              <span className="text-slate-500 font-medium">Asking Price</span>
+              <span className="text-slate-600 font-medium">Asking Price</span>
               <span className="font-bold text-blue-900 text-xl">
                 {Number(askingPrice).toLocaleString()} {currency}
               </span>
             </div>
             <div className="flex justify-between pb-1 text-sm">
-              <span className="text-slate-500 font-medium">Property Size</span>
+              <span className="text-slate-600 font-medium">Property Size</span>
               <span className="font-semibold text-lg text-navy-deep">
                 {propertySize} m²
               </span>
@@ -140,32 +140,32 @@ export function ReviewStep({
 
         {/* Location Snapshot Card */}
         <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100/80 space-y-4 md:col-span-2 shadow-sm">
-          <h4 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+          <h4 className="text-xs font-bold tracking-wider text-slate-700 uppercase">
             Location Snapshot
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <div className="flex justify-between border-b border-slate-100 pb-2 text-sm">
-                <span className="text-slate-500 font-medium">Address</span>
+                <span className="text-slate-600 font-medium">Address</span>
                 <span className="font-semibold text-right">{addressDetails.address}</span>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-2 text-sm">
-                <span className="text-slate-500 font-medium">City</span>
+                <span className="text-slate-600 font-medium">City</span>
                 <span className="font-semibold">{addressDetails.city}</span>
               </div>
               <div className="flex justify-between pb-1 text-sm">
-                <span className="text-slate-500 font-medium">Country</span>
+                <span className="text-slate-600 font-medium">Country</span>
                 <span className="font-semibold">{addressDetails.country}</span>
               </div>
             </div>
             <div className="space-y-3">
               <div className="flex justify-between border-b border-slate-100 pb-2 text-sm">
-                <span className="text-slate-500 font-medium">Latitude</span>
-                <span className="font-semibold font-mono text-slate-600">{coords.lat.toFixed(6)}</span>
+                <span className="text-slate-600 font-medium">Latitude</span>
+                <span className="font-semibold font-mono text-slate-700">{coords.lat.toFixed(6)}</span>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-2 text-sm">
-                <span className="text-slate-500 font-medium">Longitude</span>
-                <span className="font-semibold font-mono text-slate-600">{coords.lng.toFixed(6)}</span>
+                <span className="text-slate-600 font-medium">Longitude</span>
+                <span className="font-semibold font-mono text-slate-700">{coords.lng.toFixed(6)}</span>
               </div>
             </div>
           </div>
@@ -173,10 +173,10 @@ export function ReviewStep({
 
         {/* Description Card */}
         <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100/80 space-y-3 md:col-span-2 shadow-sm">
-          <h4 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+          <h4 className="text-xs font-bold tracking-wider text-slate-700 uppercase">
             Detailed Description
           </h4>
-          <p className="text-slate-600 leading-relaxed text-sm whitespace-pre-wrap font-medium">
+          <p className="text-slate-700 leading-relaxed text-sm whitespace-pre-wrap font-medium">
             {description}
           </p>
         </div>
@@ -184,7 +184,7 @@ export function ReviewStep({
         {/* Dynamic Specifications Summary */}
         {(activeSpecs.length > 0 || customSpecs.length > 0) && (
           <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100/80 space-y-4 md:col-span-2 shadow-sm">
-            <h4 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+            <h4 className="text-xs font-bold tracking-wider text-slate-700 uppercase">
               Property Specifications
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -215,7 +215,7 @@ export function ReviewStep({
 
                 return (
                   <div key={spec.path} className="flex flex-col p-4 bg-white rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">{spec.label.en}</span>
+                    <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">{spec.label.en}</span>
                     <span className="font-bold text-navy-deep mt-1 text-sm">{displayVal}</span>
                   </div>
                 )
@@ -229,8 +229,8 @@ export function ReviewStep({
                 }
                 return (
                   <div key={`custom-spec-${index}`} className="flex flex-col p-4 bg-white rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                      {spec.label} <span className="text-[9px] text-slate-300 font-bold">(Custom)</span>
+                    <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                      {spec.label} <span className="text-[9px] text-slate-400 font-bold">(Custom)</span>
                     </span>
                     <span className="font-bold text-navy-deep mt-1 text-sm">{displayVal}</span>
                   </div>
@@ -243,7 +243,7 @@ export function ReviewStep({
         {/* Features Summary */}
         {(selectedFeatures.length > 0 || customFeatures.length > 0) && (
           <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100/80 space-y-4 md:col-span-2 shadow-sm">
-            <h4 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+            <h4 className="text-xs font-bold tracking-wider text-slate-700 uppercase">
               Property Features
             </h4>
             <div className="flex flex-wrap gap-2">

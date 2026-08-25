@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { SpecFieldDefinition } from '@/collections/Properties/specs-registry'
 import * as Icons from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface FeatureOption {
   label: string
@@ -52,6 +53,8 @@ interface SpecsStepProps {
   onCustomSpecLabelChange: (val: string) => void
   customSpecValue: string
   onCustomSpecValueChange: (val: string) => void
+  fieldErrors?: Record<string, string>
+  onClearFieldError?: (fieldId: string) => void
 }
 
 function getSpecIcon(iconKey: string) {
@@ -142,6 +145,8 @@ export function SpecsStep({
   onCustomSpecLabelChange,
   customSpecValue,
   onCustomSpecValueChange,
+  fieldErrors,
+  onClearFieldError,
 }: SpecsStepProps) {
   // Custom Specifications error state
   const [customSpecErr, setCustomSpecErr] = useState('')
@@ -244,38 +249,62 @@ export function SpecsStep({
     <div className="space-y-6 animate-fadeIn">
       <div className="border-b pb-3 border-slate-100">
         <h3 className="text-xl font-bold text-navy-deep">Specifications & Description</h3>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-sm text-slate-500 mt-1">
           Provide a detailed description of the asset and enter specific property metrics.
         </p>
       </div>
 
       {/* Property Description */}
       <div className="space-y-2">
-        <Label
-          htmlFor="property_description"
-          className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center"
-        >
-          Description <span className="text-red-500 ml-1 font-bold">*</span>
-        </Label>
+        <div className="flex items-center justify-between">
+          <Label
+            htmlFor="property_description"
+            className="text-sm font-bold text-slate-700 flex items-center"
+          >
+            Description <span className="text-red-500 ml-1 font-bold">*</span>
+          </Label>
+          {fieldErrors?.property_description && (
+            <span className="text-red-500 text-xs font-bold flex items-center gap-1">
+              <Icons.AlertCircle className="w-3.5 h-3.5" />
+              Required
+            </span>
+          )}
+        </div>
         <div className="relative">
-          <Icons.FileText className="absolute left-4 top-4 text-slate-400 w-5 h-5 pointer-events-none" />
+          <Icons.FileText
+            className={cn(
+              "absolute left-4 top-4 w-5 h-5 pointer-events-none transition-colors",
+              fieldErrors?.property_description ? "text-red-500" : "text-slate-500"
+            )}
+          />
           <Textarea
             id="property_description"
             name="property_description"
             value={description}
-            onChange={(e) => onDescriptionChange(e.target.value)}
+            onChange={(e) => {
+              onDescriptionChange(e.target.value)
+              if (onClearFieldError) onClearFieldError('property_description')
+            }}
             required
             rows={6}
-            className="border-slate-200 focus:border-blue-900 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-all text-base font-medium text-navy-deep pl-12 pr-4 pt-4 placeholder:text-slate-400"
+            className={cn(
+              "rounded-2xl transition-all text-base font-medium text-navy-deep pl-12 pr-4 pt-4 placeholder:text-slate-400 shadow-xs",
+              fieldErrors?.property_description
+                ? "border-2 border-red-500 bg-red-50/20 focus:border-red-600 focus:ring-2 focus:ring-red-400/30"
+                : "border border-blue-200/80 hover:border-blue-400 focus:border-blue-900 bg-slate-50/40 hover:bg-slate-50/80"
+            )}
             placeholder="Describe your property including key features, current condition, and any relevant details..."
           />
         </div>
+        {fieldErrors?.property_description && (
+          <p className="text-red-500 text-xs font-semibold">{fieldErrors.property_description}</p>
+        )}
       </div>
 
       {/* Dynamic Specifications */}
       {activeSpecs.length > 0 && (
         <div className="space-y-6 pt-6 border-t border-slate-100">
-          <h4 className="text-sm font-bold uppercase tracking-wider text-navy-deep mb-4">
+          <h4 className="text-base font-bold text-navy-deep mb-4">
             Property Specifications
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -289,15 +318,15 @@ export function SpecsStep({
                 return (
                   <div
                     key={spec.path}
-                    className="flex items-center space-x-3 py-4 px-5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-2xl transition-all"
+                    className="flex items-center space-x-3 py-4 px-5 bg-slate-50/40 hover:bg-slate-50/80 border border-blue-200/80 rounded-2xl transition-all shadow-xs"
                   >
-                    {IconComponent && <IconComponent className="text-slate-400 w-5 h-5 mr-2" />}
+                    {IconComponent && <IconComponent className="text-slate-500 w-5 h-5 mr-2" />}
                     <input
                       type="checkbox"
                       id={inputId}
                       checked={checked}
                       onChange={(e) => onSpecValueChange(spec.path, e.target.checked)}
-                      className="h-5 w-5 rounded border-slate-200 text-blue-900 focus:ring-blue-900 cursor-pointer"
+                      className="h-5 w-5 rounded border-blue-300 text-blue-900 focus:ring-blue-900 cursor-pointer"
                     />
                     <Label
                       htmlFor={inputId}
@@ -313,14 +342,14 @@ export function SpecsStep({
                 <div key={spec.path} className="space-y-2">
                   <Label
                     htmlFor={inputId}
-                    className="text-xs font-bold uppercase tracking-wider text-slate-400"
+                    className="text-sm font-bold text-slate-700"
                   >
                     {spec.label.en}
                     {spec.unit ? ` (${spec.unit})` : ''}
                   </Label>
                   <div className="relative">
                     {IconComponent && (
-                      <IconComponent className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none z-10" />
+                      <IconComponent className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 pointer-events-none z-10" />
                     )}
                     {spec.type === 'select' ? (
                       <Select
@@ -333,7 +362,7 @@ export function SpecsStep({
                       >
                         <SelectTrigger
                           id={inputId}
-                          className="w-full !h-14 border-slate-200 focus:border-blue-900 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-base font-semibold text-navy-deep pl-12 pr-4"
+                          className="w-full !h-14 border border-blue-200/80 hover:border-blue-400 focus:border-blue-900 rounded-2xl bg-slate-50/40 hover:bg-slate-50/80 transition-colors text-base font-semibold text-navy-deep pl-12 pr-4 shadow-xs"
                         >
                           <SelectValue placeholder="Select..." />
                         </SelectTrigger>
@@ -367,7 +396,7 @@ export function SpecsStep({
                         }}
                         onWheel={(e) => e.currentTarget.blur()}
                         type={spec.type === 'number' ? 'number' : 'text'}
-                        className="h-14 border-slate-200 focus:border-blue-900 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-base font-semibold text-navy-deep pl-12 pr-4"
+                        className="h-14 border border-blue-200/80 hover:border-blue-400 focus:border-blue-900 rounded-2xl bg-slate-50/40 hover:bg-slate-50/80 transition-colors text-base font-semibold text-navy-deep pl-12 pr-4 shadow-xs"
                         placeholder={`Enter ${spec.label.en.toLowerCase()}...`}
                       />
                     )}
@@ -382,10 +411,10 @@ export function SpecsStep({
       {/* Custom Specifications Section */}
       <div className="space-y-6 pt-6 border-t border-slate-100 animate-fadeIn">
         <div className="space-y-1">
-          <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <Label className="text-sm font-bold text-slate-700">
             Custom Specifications
           </Label>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             Add any other unique specifications for your property (e.g. Ceiling Height, Security
             Rating).
           </p>
@@ -397,20 +426,20 @@ export function SpecsStep({
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
             {/* Label Input */}
             <div className="space-y-2 md:col-span-5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-600">
                 Label *
               </Label>
               <Input
                 value={customSpecLabel}
                 onChange={(e) => onCustomSpecLabelChange(e.target.value)}
                 placeholder="e.g. Ceiling Height"
-                className="h-12 border-slate-200 focus:border-blue-900 rounded-xl bg-white text-sm font-semibold text-navy-deep px-4 w-full"
+                className="h-12 border border-blue-200/80 hover:border-blue-400 focus:border-blue-900 rounded-xl bg-white text-sm font-semibold text-navy-deep px-4 w-full shadow-xs"
               />
             </div>
 
             {/* Value Input + Add Button Flexed together */}
             <div className="space-y-2 md:col-span-7">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-600">
                 Value *
               </Label>
               <div className="flex gap-3">
@@ -426,7 +455,7 @@ export function SpecsStep({
                     }}
                     type="text"
                     placeholder="e.g. 4.2m, 3-Phase, Yes, Panoramic..."
-                    className="h-12 border-slate-200 focus:border-blue-900 rounded-xl bg-white text-sm font-semibold text-navy-deep px-4 w-full"
+                    className="h-12 border border-blue-200/80 hover:border-blue-400 focus:border-blue-900 rounded-xl bg-white text-sm font-semibold text-navy-deep px-4 w-full shadow-xs"
                   />
                 </div>
                 <Button
@@ -448,10 +477,10 @@ export function SpecsStep({
             {customSpecs.map((spec, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200 shadow-sm relative group animate-fadeIn"
+                className="flex items-center justify-between p-4 bg-white rounded-2xl border border-blue-200/80 shadow-xs relative group animate-fadeIn"
               >
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                     {spec.label}
                   </span>
                   <span className="text-sm font-bold text-navy-deep mt-1">{spec.value}</span>
@@ -472,10 +501,10 @@ export function SpecsStep({
       {/* Property Features */}
       <div className="space-y-6 pt-6 border-t border-slate-100">
         <div className="space-y-1">
-          <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <Label className="text-sm font-bold text-slate-700">
             Property Features
           </Label>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             Select from the popular features below or type new ones to add them to your request.
           </p>
         </div>
@@ -497,7 +526,7 @@ export function SpecsStep({
                   className={`px-5 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 border ${
                     isSelected
                       ? 'bg-blue-900 text-white border-blue-900 shadow-md shadow-blue-900/10 scale-95'
-                      : 'bg-white text-navy-deep border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                      : 'bg-white text-navy-deep border-blue-200/80 hover:bg-blue-50/40 hover:border-blue-400'
                   }`}
                 >
                   {feat.label}
@@ -511,7 +540,7 @@ export function SpecsStep({
         <div className="space-y-3">
           <Label
             htmlFor="custom_feature_input"
-            className="text-xs font-bold uppercase tracking-wider text-slate-400"
+            className="text-sm font-bold text-slate-700"
           >
             Add Custom Features
           </Label>
@@ -527,7 +556,7 @@ export function SpecsStep({
                 }
               }}
               placeholder="e.g. Private Elevator, Wine Cellar, Sea View..."
-              className="h-14 border-slate-200 focus:border-blue-900 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors text-base font-semibold text-navy-deep px-6"
+              className="h-14 border border-blue-200/80 hover:border-blue-400 focus:border-blue-900 rounded-2xl bg-slate-50/40 hover:bg-slate-50/80 transition-colors text-base font-semibold text-navy-deep px-6 shadow-xs"
             />
             <Button
               type="button"

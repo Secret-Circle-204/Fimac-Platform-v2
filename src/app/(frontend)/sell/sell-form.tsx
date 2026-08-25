@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, Send, ArrowRight, ArrowLeft } from 'lucide-react'
+import { CheckCircle2, Send, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
 import { StepProgressBar } from '@/components/sell/StepProgressBar'
@@ -92,7 +92,7 @@ export function SellForm({
 
   // Step 2: Pricing & Size State
   const [askingPrice, setAskingPrice] = useState<string>('')
-  const [currency, setCurrency] = useState<string>('USD')
+  const [currency, setCurrency] = useState<string>('EGP')
   const [propertySize, setPropertySize] = useState<string>('')
 
   // Step 3: Location State
@@ -119,6 +119,18 @@ export function SellForm({
 
   // Step 5: Photos State
   const [photos, setPhotos] = useState<SelectedPhoto[]>([])
+
+  // Field-level validation errors
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  const clearFieldError = (fieldId: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[fieldId]) return prev
+      const next = { ...prev }
+      delete next[fieldId]
+      return next
+    })
+  }
 
   // Idempotency Key (Generated on client session per form fill)
   const [idempotencyKey, setIdempotencyKey] = useState<string>('')
@@ -255,32 +267,108 @@ export function SellForm({
     { label: 'Review', desc: 'Review & Submit' },
   ]
 
-  const isStepValid = (step: number) => {
+  interface StepValidationResult {
+    isValid: boolean
+    errorMessage?: string
+    fieldId?: string
+  }
+
+  const validateCurrentStep = (step: number): StepValidationResult => {
     switch (step) {
       case 1:
-        return !!selectedCategory && !!selectedPropertyTypeId && !!propertyTitle.trim() && !!constructionStatus
+        if (!selectedCategory) {
+          return {
+            isValid: false,
+            errorMessage: 'Please select a property category (Residential, Commercial, Hospitality, or Land).',
+            fieldId: 'category',
+          }
+        }
+        if (!selectedPropertyTypeId) {
+          return {
+            isValid: false,
+            errorMessage: 'Please select a specific property type.',
+            fieldId: 'property_type',
+          }
+        }
+        if (!propertyTitle.trim()) {
+          return {
+            isValid: false,
+            errorMessage: 'Please enter an attractive property title.',
+            fieldId: 'property_title',
+          }
+        }
+        if (!constructionStatus) {
+          return {
+            isValid: false,
+            errorMessage: 'Please select the construction status of the property.',
+            fieldId: 'constructionStatus',
+          }
+        }
+        return { isValid: true }
+
       case 2:
-        return (
-          !!askingPrice &&
-          !isNaN(Number(askingPrice)) &&
-          Number(askingPrice) > 0 &&
-          !!propertySize &&
-          !isNaN(Number(propertySize)) &&
-          Number(propertySize) > 0
-        )
+        if (!askingPrice || isNaN(Number(askingPrice)) || Number(askingPrice) <= 0) {
+          return {
+            isValid: false,
+            errorMessage: 'Please enter a valid asking price greater than 0.',
+            fieldId: 'asking_price',
+          }
+        }
+        if (!propertySize || isNaN(Number(propertySize)) || Number(propertySize) <= 0) {
+          return {
+            isValid: false,
+            errorMessage: 'Please enter a valid property size in square meters.',
+            fieldId: 'property_size',
+          }
+        }
+        return { isValid: true }
+
       case 3:
-        return (
-          !!(addressDetails.address || '').trim() &&
-          !!(addressDetails.city || '').trim() &&
-          !!(addressDetails.state || '').trim() &&
-          !!(addressDetails.country || '').trim()
-        )
+        if (!(addressDetails.address || '').trim()) {
+          return {
+            isValid: false,
+            errorMessage: 'Please enter the street address or pinpoint the location on the map.',
+            fieldId: 'property_location',
+          }
+        }
+        if (!(addressDetails.city || '').trim()) {
+          return {
+            isValid: false,
+            errorMessage: 'Please specify the city.',
+            fieldId: 'city',
+          }
+        }
+        if (!(addressDetails.state || '').trim()) {
+          return {
+            isValid: false,
+            errorMessage: 'Please specify the state or governorate.',
+            fieldId: 'state',
+          }
+        }
+        if (!(addressDetails.country || '').trim()) {
+          return {
+            isValid: false,
+            errorMessage: 'Please specify the country.',
+            fieldId: 'country',
+          }
+        }
+        return { isValid: true }
+
       case 4:
-        return !!description.trim()
+        if (!description.trim()) {
+          return {
+            isValid: false,
+            errorMessage: 'Please provide a detailed property description.',
+            fieldId: 'property_description',
+          }
+        }
+        return { isValid: true }
+
       case 5:
-        return true // Photos are optional (validated on selection)
+        return { isValid: true } // Photos are optional
+
       default:
-        return true
+        return { isValid: true }
     }
   }
 
@@ -296,7 +384,9 @@ export function SellForm({
   }
 
   const handleNext = () => {
-    if (isStepValid(currentStep)) {
+    const validation = validateCurrentStep(currentStep)
+
+    if (validation.isValid) {
       if (currentStep === 4) {
         // Auto-commit any typed custom feature that wasn't added explicitly
         const trimmedFeature = customInput.trim()
@@ -324,15 +414,41 @@ export function SellForm({
       }
       setCurrentStep((prev) => Math.min(prev + 1, 6))
       setError('')
+      setFieldErrors({})
       setTimeout(scrollToFormTop, 50)
     } else {
-      setError('Please fill in all required fields marked with * correctly before proceeding.')
+      const errorMsg = validation.errorMessage || 'Please fill in all required fields marked with * before proceeding.'
+      setError(errorMsg)
+      if (validation.fieldId) {
+        setFieldErrors({ [validation.fieldId]: errorMsg })
+      }
+
+      // Smoothly scroll directly to the missing field and highlight it
+      if (validation.fieldId) {
+        const targetElement = document.getElementById(validation.fieldId)
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          if (typeof targetElement.focus === 'function') {
+            targetElement.focus()
+          }
+          // Visual pulse highlight
+          targetElement.classList.add('ring-2', 'ring-red-500', 'ring-offset-2', 'transition-all', 'duration-300')
+          setTimeout(() => {
+            targetElement.classList.remove('ring-2', 'ring-red-500', 'ring-offset-2')
+          }, 2500)
+          return
+        }
+      }
+
+      // Fallback: smooth scroll to top of form
+      scrollToFormTop()
     }
   }
 
   const handleBack = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1))
     setError('')
+    setFieldErrors({})
     setTimeout(scrollToFormTop, 50)
   }
 
@@ -526,6 +642,8 @@ export function SellForm({
               onPropertyTypeChange={handlePropertyTypeChange}
               onTitleChange={setPropertyTitle}
               onConstructionStatusChange={setConstructionStatus}
+              fieldErrors={fieldErrors}
+              onClearFieldError={clearFieldError}
             />
           )}
 
@@ -537,6 +655,8 @@ export function SellForm({
               onAskingPriceChange={setAskingPrice}
               onCurrencyChange={setCurrency}
               onPropertySizeChange={setPropertySize}
+              fieldErrors={fieldErrors}
+              onClearFieldError={clearFieldError}
             />
           )}
 
@@ -546,6 +666,8 @@ export function SellForm({
               addressDetails={addressDetails}
               onLocationChange={handleLocationChange}
               onAddressDetailsChange={setAddressDetails}
+              fieldErrors={fieldErrors}
+              onClearFieldError={clearFieldError}
             />
           )}
 
@@ -571,6 +693,8 @@ export function SellForm({
               onCustomSpecLabelChange={setCustomSpecLabel}
               customSpecValue={customSpecValue}
               onCustomSpecValueChange={setCustomSpecValue}
+              fieldErrors={fieldErrors}
+              onClearFieldError={clearFieldError}
             />
           )}
 
@@ -606,8 +730,16 @@ export function SellForm({
             />
           )}
 
+          {/* Bottom Error Feedback */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-sm flex items-center gap-3 animate-shake">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500" />
+              <span className="font-semibold">{error}</span>
+            </div>
+          )}
+
           {/* Navigation Controls */}
-          <div className="flex justify-between items-center pt-6 border-t border-slate-100 mt-8">
+          <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-6">
             {currentStep > 1 ? (
               <Button
                 type="button"
