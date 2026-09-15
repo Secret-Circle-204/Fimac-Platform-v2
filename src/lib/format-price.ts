@@ -1,5 +1,7 @@
 export function formatPrice(price: number | null | undefined, currency?: string | null): string {
-  if (price == null) {return 'Price not available'}
+  if (price == null) {
+    return 'Price on Request'
+  }
 
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -8,3 +10,4 @@ export function formatPrice(price: number | null | undefined, currency?: string 
     maximumFractionDigits: 0,
   }).format(price)
 }
+

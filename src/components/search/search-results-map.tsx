@@ -616,9 +616,7 @@ export function AnimatedGlobe({ properties, variant = 'default' }: AnimatedGlobe
                 {hoveredProperty.title}
               </h4>
               <p className="text-gold-royal font-bold text-lg mt-1 italic">
-                {hoveredProperty.price
-                  ? formatPrice(hoveredProperty.price, hoveredProperty.currency)
-                  : 'Price upon request'}
+                {formatPrice(hoveredProperty.price, hoveredProperty.currency)}
               </p>
               <div className="flex items-center gap-2 mt-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold-royal animate-pulse" />

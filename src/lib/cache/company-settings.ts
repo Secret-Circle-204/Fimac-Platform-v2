@@ -12,20 +12,25 @@ export interface CompanySettingsData {
     websiteUrl?: string | null
     logo?: string | Media | null
     badgeText?: string | null
-  }
+  } | null
   contactEmail?: string | null
   notificationEmail?: string | null
   contactPhone?: string | null
   contactOffice?: string | null
+  socialMedia?: {
+    facebook?: string | null
+    instagram?: string | null
+    youtube?: string | null
+  } | null
   updatedAt?: string | null
   createdAt?: string | null
 }
 
 /**
- * Retrieves the CompanySettings global via serialization-safe cache.
+ * Retrieves the CompanySettings global via serialization-safe on-demand cache.
  * 
- * Duration: 1 Day (86400s) — safety net only
- * Tags: 'company-settings'
+ * Duration: Infinite (revalidate: false) — invalidated strictly on-demand when 'company-settings' tag is triggered.
+ * Tags: ['company-settings']
  */
 export const getCachedCompanySettings = async (): Promise<CompanySettingsData> => {
   const cacheKey = `company-settings-global-v2`
@@ -42,11 +47,12 @@ export const getCachedCompanySettings = async (): Promise<CompanySettingsData> =
     },
     [cacheKey],
     {
-      revalidate: 86400,
+      revalidate: false,
       tags: ["company-settings"],
     }
   )()
 
   return rawDoc as unknown as CompanySettingsData
 }
+
 

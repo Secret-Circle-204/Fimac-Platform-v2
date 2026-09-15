@@ -191,7 +191,7 @@ export function RecommendedProperties() {
                     <div>
                       <p className="text-xs text-gray-400 font-medium">Investment Value</p>
                       <p className="text-lg font-black text-navy-deep">
-                        {property.price ? formatPrice(property.price, property.currency) : "Request Price"}
+                        {formatPrice(property.price, property.currency)}
                       </p>
                     </div>
                     <span className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition-all ${

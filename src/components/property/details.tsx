@@ -50,18 +50,16 @@ export const PropertyDetails = () => {
           </div>
         )}
 
-        {property.original.price !== undefined && property.original.price !== null && (
-          <div className="pt-4 border-t border-slate-100/80 w-full">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-royal">
-                Listing Price
-              </span>
-              <h3 className="text-3xl md:text-4xl font-bold text-navy-deep tracking-tight">
-                {priceFormatted}
-              </h3>
-            </div>
+        <div className="pt-4 border-t border-slate-100/80 w-full">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold-royal">
+              Listing Price
+            </span>
+            <h3 className="text-3xl md:text-4xl font-bold text-navy-deep tracking-tight">
+              {priceFormatted}
+            </h3>
           </div>
-        )}
+        </div>
       </div>
 
       <div className="flex md:flex-col gap-3">

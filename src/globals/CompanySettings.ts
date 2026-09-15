@@ -1,6 +1,6 @@
 import type { GlobalConfig } from 'payload'
 import { diagnosticAccessWrapper } from '@/lib/diagnostics'
-import { revalidateTag } from 'next/cache'
+import { triggerRevalidate } from '@/lib/cache/revalidate'
 
 export const CompanySettings: GlobalConfig = {
   slug: 'company-settings',
@@ -18,7 +18,7 @@ export const CompanySettings: GlobalConfig = {
     afterChange: [
       ({ doc, context }) => {
         if (!context?.skipCacheInvalidation) {
-          revalidateTag('company-settings')
+          triggerRevalidate('company-settings')
         }
         return doc
       },
@@ -138,6 +138,46 @@ export const CompanySettings: GlobalConfig = {
               type: 'textarea',
               defaultValue: '123 Investment Plaza\nKnoxville, TN 37902',
               required: true,
+            },
+          ],
+        },
+        {
+          label: 'Social Media',
+          description: 'Official social media links for FIMAC displayed in the website footer and platforms.',
+          fields: [
+            {
+              name: 'socialMedia',
+              type: 'group',
+              label: 'Social Media Profiles',
+              fields: [
+                {
+                  name: 'facebook',
+                  label: 'Facebook URL',
+                  type: 'text',
+                  admin: {
+                    placeholder: 'https://facebook.com/fimacgroup',
+                    description: 'Direct link to the official Facebook page.',
+                  },
+                },
+                {
+                  name: 'instagram',
+                  label: 'Instagram URL',
+                  type: 'text',
+                  admin: {
+                    placeholder: 'https://instagram.com/fimacgroup',
+                    description: 'Direct link to the official Instagram profile.',
+                  },
+                },
+                {
+                  name: 'youtube',
+                  label: 'YouTube URL',
+                  type: 'text',
+                  admin: {
+                    placeholder: 'https://youtube.com/@fimacgroup',
+                    description: 'Direct link to the official YouTube channel.',
+                  },
+                },
+              ],
             },
           ],
         },

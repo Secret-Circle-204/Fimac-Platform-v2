@@ -165,7 +165,7 @@ export function RecentlyViewedProperties() {
                     <div>
                       <p className="text-xs text-gray-400 font-medium">Value</p>
                       <p className="text-lg font-black text-navy-deep">
-                        {property.price ? formatPrice(property.price, property.currency) : "Request Price"}
+                        {formatPrice(property.price, property.currency)}
                       </p>
                     </div>
                     <div className="text-right">

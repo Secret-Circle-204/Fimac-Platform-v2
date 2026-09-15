@@ -153,9 +153,7 @@ export function PropertyMapPortal({ property, onClose }: PropertyMapPortalProps)
                       </span>
                     </div>
                     <span className="text-2xl sm:text-3xl font-bold text-white whitespace-nowrap">
-                      {property.price
-                        ? formatPrice(property.price, property.currency)
-                        : 'Price upon request'}
+                      {formatPrice(property.price, property.currency)}
                     </span>
                   </div>
 
